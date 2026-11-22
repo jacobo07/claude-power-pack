@@ -128,6 +128,81 @@ public static class AcFg {
         return r.ToArray();
     }
 }
+// Orca provider (2026-11-17). Orca stamps ORCA_TERMINAL_HANDLE on every PTY it spawns, so the
+// handle in claude.exe's OWN environment block names its pane; a pid match is impossible because
+// Orca's terminal records carry no PTY pid. x64 targets only: anything else returns null.
+public static class AcProcEnv {
+    [StructLayout(LayoutKind.Sequential)] struct Pbi { public IntPtr R1; public IntPtr Peb; public IntPtr R2a; public IntPtr R2b; public IntPtr Pid; public IntPtr R3; }
+    [DllImport("ntdll.dll")] static extern int NtQueryInformationProcess(IntPtr h, int c, ref Pbi p, int l, out int r);
+    [DllImport("kernel32.dll")] static extern IntPtr OpenProcess(int a, bool i, int pid);
+    [DllImport("kernel32.dll")] static extern bool CloseHandle(IntPtr h);
+    [DllImport("kernel32.dll")] static extern bool IsWow64Process(IntPtr h, out bool w);
+    [DllImport("kernel32.dll")] static extern bool ReadProcessMemory(IntPtr h, IntPtr a, byte[] b, IntPtr n, out IntPtr r);
+    static byte[] Read(IntPtr h, IntPtr a, int n) {
+        var b = new byte[n]; IntPtr r;
+        if (!ReadProcessMemory(h, a, b, (IntPtr)n, out r) || (long)r != n) return null;
+        return b;
+    }
+    public static string Get(int pid, string name) {
+        if (IntPtr.Size != 8) return null;
+        IntPtr h = OpenProcess(0x0400 | 0x0010, false, pid);
+        if (h == IntPtr.Zero) return null;
+        try {
+            bool wow; if (!IsWow64Process(h, out wow) || wow) return null;
+            var p = new Pbi(); int rl;
+            if (NtQueryInformationProcess(h, 0, ref p, Marshal.SizeOf(p), out rl) != 0) return null;
+            var pp = Read(h, IntPtr.Add(p.Peb, 0x20), 8); if (pp == null) return null;
+            IntPtr par = (IntPtr)BitConverter.ToInt64(pp, 0);
+            var ep = Read(h, IntPtr.Add(par, 0x80), 8); var sz = Read(h, IntPtr.Add(par, 0x3F0), 8);
+            if (ep == null || sz == null) return null;
+            long size = BitConverter.ToInt64(sz, 0);
+            if (size <= 0 || size > 4194304) return null;
+            var blk = Read(h, (IntPtr)BitConverter.ToInt64(ep, 0), (int)size); if (blk == null) return null;
+            string pre = name + "=";
+            foreach (var kv in Encoding.Unicode.GetString(blk).Split('\0'))
+                if (kv.StartsWith(pre, StringComparison.OrdinalIgnoreCase)) return kv.Substring(pre.Length);
+            return null;
+        } finally { CloseHandle(h); }
+    }
+}
+// Same quoting as Orca's native CLI launcher (OrcaCliLauncher.cs), so a typed line with quotes or
+// spaces reaches the CLI byte-identical; PowerShell 5.1's native-arg passing does not escape `"`.
+public static class AcOrcaCli {
+    static string Q(string v) {
+        bool need = v.Length == 0;
+        for (int i = 0; i < v.Length && !need; i++) need = v[i] == '"' || Char.IsWhiteSpace(v[i]);
+        if (!need) return v;
+        var sb = new StringBuilder("\""); int bs = 0;
+        foreach (char ch in v) {
+            if (ch == '\\') { bs++; continue; }
+            if (ch == '"') { sb.Append('\\', bs * 2 + 1); sb.Append('"'); } else { sb.Append('\\', bs); sb.Append(ch); }
+            bs = 0;
+        }
+        sb.Append('\\', bs * 2); sb.Append('"'); return sb.ToString();
+    }
+    // Returns { exitCode, stdout }; exitCode -1 = timed out (killed) or could not start.
+    public static string[] Run(string exe, string[] args, int timeoutMs) {
+        var psi = new ProcessStartInfo(exe);
+        var parts = new List<string>(); foreach (var a in args) parts.Add(Q(a));
+        psi.Arguments = String.Join(" ", parts.ToArray());
+        psi.UseShellExecute = false; psi.RedirectStandardOutput = true; psi.RedirectStandardError = true;
+        psi.CreateNoWindow = true; psi.StandardOutputEncoding = Encoding.UTF8;
+        psi.EnvironmentVariables["ELECTRON_RUN_AS_NODE"] = "1";
+        psi.EnvironmentVariables["ORCA_WINDOWS_PACKAGED_CLI_LAUNCHER"] = "1";
+        psi.EnvironmentVariables["ORCA_CLI_COMMAND"] = "orca";
+        psi.EnvironmentVariables.Remove("NODE_OPTIONS");
+        try {
+            using (var p = Process.Start(psi)) {
+                var so = p.StandardOutput.ReadToEndAsync(); p.StandardError.ReadToEndAsync();
+                if (!p.WaitForExit(timeoutMs)) {
+                    try { p.Kill(); } catch (InvalidOperationException) { return new string[] { "-1", "exited during kill" }; }
+                    return new string[] { "-1", "timeout" };
+                }
+                return new string[] { p.ExitCode.ToString(), so.Result };
+            }
+        } catch (Exception e) { return new string[] { "-1", e.Message }; }
+    }
+}
 "@
 try { Add-Type -TypeDefinition $src -ErrorAction Stop } catch {
     Log "Add-Type failed: $($_.Exception.Message)"
@@ -411,7 +486,108 @@ function Request-Inbox($fl, $line, $key) {
     Log "REQUESTED flag=$($fl.file.Name) sid=$($fl.sid) pid=$($s.pid) ancestors=$($s.ancestors.Count) typed=[$line]"
     # `line` is kept so Poll-Inbox can re-verify the transcript still ends on the
     # exact text we asked to be typed, and withdraw the request when it does not.
-    $script:inbox[$key] = @{ sid = $fl.sid; id = $id; state = 'pending'; at = Get-Date; line = $line }
+    $script:inbox[$key] = @{ sid = $fl.sid; id = $id; state = 'pending'; at = Get-Date; line = $line;
+                             pid = $s.pid; procStart = $s.procStart }
+}
+
+# --- Orca provider (2026-11-17) --------------------------------------------------
+# Sessions hosted in an Orca X pane have no extension to answer, so every request was
+# refused after $ackFirstSec. The daemon answers for them itself: the pane is the
+# ORCA_TERMINAL_HANDLE in claude.exe's own environment, confirmed live (and on the same
+# tab) by `orca terminal list`, and typed with `orca terminal send` -- no focus involved.
+# It writes the same ack the extension writes, so Poll-Inbox's single path records it.
+# No handle in the environment = not an Orca pane: the request is left to the extension.
+$orcaOff = ($env:AC_ORCA_PROVIDER -eq 'off')
+$orcaApp = if ($env:AC_ORCA_APP) { $env:AC_ORCA_APP } else {
+    $d = Join-Path $env:LOCALAPPDATA 'Programs\orca'
+    @('Orca X.exe', 'Orca.exe') | ForEach-Object { Join-Path $d $_ } | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+}
+$orcaCliJs = if ($env:AC_ORCA_CLI_JS) { $env:AC_ORCA_CLI_JS } elseif ($orcaApp) {
+    Join-Path (Split-Path -Parent $orcaApp) 'resources\app.asar.unpacked\out\cli\index.js'
+} else { '' }
+$orcaEnterDelayMs = 250   # text and Enter apart, as the extension does (ENTER_DELAY_MS)
+
+function Invoke-OrcaCli([string[]]$cliArgs) {
+    $r = [AcOrcaCli]::Run($orcaApp, (@($orcaCliJs) + $cliArgs), 30000)
+    if ($r[0] -eq '-1') { return @{ ok = $false; why = "cli-did-not-finish($($r[1]))" } }
+    try { $j = $r[1] | ConvertFrom-Json } catch { return @{ ok = $false; why = "cli-output-unparseable(exit=$($r[0]))" } }
+    if (-not $j.ok) { return @{ ok = $false; why = "cli-error($([string]$j.error.code))" } }
+    return @{ ok = $true; result = $j.result }
+}
+
+function Write-InboxAck($e, $fields) {
+    $ack = [ordered]@{ id = $e.id; session_id = $e.sid; provider = 'orca'; at_ms = [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() }
+    foreach ($k in $fields.Keys) { $ack[$k] = $fields[$k] }
+    $p = Join-Path $inboxDir "$($e.sid).ack.json"; $tmp = "$p.$PID.tmp"
+    [IO.File]::WriteAllText($tmp, ($ack | ConvertTo-Json -Compress), (New-Object Text.UTF8Encoding($false)))
+    Move-Item -LiteralPath $tmp -Destination $p -Force
+}
+
+function Get-OrcaSessionStatus($e) {
+    $f = Join-Path $sessionsDir "$($e.pid).json"
+    try { $s = Get-Content -LiteralPath $f -Raw | ConvertFrom-Json } catch { return @{ ok = $false; why = 'session-unreadable' } }
+    if ([string]$s.sessionId -cne $e.sid) { return @{ ok = $false; why = 'session-mismatch' } }
+    $rec = [long]0; $want = [long]0
+    if (-not [long]::TryParse([string]$s.procStart, [ref]$rec) -or -not [long]::TryParse([string]$e.procStart, [ref]$want) -or
+        [Math]::Abs($rec - $want) -ge 10) { return @{ ok = $false; why = 'proc-start-mismatch' } }
+    return @{ ok = $true; status = [string]$s.status }
+}
+
+function Send-OrcaLine($handle, $line) {
+    $first = Invoke-OrcaCli @('terminal', 'send', '--terminal', $handle, '--text', $line, '--enter', '--json')
+    if (-not $first.ok) { return @{ ok = $false; why = "orca-send-failed:$($first.why)" } }
+    if (-not $first.result.send.accepted) { return @{ ok = $false; why = 'orca-send-not-accepted' } }
+    # The slash-command popup eats the first Enter; Enter on an empty prompt is a no-op (extension.js).
+    Start-Sleep -Milliseconds $orcaEnterDelayMs
+    $enters = 1
+    if ((Invoke-OrcaCli @('terminal', 'send', '--terminal', $handle, '--enter', '--json')).ok) { $enters = 2 }
+    $tail = ''
+    if ($line -cmatch '^/compact\s+') {
+        $tail = ($line -creplace '^/compact\s+', '').Trim()
+        Start-Sleep -Milliseconds $orcaEnterDelayMs
+        if ((Invoke-OrcaCli @('terminal', 'send', '--terminal', $handle, '--text', $tail, '--enter', '--json')).ok) { $enters++ }
+    }
+    return @{ ok = $true; enters = $enters; tail = $tail }
+}
+
+function Invoke-OrcaProvider($e) {
+    if ($e.orca -eq 'none' -or $e.orca -eq 'done' -or -not $e.pid) { return }
+    # Dry-run suites may be launched from an Orca pane: without an injected CLI they never reach Orca.
+    if ($dryRun -and -not $env:AC_ORCA_APP) { $e.orca = 'none'; return }
+    if ($null -eq $e.orca) {
+        $h = [AcProcEnv]::Get([int]$e.pid, 'ORCA_TERMINAL_HANDLE')
+        if (-not $h) { $e.orca = 'none'; return }
+        $e.orca = @{ handle = $h; tab = [AcProcEnv]::Get([int]$e.pid, 'ORCA_TAB_ID') }
+        Log "inbox: sid=$($e.sid) runs in Orca pane handle=$h tab=$($e.orca.tab)"
+    }
+    if ($e.orcaNext -and (Get-Date) -lt $e.orcaNext) { return }
+    $e.orcaNext = (Get-Date).AddSeconds(2)
+    $handle = $e.orca.handle
+    $refuse = { param($why) $e.orca = 'done'; Write-InboxAck $e @{ status = 'refused'; reason = $why; terminal = "orca:$handle" } }
+
+    if (-not $orcaApp -or -not (Test-Path -LiteralPath $orcaCliJs)) { & $refuse 'orca-cli-not-found'; return }
+    $line = [string]$e.line
+    if ($line.Length -eq 0 -or $line.Length -gt 512 -or $line -match '[\u0000-\u001f\u007f]') { & $refuse 'invalid-text'; return }
+    $st = Get-OrcaSessionStatus $e
+    # Claude Code rewrites this file constantly; a torn read is retried next tick, bounded by Poll-Inbox's limit.
+    if (-not $st.ok -and $st.why -eq 'session-unreadable') { return }
+    if (-not $st.ok) { & $refuse $st.why; return }
+    if ($st.status -ne 'idle') {
+        if ($e.state -ne 'deferred') { Write-InboxAck $e @{ status = 'deferred'; reason = "status-$($st.status)"; terminal = "orca:$handle" } }
+        return
+    }
+    $list = Invoke-OrcaCli @('terminal', 'list', '--json')
+    if (-not $list.ok) { & $refuse "orca-unreachable:$($list.why)"; return }
+    $t = @($list.result.terminals | Where-Object { [string]$_.handle -ceq $handle })
+    if ($t.Count -ne 1) { & $refuse 'orca-handle-not-live'; return }
+    if ($e.orca.tab -and [string]$t[0].tabId -cne $e.orca.tab) { & $refuse 'orca-tab-mismatch'; return }
+    if (-not $t[0].connected -or -not $t[0].writable) { & $refuse 'orca-terminal-not-writable'; return }
+
+    $e.orca = 'done'
+    $sent = Send-OrcaLine $handle $line
+    if (-not $sent.ok) { Write-InboxAck $e @{ status = 'refused'; reason = $sent.why; terminal = "orca:$handle" }; return }
+    Write-InboxAck $e @{ status = 'sent'; terminal = "orca:$handle"; enters = $sent.enters;
+                         arg_tail = $(if ($sent.tail) { $sent.tail } else { $null }) }
 }
 
 function Poll-Inbox($flags) {
@@ -438,11 +614,14 @@ function Poll-Inbox($flags) {
             }
         }
 
+        if (-not $orcaOff) { Invoke-OrcaProvider $e }
+
         $ack = $null
         $ackP = Join-Path $inboxDir "$($e.sid).ack.json"
         if (Test-Path -LiteralPath $ackP) { try { $ack = Get-Content -LiteralPath $ackP -Raw | ConvertFrom-Json } catch {} }
         if ($ack -and [string]$ack.id -eq $e.id) {
             $st = [string]$ack.status
+            $via = if ($ack.provider) { [string]$ack.provider } else { 'extension' }
             if ($st -eq 'sent') {
                 $e.state = 'sent'
                 # enters/arg_tail come from the ack the extension just wrote, and
@@ -460,7 +639,7 @@ function Poll-Inbox($flags) {
                 # turns "no test says so" into a record that does.
                 $ent = if ($null -ne $ack.enters) { [string]$ack.enters } else { '<none>' }
                 $at = if ($ack.arg_tail) { [string]$ack.arg_tail } else { '<none>' }
-                Log "SENT via=extension sid=$($e.sid) terminal=[$($ack.terminal)] window=[$($ack.window_cwd)] enters=$ent arg_tail=[$at]"
+                Log "SENT via=$via sid=$($e.sid) terminal=[$($ack.terminal)] window=[$($ack.window_cwd)] enters=$ent arg_tail=[$at]"
                 # The ledger row is not a duplicate of the log line. Every FAILURE
                 # path here ledgers (refused x2, withdrawn) and this success path
                 # did not, so the ledger was structurally incapable of showing a
@@ -472,13 +651,13 @@ function Poll-Inbox($flags) {
                 # The event name mirrors resume_dispatched deliberately: one query
                 # over the ledger must see both kinds, or the next reader repeats
                 # the same wrong conclusion.
-                Write-LedgerRow $e.sid 'compact_dispatched' "terminal inbox delivered via extension; terminal=[$($ack.terminal)] enters=$ent"
+                Write-LedgerRow $e.sid 'compact_dispatched' "terminal inbox delivered via ${via}; terminal=[$($ack.terminal)] enters=$ent"
                 foreach ($fl in $mine) { Remove-Item -LiteralPath $fl.file.FullName -Force -ErrorAction SilentlyContinue }
                 continue
             }
             if ($st -eq 'refused') {
                 $e.state = 'refused'
-                Log "inbox: REFUSED by extension sid=$($e.sid) reason=$($ack.reason)"
+                Log "inbox: REFUSED by $via sid=$($e.sid) reason=$($ack.reason)"
                 foreach ($fl in $mine) {
                     $dest = Join-Path $hooksDir ($fl.file.Name -replace '^auto-compact-(trigger|pending)', 'auto-compact-refused')
                     try { Move-Item -LiteralPath $fl.file.FullName -Destination $dest -Force -ErrorAction Stop } catch {}
@@ -488,7 +667,7 @@ function Poll-Inbox($flags) {
             }
             if ($st -eq 'deferred' -and $e.state -ne 'deferred') {
                 $e.state = 'deferred'
-                Log "inbox: deferred by extension sid=$($e.sid) reason=$($ack.reason)"
+                Log "inbox: deferred by $via sid=$($e.sid) reason=$($ack.reason)"
             }
         }
         $age = ((Get-Date) - $e.at).TotalSeconds

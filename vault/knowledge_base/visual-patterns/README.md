@@ -67,7 +67,8 @@ uniforme sobre las letras.
 | VP-016 | [[device-demo-state-carousel]] — Device Demo State Carousel | B4 movimiento | local (REF-MOTION-001) |
 | VP-017 | [[progressive-state-build]] — Intra-State Progressive Build | B5 movimiento | local (REF-MOTION-001) |
 | VP-018 | [[shared-element-continuity]] — Shared-Element Continuity | B6 movimiento | hypothesis (REF-MOTION-001) |
-| VP-019 | [[local-discovery-assistant-scene]] — Local Discovery Assistant Scene | E1 narrativa | **baseline** for local-business sites and demos (Owner, 2026-11-21); implemented in Lola's `/demo/#ia` |
+| VP-019 | [[cinematic-brand-lit-hero]] — Cinematic Brand-Lit Hero | E1 escena fotográfica/3D + luz de marca | investigación (REF-BRAND-LIGHT-001; no render ni tests de producción) |
+| VP-020 | [[local-discovery-assistant-scene]] — Local Discovery Assistant Scene | E2 narrativa | **baseline** for local-business sites and demos (Owner, 2026-11-21); implemented in Lola's `/demo/#ia` (renumbered from VP-019 on 2026-11-22: ID collided with upstream) |
 
 "Investigacion" = patron verificado con fuentes reales, sin implementacion
 propia todavia en un proyecto del Owner. Actualizar el campo Evidence de la
@@ -102,6 +103,16 @@ OBSERVED / INFERRED / HYPOTHESIZED / UNKNOWN per claim, then either raise an
 existing entry's `evidence_level` (a second independent reference) or add an
 entry at `local`. Open-source libraries are principle sources only unless
 `research/motion-oss-reference-classes.md` marks them SAFE-TO-DEPEND.
+
+## Cinematic image-backed heroes (2026-11-17)
+
+VP-019 documents brand-colour propagation into plausible scene illumination (landscape, refractive object and emissive architecture). It is NOT a motion pattern and is not auto-enrolled by the CDIO-07 motion resolver. Its related study is `evidence/REF-BRAND-LIGHT-001/OBSERVATION.md`; no reference image/video is redistributed in the repo. Retrieval through `/cpp-design` requires the existing opt-in `--refresh` until an independently tested automatic activation is added.
+
+## Brand-lit combinations dataset and experiment ledger (2026-11-17)
+
+- [160 cinematic scene/lighting/palette hypotheses](datasets/VP019_BRAND_LIT_COMBINATIONS.md) — 20 context families × 8 individually specified designs. These are original *design candidates*, not observed user-video frames and not 160 production-ready image assets.
+- [VP-019 evaluation ledger](ledgers/VP019_COMBINATION_LEDGER.jsonl) — 160 aligned identifiers, all `HYPOTHESIS_UNTESTED`, with blank proof/asset/rights/review/baseline fields; no promotion without actual tests.
+- The canonical design technique and existing selector point remain [[cinematic-brand-lit-hero]] (VP-019). The dataset is a subordinate enumerated candidate corpus, not 160 separate VP pattern IDs. Static web realization, asset licenses and accessibility remain to be verified.
 
 ## Discoverable via /cpp-design
 

@@ -1,5 +1,5 @@
 ---
-id: VP-019
+id: VP-020
 name: Local Discovery Assistant Scene (simulated conversation + imagined payoff)
 type: pattern
 domain: visual-patterns
@@ -9,7 +9,7 @@ baseline_by: Owner, 2026-11-21 ("que esto sea el baseline de las webs que haga C
 evidence_level: local
 ---
 
-# VP-019 — Local Discovery Assistant Scene
+# VP-020 — Local Discovery Assistant Scene
 
 ## Eje
 

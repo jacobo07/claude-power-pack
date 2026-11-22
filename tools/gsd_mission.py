@@ -4875,11 +4875,62 @@ def align_cwd(cwd: str, work_dir: str | None, proven_workstream: str | None = No
                     " but has uncommitted tracked changes; not fast-forwarding over them", **facts}
         ff = git(cwd, "merge", "--ff-only", hw)
         if ff.returncode != 0:
-            return {"status": "behind_dirty", "detail": "fast-forward refused: "
-                    + ((ff.stderr or ff.stdout).strip()[-200:]), **facts}
+            refusal = (ff.stderr or ff.stdout).strip()[-200:]
+            aside = _set_aside_identical_untracked(git, here[0], hc, hw)
+            if aside["moved"]:
+                ff = git(cwd, "merge", "--ff-only", hw)
+                if ff.returncode == 0:
+                    return {"status": "fast_forwarded", "detail": f"cwd {hc[:12]} -> {hw[:12]}; set aside"
+                            f" {len(aside['moved'])} untracked file(s) identical to the work_dir's in {aside['backup']}",
+                            "set_aside": aside["moved"], "set_aside_dir": aside["backup"], **facts}
+                _restore_set_aside(here[0], aside)
+                refusal = (ff.stderr or ff.stdout).strip()[-200:]
+            if aside["differ"]:
+                refusal += f"; untracked file(s) differ from the work_dir's copy: {aside['differ'][:5]}"
+            return {"status": "behind_dirty", "detail": "fast-forward refused: " + refusal, **facts}
         return {"status": "fast_forwarded", "detail": f"cwd {hc[:12]} -> {hw[:12]}", **facts}
     except Exception as exc:  # never launch on an unanswered question
         return {"status": "unreadable", "detail": f"{type(exc).__name__}: {exc}"}
+
+
+def _set_aside_identical_untracked(git, top: str, hc: str, hw: str) -> dict:
+    """Move out of the way the untracked files a fast-forward to `hw` would overwrite, ONLY when every one of them is
+    byte-identical (after the repo's clean filters) to the version `hw` brings, so the fast-forward writes the same
+    bytes back and nothing is lost. Any differing file moves nothing and is reported. Measured 2026-11-21 (Lola's,
+    m-d71f5191ed2f): the arm-time milestone scaffold wrote .planning/ into the cwd, the worker committed the same files
+    in its worktree, and the mission slept 70 min on "untracked working tree files would be overwritten"."""
+    import shutil
+    import tempfile
+    changed = {p for p in git(top, "diff", "--name-only", "-z", hc, hw).stdout.split("\0") if p}
+    untracked = {p for p in git(top, "ls-files", "--others", "--exclude-standard", "-z").stdout.split("\0") if p}
+    hits = sorted(changed & untracked)
+    if not hits:
+        return {"moved": [], "differ": [], "backup": None}
+    differ = [p for p in hits
+              if (git(top, "rev-parse", "--verify", "-q", f"{hw}:{p}").stdout.strip() or "?")
+              != (git(top, "hash-object", "--", p).stdout.strip() or "!")]
+    if differ:
+        return {"moved": [], "differ": differ, "backup": None}
+    base = Path(lr.state_dir()) / "cwd-align-set-aside"
+    base.mkdir(parents=True, exist_ok=True)
+    backup = tempfile.mkdtemp(prefix=time.strftime("%Y%m%dT%H%M%S-"), dir=str(base))
+    moved = []
+    for p in hits:
+        dst = Path(backup) / p
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(Path(top) / p), str(dst))
+        moved.append(p)
+    return {"moved": moved, "differ": [], "backup": backup}
+
+
+def _restore_set_aside(top: str, aside: dict) -> None:
+    """Put back what _set_aside_identical_untracked moved when the retried fast-forward still failed."""
+    import shutil
+    for p in aside["moved"]:
+        src, dst = Path(aside["backup"]) / p, Path(top) / p
+        if src.exists() and not dst.exists():
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            shutil.move(str(src), str(dst))
 
 
 def effective_workdir(session_id: str, base_cwd: str, workstream: str | None = None) -> str | None:
@@ -7016,29 +7067,36 @@ def _steward_rows(missions, now, sessions, pid_alive, dry_run) -> list[dict]:
 # mission is a disposable attempt at it. Measured 2026-10-06: create() refused only a live record with
 # the SAME id, so a fresh `arm` on a workstream whose attempt sits under an Owner hold (KSR recon-factory,
 # InfinityOps odr-device-trust) would have started a second attempt beside the hold.
+# A mission with no workstream drives the repository's ROOT roadmap (.planning/ROADMAP.md). That roadmap is a Goal
+# too: until 2026-11-21 goal_key answered None for it, so two root missions armed on one repo both ran /gsd-autonomous
+# against the same ROADMAP.md with no singleflight, hold or supersede check between them.
+ROOT_GOAL = ""
+
+
 def goal_key(cwd: str, workstream: str | None) -> tuple[str, str] | None:
-    """(repository identity, workstream), or None for a mission without a workstream (no Goal to guard).
+    """(repository identity, workstream), with ROOT_GOAL for the root roadmap; None only without a cwd.
     The repository is the git common dir, so a worktree and its main checkout are one Goal."""
-    if not workstream or not cwd:
+    if not cwd:
         return None
     tc = _git_toplevel_and_common(cwd)
     repo = tc[1] if tc else os.path.normcase(str(Path(cwd).resolve()))
-    return repo, workstream
+    return repo, workstream or ROOT_GOAL
 
 
 def goal_conflicts(key: tuple[str, str] | None, *, exclude: str | None = None,
                    records: list[dict] | None = None) -> list[dict]:
-    """Non-terminal attempts of the Goal `key` other than `exclude`, each {mission_id, held, unit}."""
+    """Non-terminal attempts of the Goal `key` other than `exclude`, each {mission_id, held, unit, root}."""
     if key is None:
         return []
     out = []
     for r in (records if records is not None else all_missions()):
-        if r["mission_id"] == exclude or r.get("state") in TERMINAL or r.get("workstream") != key[1]:
+        if (r["mission_id"] == exclude or r.get("state") in TERMINAL
+                or (r.get("workstream") or ROOT_GOAL) != key[1]):
             continue
         if goal_key(r.get("cwd") or "", r.get("workstream")) != key:
             continue
         out.append({"mission_id": r["mission_id"], "held": bool(r.get("owner_hold")),
-                    "unit": (r.get("goal") or {}).get("unit")})
+                    "unit": (r.get("goal") or {}).get("unit"), "root": key[1] == ROOT_GOAL})
     return out
 
 
@@ -7052,8 +7110,10 @@ def goal_refusal(conflicts: list[dict], unit: str | None = None) -> str | None:
     for c in conflicts:
         if not unit or not c["unit"] or c["unit"] == unit:
             return (f"singleflight: {c['mission_id']} is a live attempt of this goal"
+                    + (" (the repository's root roadmap, .planning/ROADMAP.md)" if c.get("root") else "")
                     + (f" (unit {c['unit']})" if c["unit"] else "")
-                    + "; supersede it with authority, or name a distinct --parallel-unit on both")
+                    + "; supersede it with authority, or name a distinct --parallel-unit on both"
+                    + (", or arm the new work on its own --workstream" if c.get("root") else ""))
     return None
 
 
@@ -7288,7 +7348,7 @@ def arm(cwd: str, resume_command: str, *, launch: bool = True, supersedes: str |
     why = goal_refusal(conflicts, parallel_unit)
     if why:
         if key is not None:
-            lr.ledger_append(f"goal-{key[1]}", "goal_arm_refused", workstream=key[1], why=why[:300])
+            lr.ledger_append(f"goal-{key[1] or 'root'}", "goal_arm_refused", workstream=key[1] or None, why=why[:300])
         raise MissionError(why)
     try:   # CCN-3 weekly account ceiling (Owner Q2 = enforce 85%); covers arm_chain, which calls arm
         import account_governor as _ag

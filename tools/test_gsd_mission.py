@@ -1570,7 +1570,10 @@ def main() -> int:
     env = {**os.environ, "GSD_LONG_RUN_STATE_DIR": TMP, "GSD_AUTORUN_MARKER_DIR": TMP}
     cli = str(Path(__file__).resolve().parent / "gsd_mission.py")
     for mid_flag, want in ((None, "auto"), ("acceptEdits", "acceptEdits")):
-        argv = [sys.executable, cli, "arm", "--cwd", TMP, "--command", "/x", "--no-launch"]
+        # Each arm gets its own repo: a root-roadmap mission is a Goal, so a second one in TMP is refused singleflight.
+        perm_cwd = Path(TMP) / f"perm-{want}"
+        perm_cwd.mkdir(exist_ok=True)
+        argv = [sys.executable, cli, "arm", "--cwd", str(perm_cwd), "--command", "/x", "--no-launch"]
         if mid_flag:
             argv += ["--permission-mode", mid_flag]
         r = subprocess.run(argv, capture_output=True, text=True, env=env, timeout=120)
