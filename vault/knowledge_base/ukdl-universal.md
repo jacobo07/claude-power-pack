@@ -22925,3 +22925,44 @@ a drift's direction from a direct search of EACH side, never from a diff indicat
 TRIGGER: building or reviewing a lazy-spawn/proxy layer in front of an MCP server.
 EVIDENCE: 2026-11-21, 14/14 V-LAZY gates green, yet live `claude mcp list` spawned the real server on host probe `server/discover`, and a read-only `claude -p` spawned it on `prompts/list` (server advertised prompts/resources). Fixed in 87a5572c: spawn allowlist, -32601 for unknown methods, cached prompts/resources lists.
 RULE: the done-gate for a lazy layer is the live host's own event log (spawn only on tools/call), not the synthetic suite. Origin: resource-residency P2.
+
+## UKDL PROMOTIONS -- CDIO autonomous design, tranche 1 (2026-11-22; PP b1403659, 2fcf11b1)
+
+### T-DESIGN-REVIEWER-PASS-OVER-BROKEN-RENDER-001 -- a reviewer's "pass" outranked what the browser saw
+**TRAP:** The design review gate required a real render, then trusted the reviewer's verdicts about it. Seven
+"pass" verdicts recorded APPROVE 92, is_done True, for a page whose render showed a broken hero image, a link to
+nowhere and 212px of sideways scroll on phone. A defect the machine can see depended on a person noticing it in a PNG.
+**FIX:** the renderer records what the browser observed (broken images, failed requests, console errors, dead links,
+overflow, repeated images) and `record` folds them in as RENDER-* verdicts the reviewer cannot override; a render
+without those facts is refused. Measured after: the same lazy record on a seeded page is BLOCK 57.
+**Consumer (enforced, not advisory):** `tools/design_review_record.py record`, reached by the Stop design done-gate.
+**Pins:** V-DSR-RECORD-FOLDS-RENDER-FACTS, V-DSR-RENDER-FACTS-SEEDED (real Chromium), V-DSR-RECORD-REFUSES-FACTLESS-RENDER.
+**Limits:** machine facts cover plumbing, not design. The independent reviewer still found a 25px tap target and
+missing visit information on a page with zero facts (fixture `vault/fixtures/cdio_repair_loop/`). Both layers stay.
+
+### T-GATE-WRITE-CHANNEL-COVERAGE-001 -- a done-gate that learns "what this session wrote" from one channel #CROSS-PROJECT
+**TRAP:** The Stop design gate collected written files only from Write/Edit tool rows. A page written by a Bash
+heredoc, Set-Content, Copy-Item or a generator skipped Taste and the review entirely: the gate passed because it
+never saw the file (red-team case 24).
+**FIX:** enumerate every write channel the agent has. Shell commands are scanned for paths of the judged kind; a
+path counts when its file changed at or after the command, measured when the command is scanned (not at every later
+Stop, or another pane's save turns a read into this session's write). Parse linearly: the first regex backtracked
+quadratically and took 18.31 s on a 40 KB inline image against an 8 s hook kill, which kills the gate for the session.
+**Proven on the production plane:** the real Stop hook on this session's real transcript blocked a fixture placed by
+`Copy-Item` (2026-11-22).
+**Same shape elsewhere, not gates, not changed:** `tools/mission_binding.py:181`, `tools/mission_recovery.py:164`,
+`tools/rollover.py:191`, `tools/root_progress.py:53` read writes from Write/Edit only. Audit them before relying on
+them for "what did the worker change".
+**Residual:** a generator that writes a file it never names on its command line; paths with spaces; `cd x && ...`.
+
+### PR-DETECTOR-LIVE-SITE-BEFORE-SEVERITY-BINDS-001 -- run a new detector on a real production page before trusting it
+**RULE:** A detector proven only on fixtures runs on at least one real production page before its severity binds.
+**WHY:** the render-facts collector passed every fixture, then on its first live run (the Owner's Next.js portfolio)
+reported two failed assets that were Next.js cancelling its own prefetches (net::ERR_ABORTED). Shipped as is, every
+correct Next.js site would have taken a major. No fixture could have shown it.
+**Consumer:** `counts_as_failed` in `tools/design_review_record.py`, pinned by V-DSR-RENDER-ABORTED-NOT-FAILED;
+evidence `vault/audits/cdio_portfolio_vs_bodeguita_2026-11-22.md`.
+
+### Candidate, NOT promoted: hero protagonist below the phone fold
+Observed on 2 of 2 live sites (portfolio, Bodeguita), one author, one date. Needs a third site, a non-food,
+non-personal sector and a counterexample review (a text-led B2B hero can be right) before it becomes a criterion.
