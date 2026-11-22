@@ -67,6 +67,7 @@ uniforme sobre las letras.
 | VP-016 | [[device-demo-state-carousel]] — Device Demo State Carousel | B4 movimiento | local (REF-MOTION-001) |
 | VP-017 | [[progressive-state-build]] — Intra-State Progressive Build | B5 movimiento | local (REF-MOTION-001) |
 | VP-018 | [[shared-element-continuity]] — Shared-Element Continuity | B6 movimiento | hypothesis (REF-MOTION-001) |
+| VP-019 | [[local-discovery-assistant-scene]] — Local Discovery Assistant Scene | E1 narrativa | **baseline** for local-business sites and demos (Owner, 2026-11-21); implemented in Lola's `/demo/#ia` |
 
 "Investigacion" = patron verificado con fuentes reales, sin implementacion
 propia todavia en un proyecto del Owner. Actualizar el campo Evidence de la
