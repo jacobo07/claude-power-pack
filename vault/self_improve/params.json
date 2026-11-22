@@ -1,0 +1,8 @@
+{
+ "_doc": "Seed parameters for tools/self_improve_unattended.py. The loop tunes its live copy in ~/.claude/state/self-improve/params.json inside the bounds of tools/self_improve_guard.py (BOUNDS); this file is only read when no live copy exists.",
+ "min_score": 20.0,
+ "revert_ratio": 1.5,
+ "baseline_days": 7,
+ "kind_weights": {},
+ "benched": {}
+}
