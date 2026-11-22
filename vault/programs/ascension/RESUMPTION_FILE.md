@@ -5,6 +5,36 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**2026-11-22 17:00Z (pane a52cc240). Owner "y" (AskUserQuestion "Approve as written") on T2.**
+- Plan: worktree `vault/plans/ascension-atomic-fabric-T2-20261122.md` (d8ac705b).
+- Run inline: the laptop had 3.47 GB free, so a worker would eat the 0.47 GB margin above the floor.
+- **W1 DONE, live.**
+  - Code: worktree b1492e15. GEX44 gate /tmp/apgate-a52c-w1: 377/377, mutants 155/155. Control (c8adca86 + new
+    test) crashes on the missing `conservation`.
+  - DEPLOYED 16:51:27Z under cron.lock: CAS c8adca86 -> b475e361, test -> baefb969. Backups
+    `*.bak-a52c-w1-20261122T165127Z`, including `ledger.jsonl`.
+  - Conservation rule: every settled generation books exactly its measured spend (`booked_net == spend`). `settle()`
+    releases above the spend, back-dated to each reservation's day. Below the spend it books a `spend_correction`.
+    It is idempotent.
+  - Terminal missions get a `generation_settled` row. Owner topups and grants are now escrow.
+  - New CLI: `autopilot.py conservation` (read-only) and `settle-stranded [--apply]` (takes the tick lock).
+- **M2 RESOLVED by invariant, not by an Owner ruling.**
+  - A release returns escrow in every scope it was charged: its booking day, the lifetime total and the lane envelope.
+  - SPENT is monotonic by construction, because a release is only `booked_net - spend > 0`.
+  - Proof on live: `conservation` gives 265 settled, 265 conserved, 0 under, 0 over.
+- Live sweep, applied 16:53Z:
+  - 64 stranded HALTED/terminal generations; 63 measured, 1 unmeasured (WSR S86R m-9cd1605b8f6c keeps its booking).
+  - Released 110,975,377. Reconciled: S95C -3.0M (review M1 class; correction booked), S53K +0.27M and S181K +4.0M
+    (owner escrow, released). Corrections 354,213.
+  - Ledger total 3,100,183,936 -> 2,988,288,869 (-111,895,067, exact). Today 494.5M -> 493.8M.
+  - A second sweep returns 0: idempotent.
+  - CORRECTION of my own scan: "705.7M stranded" was booking, not unspent escrow. Halted missions had spent most of
+    it (CAPITAL_EXHAUSTED). The unspent part was 111M.
+- Smoke: the 16:55Z tick on b475e361 wrote state.json, with 0 tracebacks; it was still running at 16:57Z (READ ITS
+  END).
+- NEXT (T2 order): W4 merge unblock (move T1's lesson/UKDL additions into append-only candidate files) -> W2 J0 shadow
+  -> W3 slim pilot -> W5. Review L2 (wire reservation_overhead into the digest) is still open.
+
 **2026-11-22 16:10Z (pane a52cc240). Owner chose "(b) Count-first P1" and "Review, then merge".**
 - Reshaped by measurement: 153 of 314 packets declare a floor, and in 149 of them P1 already freezes the pool (P1 cap
   p50 1.5M). So the slice already existed; W3 adds the HALT. Spec: `throughput/W3_POOL_FLOOR_HALT_SPEC.md`.
