@@ -163,30 +163,103 @@ function markOwnSession(sessionId, transcriptPath, mode) {
   return title;
 }
 
-function orphanMarkSweep(ownSessionId) {
+// Incremental sweep state. The full sweep read a 256 KB tail of EVERY .jsonl on
+// every Stop: 3147 transcripts took 47.9 s (2026-11-22), so the Stop-chain's 8 s
+// kill fired 1724 times in 7 days and the sweep never finished. Exact pruning:
+// a "⚡ " title reaches a file only through an append, and an append bumps its
+// mtime. After a COMPLETED pass that started at `since`, a file can carry "⚡ "
+// only if its mtime >= since, or that pass left it marked (alive): `marked`.
+// A first pass (no state) is resumable: `scan` keeps its start and a
+// (proj, file) cursor, so a budget cut costs progress, never correctness.
+const STATE_FILE = path.join(os.homedir(), '.claude', 'state', 'mark-live-session', 'sweep.json');
+// 3 s: one slow file overran a 4 s budget by 1.9 s on a loaded host, and the
+// dispatcher kills the hook at 8 s.
+const SWEEP_BUDGET_MS = Number(process.env.PP_MLS_SWEEP_BUDGET_MS) || 3000;
+const MTIME_SLACK_MS = 5000;   // clock / mtime granularity margin
+
+function loadSweepState() {
+  try {
+    const s = JSON.parse(fs.readFileSync(STATE_FILE, 'utf-8'));
+    if (s && typeof s === 'object') {
+      return {
+        since: Number.isFinite(s.since) ? s.since : null,
+        marked: s.marked && typeof s.marked === 'object' ? s.marked : {},
+        scan: s.scan && Number.isFinite(s.scan.start) ? s.scan : null,
+      };
+    }
+  } catch { /* missing or corrupt -> full pass */ }
+  return { since: null, marked: {}, scan: null };
+}
+
+function saveSweepState(state) {
+  try {
+    fs.mkdirSync(path.dirname(STATE_FILE), { recursive: true });
+    const tmp = STATE_FILE + '.' + process.pid + '.tmp';
+    fs.writeFileSync(tmp, JSON.stringify(state));
+    fs.renameSync(tmp, STATE_FILE);   // concurrent writers: last rename wins; each is a sound state
+  } catch { /* next run redoes the work */ }
+}
+
+// Judge one file; keeps `marked` equal to "carries ⚡ and was left so".
+function sweepOne(proj, uuid, filePath, marked) {
+  const last = lastCustomTitle(filePath);
+  if (!last || !last.hasPrefix) { delete marked[uuid]; return; }
+  if (!isSessionAlive(proj, uuid, filePath)) {
+    const title = decideTitle(filePath, uuid, 'dead');
+    if (title !== null && appendCustomTitle(filePath, uuid, title)) { delete marked[uuid]; return; }
+  }
+  marked[uuid] = proj;
+}
+
+function orphanMarkSweep(ownSessionId, state = loadSweepState()) {
+  const start = Date.now();
+  const deadline = start + SWEEP_BUDGET_MS;
+  const own = (ownSessionId || '').toLowerCase();
+  const full = state.since === null;
+  if (full && !state.scan) state.scan = { start, cursor: '' };
+  const since = full ? null : state.since - MTIME_SLACK_MS;
+  const seen = new Set();
+  let cut = false;
   let projDirs;
-  try { projDirs = fs.readdirSync(PROJECTS_DIR); } catch { return; }
+  try { projDirs = fs.readdirSync(PROJECTS_DIR).sort(); } catch { return state; }
+  outer:
   for (const proj of projDirs) {
     const dir = path.join(PROJECTS_DIR, proj);
     let entries;
     try {
-      const st = fs.statSync(dir);
-      if (!st.isDirectory()) continue;
-      entries = fs.readdirSync(dir);
+      if (!fs.statSync(dir).isDirectory()) continue;
+      entries = fs.readdirSync(dir).sort();
     } catch { continue; }
     for (const f of entries) {
       if (!f.endsWith('.jsonl')) continue;
       const uuid = f.slice(0, -'.jsonl'.length);
       if (!UUID_RE.test(uuid)) continue;
-      if (ownSessionId && uuid.toLowerCase() === ownSessionId.toLowerCase()) continue;
+      if (own && uuid.toLowerCase() === own) continue;
+      const key = proj + '/' + f;
+      if (full && key <= state.scan.cursor) continue;          // done in an earlier chunk
       const filePath = path.join(dir, f);
-      const last = lastCustomTitle(filePath);
-      if (!last || !last.hasPrefix) continue;
-      if (isSessionAlive(proj, uuid, filePath)) continue;
-      const title = decideTitle(filePath, uuid, 'dead');
-      if (title !== null) appendCustomTitle(filePath, uuid, title);
+      if (!full) {
+        let mtime;
+        try { mtime = fs.statSync(filePath).mtimeMs; } catch { continue; }
+        if (mtime < since && !Object.prototype.hasOwnProperty.call(state.marked, uuid)) continue;
+      }
+      // At least one file per run, so a budget below readdir time still progresses.
+      if (seen.size > 0 && Date.now() > deadline) { cut = true; break outer; }
+      seen.add(uuid);
+      sweepOne(proj, uuid, filePath, state.marked);
+      if (full) state.scan.cursor = key;
     }
   }
+  // A marked file that vanished (deleted/moved) is no longer a candidate.
+  if (!cut && !full) {
+    for (const uuid of Object.keys(state.marked)) if (!seen.has(uuid) && uuid.toLowerCase() !== own) delete state.marked[uuid];
+  }
+  if (!cut) {
+    // Files appended to after this pass started are caught by mtime next time.
+    state.since = full ? state.scan.start : start;
+    state.scan = null;
+  }
+  return state;
 }
 
 function main() {
@@ -201,10 +274,15 @@ function main() {
     markOwnSession(sessionId, input.transcript_path, FINISH_REASONS.has(input.reason) ? 'finished' : 'dead');
     return;
   }
-  orphanMarkSweep(sessionId);
+  const state = orphanMarkSweep(sessionId);
   // On SessionStart the .jsonl usually doesn't exist yet, so this is a no-op
   // there; the first Stop applies it.
   markOwnSession(sessionId, input.transcript_path, 'live');
+  // The sweep skips its own session, so it enters `marked` here: an idle
+  // session that later crashes keeps an old mtime and is found only this way.
+  const ownFile = sessionId ? findSessionFile(sessionId, input.transcript_path) : null;
+  if (ownFile) state.marked[sessionId] = path.basename(path.dirname(ownFile));
+  saveSweepState(state);
 }
 
 if (require.main === module) {
