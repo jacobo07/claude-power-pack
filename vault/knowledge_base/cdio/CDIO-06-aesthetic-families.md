@@ -441,3 +441,30 @@ gradient hero; the pill status chips; the photo-card treatment; the tab-bar item
 Each is present in a majority of the exemplars and none of them is a principle. The test
 is whether the trait survives a change of brand, platform or domain — and every item on
 that list is an artefact of three template kits sold in the same year.
+
+## 10. Amendment 2026-11-22 — F11 Heritage Maritime
+
+This amendment adds an eleventh family to the list in sec. 1. The text of sec. 1 to sec. 9 is
+unchanged; where it says "ten families", read eleven. The full definition (invariants, strong
+preferences, motion restraint, anti-patterns, floor collisions, proof set) lives in CDIO-12
+sec. 6, and CDIO-12 is the authority on it.
+
+### F11 — Heritage Maritime
+- **Palette:** desaturated deep navy as the dark neutral / paper or bone ground / the
+  institution's emblem colours as the only saturated hues, sampled from the supplied master /
+  an alert red kept as a separate token from any heraldic red
+- **Typography:** a text serif with old-style figures for reading, paired with a restrained
+  sans for interface and data; tabular lining figures in tables
+- **Use when:** institutions whose authority comes from age and a supplied emblem (royal and
+  historic yacht clubs, rowing clubs, learned societies, museums), on reading-heavy public
+  surfaces
+- **Proof:** nominated, not yet verified against rendered pixels (CDIO-12 sec. 6)
+- **Sanctions default-tier fonts:** no (the serif and sans pairing is the commitment)
+
+**Picker addition.** After question 3, where the answer is "no courage needed" and the
+surface is read-heavy: if the brand's authority is inherited (an old institution with a mark
+it did not design) → F11; otherwise the sec. 2 answer stands.
+
+**Floor collisions (summary; detail in CDIO-12 sec. 6).** Navy-on-navy and grey-on-bone text
+drifting under 4.5:1; heraldic reds and golds used as small text; text laid over uneven archive
+photographs without a scrim; heraldic red reused as the alert colour.

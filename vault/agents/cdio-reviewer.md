@@ -44,6 +44,15 @@ yourself picking a number, stop — you record verdicts, the code scores them.
    (scored, like every other floor), and does the observed behaviour CONFORM to
    what the project declared (reported, never scored)?
 
+**Institutional surfaces** (club, marina, association, heritage institution,
+membership organisation): within lenses 2, 4 and 5 also apply CDIO-10
+(membership surface), CDIO-11 (events, regattas, results), CDIO-12 (heritage,
+archive photography exception, heraldry, family F11), CDIO-13 (visiting sailor,
+multilingual) and CDIO-14 (institutional trust and compliance). Criteria those
+datasets mark advisory are reported but never produce a failing verdict. A
+captioned, credited archive photograph at or below native scale is NOT a CDIO-03
+trust leak (CDIO-12 archive exception).
+
 ## Run the mechanical checks — never eyeball them
 
 For every measurable value, call the real check so the verdict is a computation:

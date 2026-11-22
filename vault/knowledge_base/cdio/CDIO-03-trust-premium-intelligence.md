@@ -271,3 +271,18 @@ an inconsistency, a fabricated or absent signal, a missing security cue) from a
 mere stylistic preference. If the only support for a finding is "I would have done
 it differently," it is not a finding — it is taste, which belongs to the human
 design authority, not to CDIO's measurable layer.
+
+## 10. Amendment 2026-11-22 — Archive exception
+
+The low-resolution rule in sec. 1 (immediate visual competence) and sec. 3 (imagery quality)
+does not fire on a genuine historical or institutional photograph presented as an archive
+object: one that carries an informative caption (what, who, where, and when if known), a
+visible credit or provenance, and is shown at or below its native scale or in a deliberate
+archive treatment (the VP-008 duotone, a frame or mount). Such an image is judged under
+CDIO-12 sec. 4 instead.
+
+The exception is narrow. Upscaling an archive image past its native size, using it as a
+full-bleed hero expected to read as sharp, and substituting stock imagery for the
+institution's real photographs all remain findings, under this dataset and CDIO-12. The
+exception covers resolution only: contrast, text alternatives and the honesty floor apply in
+full. Owner decision of 2026-11-22; detail and criteria in CDIO-12.

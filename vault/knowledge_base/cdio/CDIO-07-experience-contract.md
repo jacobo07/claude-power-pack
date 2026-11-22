@@ -357,3 +357,66 @@ identity claim designed to be posted is an easy route to flattery used as
 pressure. *Make consistency the habit* is CDIO-00's Inconsistency class stated as
 strategy. None of the three creates a criterion; the celebration rules above do
 not relax §5.
+
+## 12. Institutional motion and performance (extension, 2026-11-22)
+
+Added from the CDIO-GAP-INSTITUCIONAL catalogue (Owner approval 2026-11-22) for institutional sites:
+clubs, marinas, associations and heritage institutions, whose readers often arrive on older phones and
+slow connections and judge the institution in the first moment. The evidence anchor is the first
+credibility judgement, formed in about 50 ms (Lindgaard et al. 2006, [OBSERVED]): what is painted
+first is what is judged, so a slow or blank first paint is a trust defect before it is a performance
+one. Evidence levels follow the gap report: C is a published standard or observed practice with a
+working link, H is hypothesis and makes a criterion advisory. Severity follows CDIO-05 sec. 3.
+
+These criteria are not fields of the declared contract in §1. They judge behaviour at rest and on load,
+they report through the existing `ux` and `visual` dimensions under CDIO-05 Lens 3 and Lens 6, and so
+they do move the score, unlike Lens 7. They also apply whether or not a project has declared an
+experience contract; a declared `motion_budget: high` does not exempt a surface from any of them.
+
+**`no-scrolljacking`** (dimension `ux`, severity major). Scrolling is never captured, slowed or turned
+into forced steps, and no section is pinned for more than one extra viewport. Observed-value form:
+"history page pins 6 viewports of scroll to a timeline animation; wheel events cancelled". Evidence C:
+NN/g on scrolljacking (https://www.nngroup.com/articles/scrolljacking-101/) (G-A22-022, G-A22-039).
+When NOT: an optional horizontal carousel the user drives with its own controls.
+
+**`content-visible-without-js`** (dimension `ux`, severity critical when primary content stays
+invisible, major otherwise). Reveal animations start from the visible state and the animation is an
+enhancement; hours, contact and notices are in the served HTML, not injected later. Observed-value
+form: "with JavaScript disabled, every section below the hero stays at opacity 0". Evidence C: GOV.UK
+on progressive enhancement
+(https://www.gov.uk/service-manual/technology/using-progressive-enhancement) (G-A22-036, G-A23-026).
+Critical when primary content is invisible, because that is a broken state. When NOT: a genuinely
+interactive tool, such as a live tracker, may require script, provided the page says so in HTML.
+
+**`hero-image-lcp`** (dimension `ux`, severity major). The hero is an image element marked with high
+fetch priority, not lazy-loaded, served in a modern format at the rendered size, and it is the largest
+contentful paint; the hero is not a video. Where a video is used, its poster is the first paint and the
+video loads afterwards, not at all on a data-saving connection. Observed-value form: "LCP element is a
+9 MB autoplay video; LCP 6.8 s on a mobile profile". Evidence C: web.dev on optimising LCP
+(https://web.dev/articles/optimize-lcp) (G-A23-001, G-A23-002, G-A23-022). When NOT: a page whose
+largest element is legitimately text; never mark more than one image as high priority.
+
+**`explicit-media-dimensions`** (dimension `visual`, severity minor). Every image and embedded frame
+has explicit width and height or an aspect ratio, so the layout does not shift as media arrives.
+Observed-value form: "17 images without dimensions; CLS 0.31". Evidence C: web.dev on CLS
+(https://web.dev/articles/cls) (G-A23-004). When NOT: inline SVG with a viewBox.
+
+**`third-party-facades`** (dimension `ux`, severity minor). YouTube videos and embedded maps load as a
+static preview that fetches the third-party frame only on click. Observed-value form: "home loads three
+YouTube frames and one map frame at start; 2.1 MB of third-party script". Evidence C: Chrome on
+third-party facades (https://developer.chrome.com/docs/lighthouse/performance/third-party-facades)
+(G-A23-005). When NOT: a page whose main purpose is the map.
+
+**`external-widgets-isolated`** (dimension `ux`, severity major). Weather, booking and social widgets
+load after the content, asynchronously, and their failure does not block or blank the page.
+Observed-value form: "synchronous weather script in the head; when its server is down the page stays
+white for 20 s". Evidence C: web.dev on third-party JavaScript
+(https://web.dev/articles/optimizing-content-efficiency-loading-third-party-javascript) (G-A23-009).
+When NOT: a first-party feature served from the site itself.
+
+**`static-error-page-contact`** (dimension `ux`, severity major). If the application fails, a static
+error page is served that states the problem in plain language and gives the phone number and email,
+so the reader can still reach the institution. Observed-value form: "backend down returns a framework
+stack trace with no contact". Evidence C: GOV.UK "There is a problem with the service" pages
+(https://design-system.service.gov.uk/patterns/problem-with-the-service-pages/) (G-A23-016). When NOT:
+never expose technical detail on the page; it belongs in the log.

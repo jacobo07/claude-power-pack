@@ -252,3 +252,52 @@ Before recording a CDIO-01 finding, confirm it is not one of these. When a value
 is technically off a threshold but clearly intentional and harmless, note it as an
 observation with the reason, not as a defect. The goal is a review the team
 trusts because every finding is real.
+
+## 10. Institutional and older-audience legibility (extension, 2026-11-22)
+
+Added from the CDIO-GAP-INSTITUCIONAL catalogue (Owner approval 2026-11-22) for institutional
+sites whose readers skew older: royal yacht clubs, marinas, sports clubs, associations and heritage
+institutions, where a large share of members read on a tablet or a desktop at arm's length and the
+pages that matter most are tariffs, timetables and results. Nothing here lowers a CDIO-00 floor; the
+16 px mobile minimum, the 4.5:1 contrast floor, the 45 to 75 character measure and the 1.4 line-height
+stand. Evidence levels follow the gap report: C is a published standard or observed practice with a
+working link, H is hypothesis and makes a criterion advisory. Severity follows CDIO-05 sec. 3.
+
+**`older-audience-body-size`** (dimension `visual`, severity minor). On an institutional site whose
+declared audience includes older members, body text is set at 18 px or more on desktop and tablet, with
+line-height of at least 1.5 and no light-grey body text. Observed-value form: "member news body 15 px
+on desktop, line-height 1.35, text #8C8C8C". Evidence C: catalogue row G-A20-008, anchored on WCAG 2.2
+Resize Text (https://www.w3.org/WAI/WCAG22/Understanding/resize-text.html). The 18 px figure is a
+recommendation, labelled a convention under CDIO-00 sec. 5, and is never reported above minor; the
+floor remains 16 px. When NOT: dense product interfaces and data tables; mobile body, which stays at
+the 16 px floor rather than being forced larger at the cost of reflow.
+
+**`zoom-200-holds`** (dimension `visual`, severity critical). At 200 per cent browser zoom all text and
+functions remain available, nothing is clipped or overlapped, and the viewport does not disable zoom
+(no user-scalable=no, no maximum-scale=1). Observed-value form: "at 200 % the tariff table's last two
+columns are cut off with no scroll; viewport meta sets maximum-scale=1". Evidence C: WCAG 2.2 Resize
+Text, success criterion 1.4.4, and Reflow
+(https://www.w3.org/WAI/WCAG22/Understanding/reflow.html) (G-A20-008, G-A20-030). Critical because
+it is an accessibility-floor failure. When NOT: content whose meaning needs a two-dimensional layout,
+such as a data table or a map, may scroll inside its own region at 200 per cent, provided the page
+around it reflows.
+
+**`tabular-figures-in-tables`** (dimension `visual`, severity minor). Tariff, timetable and results
+tables set numerals with tabular figures, so digits align by column and a reader can compare values
+down a column. Observed-value form: "berth tariff column in proportional figures; 1,111 and 8,888
+differ in width by 9 px". Evidence C: MDN font-variant-numeric
+(https://developer.mozilla.org/en-US/docs/Web/CSS/font-variant-numeric) (G-A12-003); CDIO-08 already
+applies the same rule to app screens. When NOT: running prose, where proportional figures read better;
+a typeface without tabular figures, where the finding is recorded against the type choice once rather
+than per table.
+
+**`responsive-table-lossless`** (dimension `ux`, severity major). A wide table on a narrow screen
+either scrolls horizontally inside a focusable, labelled region with a caption, or reorganises into
+labelled rows; no column is hidden without a way to reach it. Observed-value form: "results table on
+390 px hides 'Corrected time' and 'Points' with no toggle". Evidence C: Adrian Roselli on responsive
+tables (https://adrianroselli.com/2020/11/under-engineered-responsive-tables.html) and the W3C WAI
+tables tutorial (https://www.w3.org/WAI/tutorials/tables/) (G-A20-032). When NOT: a two-column table
+that already fits at 320 px.
+
+These four sit beside the anti-pattern catalogue in sec. 5 and report through the same dimensions, so
+the score formula is unchanged.

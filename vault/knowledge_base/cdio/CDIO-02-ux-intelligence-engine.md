@@ -261,3 +261,65 @@ Before recording a CDIO-02 finding, confirm the step or field genuinely fails th
 task rather than serving it. A flow finding must show that the step costs the user
 without serving the task; a step that serves the task is not friction, however
 much a naive "fewer steps" heuristic would cut it.
+
+## 10. Editorial and institutional magazine (extension, 2026-11-22)
+
+Added from the CDIO-GAP-INSTITUCIONAL catalogue (Owner approval 2026-11-22) for the editorial layer
+of institutional sites: club news, race reports, the club magazine, FAQs and practical information.
+The evidence anchor is the reading research recorded in the DRX run of 2026-11-22: users read at most
+about 28 per cent of the words on a page, and calm, hierarchical pages are perceived as more usable
+and more trustworthy (NN/g, [OBSERVED][MEDIUM]). Evidence levels follow the gap report: C is a
+published standard or observed practice with a working link, H is hypothesis and makes a criterion
+advisory. Severity follows CDIO-05 sec. 3. Reading measure is not redefined here: CDIO-01 sec. 1 owns
+the 45 to 75 character range and applies to every article body.
+
+**`absolute-news-date`** (dimension `ux`, severity minor). Every news item shows an absolute date with
+the month in words ("22 Nov 2026"), in the list and in the article header, never only a relative one
+("3 days ago"). Observed-value form: "news cards show '2 weeks ago' with no date anywhere". Evidence C:
+W3C Internationalization on date formats (https://www.w3.org/International/questions/qa-date-format)
+(G-A14-003). When NOT: evergreen pages such as rules, which show a "last reviewed" date under CDIO-14
+instead of a publication date.
+
+**`short-fixed-taxonomy`** (dimension `ux`, severity minor). News uses four to seven stable categories
+(for example Racing, School, Club, Port, Restaurant), each item has exactly one primary category, and
+the same categories drive filters and related items. Observed-value form: "23 categories, 14 of them
+holding one post each". Evidence C: observed at the Real Club Náutico de Barcelona
+(https://www.rcnb.com/) (G-A14-004). When NOT: a one-off event is a tag, not a category.
+
+**`race-report-inverted-pyramid`** (dimension `ux`, severity minor). The first paragraph of a race
+report gives the result (winner, class, conditions, day); the narrative follows. Observed-value form:
+"winner first named in paragraph five of a 900-word report". Evidence C: NN/g on the inverted pyramid
+(https://www.nngroup.com/articles/inverted-pyramid/) (G-A14-010). When NOT: history pieces and long
+features, where the narrative arc is the value.
+
+**`faq-grouped-disclosure`** (dimension `ux`, severity minor). FAQs are grouped by topic under real
+headings, each question uses a native disclosure (details and summary) or the APG accordion pattern,
+and each question has a linkable anchor. Observed-value form: "41 questions in one flat list, no
+groups, no anchors". Evidence C: WAI-ARIA APG accordion
+(https://www.w3.org/WAI/ARIA/apg/patterns/accordion/) (G-A14-014). When NOT: FAQs invented for search
+are not published at all; only questions the office actually receives belong here.
+
+**`purposeful-link-text`** (dimension `ux`, severity critical when the purpose cannot be determined from
+the link or its programmatic context, minor otherwise). Repeated links such as "read more" carry the
+headline in their accessible name, so a list of links read out of context still says where each one
+goes. Observed-value form: "12 links named 'Read more' to 12 different articles; none inside the
+heading's list item". Evidence C: WCAG 2.2 Link Purpose (In Context)
+(https://www.w3.org/WAI/WCAG22/Understanding/link-purpose-in-context.html) (G-A20-017). When NOT: a
+card whose whole area is one link named by its heading needs no extra link.
+
+**`plain-language-practical`** (dimension `ux`, severity minor). Practical information (hours, prices,
+how to book, what to bring) is written in short sentences, active voice, and with technical terms
+explained at first use. Observed-value form: "berth booking page: average sentence 38 words, three
+undefined terms". Evidence C: ISO 24495-1:2023, Plain language, Part 1 (cited without a link; the
+standard's page did not pass the link check) and GOV.UK content design
+(https://www.gov.uk/guidance/content-design/writing-for-gov-uk) (G-A20-026). When NOT: official legal
+texts are not simplified; they are accompanied by a plain summary that names the text as the authority.
+
+**`long-page-contents`** (dimension `ux`, severity minor). Long race reports, annual reports and rules
+pages with four or more second-level sections carry a table of contents linking to each section, sticky
+on desktop and collapsible on mobile. Observed-value form: "rules page of 9 sections, 6,000 words, no
+contents". Evidence C: NN/g on tables of contents
+(https://www.nngroup.com/articles/table-of-contents/) (G-A14-009). When NOT: articles of fewer than
+about four sections, where the contents would take more room than it saves.
+
+These seven report through the existing `ux` dimension, so the score formula is unchanged.

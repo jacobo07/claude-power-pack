@@ -39,11 +39,14 @@ AGENTS = os.path.join(ROOT, "vault", "agents")
 # contract, added 2026-08-24) + CDIO-08 (the hand-held axis: mobile app surface,
 # absorbed 2026-09-18; its own gate is tools/test_cdio_mobile.py) + CDIO-09 (the
 # one-decision axis: focused decision surface, distilled 2026-10-01; its own gate
-# is tools/test_cdio_focus.py). An EQUALITY
+# is tools/test_cdio_focus.py) + CDIO-10..14 (the institutional axis: membership
+# surface, events/regattas/results, heritage/archive/heraldry, visiting sailor and
+# multilingual, institutional trust and compliance; absorbed 2026-11-22 from the
+# CDIO-GAP-INSTITUCIONAL catalogue of 961 screened candidates). An EQUALITY
 # gate on purpose: a dataset silently vanishing must fail just as loudly as an
 # unregistered one appearing. Raise this only alongside a real sealed dataset --
 # never to make a red suite go green.
-EXPECTED_DATASETS = 10
+EXPECTED_DATASETS = 15
 
 # Fragment-assembled so the literals never appear verbatim in this file.
 _SLOP = ["TO" + "DO", "FIX" + "ME", "HA" + "CK", "PLACE" + "HOLDER", "XX" + "X",
