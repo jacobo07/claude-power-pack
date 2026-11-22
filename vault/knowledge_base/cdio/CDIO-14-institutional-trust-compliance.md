@@ -266,3 +266,10 @@ unknown are listed as questions for the Owner, and advisory criteria are listed 
 `cdio-core` routes a request that mentions a legal notice, footer, privacy, cookies, child protection,
 transparency, rules, cancellations or emergency contact here first, to CDIO-13 for arrival and language,
 and to CDIO-10 for membership and access.
+
+## Evidence update 2026-11-23 (second deep-research run)
+
+Source run: vault/research/2026-11-23_000309_evidencia-medida-o-acad-mica-estudios-ux-baymard-n.md. No severity changes.
+
+- `contact-by-department` and `urgent-channel-separate`: a utility-sector case reported in the run attributes about 14 percent of contact-centre volume to sign-in and navigation problems at about 27 US dollars per call, with most of those customers abandoning self-service afterwards [OBSERVED][MEDIUM, cross-sector]. It supports routing people to the right channel first; it says nothing measured about clubs and does not raise either criterion.
+- Spanish accessibility regulation: the run cites a "Ley de Discapacidad 2026" and a "Real Decreto 707/2026" from news and advocacy sites (titularisimos.com, redinclusiva.com). A search of the BOE did not confirm the decree. It is recorded here as an UNVERIFIED lead and is not a basis for any criterion until its BOE text is read. The accessibility floor remains CDIO-00 and WCAG 2.2 AA.

@@ -303,3 +303,10 @@ under the existing `ux`, `visual` and `trust` dimensions, so the score formula i
 criteria are listed in the report and never scored. `cdio-core` routes a request that mentions visiting
 yachts, berths, harbour office, VHF, tides, a language selector or translation here first, to CDIO-14
 for the legal and emergency layer, and to CDIO-11 for anything about a race.
+
+## Evidence update 2026-11-23 (second deep-research run)
+
+Source run: vault/research/2026-11-23_000309_evidencia-medida-o-acad-mica-estudios-ux-baymard-n.md. No severity changes.
+
+- `dual-units`: the run records publication in both metric and imperial units as standard practice in international navigation and racing communication [OBSERVED][MEDIUM as practice, evidence C]; it found no measurement of how many visitors use each unit. The criterion keeps its evidence level C.
+- `language-selector-endonyms`: the run's claim that a flag-based selector is itself a WCAG violation is REJECTED as an overclaim: no WCAG success criterion names flags. The criterion keeps its basis in the USWDS language selector guidance and NN/g language-switching research, plus WCAG 1.1.1 and 3.1.2 where a flag carries no text alternative or language attribute.
