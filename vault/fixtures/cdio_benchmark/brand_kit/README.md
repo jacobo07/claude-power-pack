@@ -3,12 +3,14 @@
 Marca **inventada**, solo para el benchmark CDIO entre sectores. Cooperativa de panadería de barrio ficticia; no representa a ningún negocio real. Comprobación de nombre limitada a una búsqueda web ("Miga Común" panadería cooperativa): sin coincidencia exacta, pero no es una búsqueda de marca registrada.
 
 ## Cómo se hicieron los activos
-CCF no tiene proveedor de imágenes en este equipo (sin OPENAI_API_KEY, comprobado por el agente padre), así que **los SVG están escritos a mano**. No se ejecutó `ccf generate`.
+CCF no tiene proveedor de imágenes en este equipo (sin OPENAI_API_KEY), así que **los SVG están escritos a mano**. No se ejecutó `ccf generate`.
 
-- `symbol.svg`: hogaza (cúpula + base) con tres cortes como huecos (`evenodd`). Un solo color, sin texto, sin trazos finos.
-- `wordmark.svg`: usa **`<text>`**, no trazos convertidos a curvas. Su rasterizado depende de las fuentes instaladas: `Source Serif 4, Georgia, 'Times New Roman', serif`. Sin Source Serif 4 se verá en Georgia, con otras métricas.
-- Ambos SVG van en terracota (`#BC4A2D`) para valer sobre fondo claro y oscuro; las versiones en tinta/crema no se entregan como archivos.
-- `index.html` + `styles.css`: hoja de marca en español, un acento, sin blanco puro. Google Fonts es la única dependencia externa.
+- `symbol.svg`: hogaza alargada vista de lado, con tres cortes diagonales como huecos (`evenodd`). Una sola forma, un color, sin texto ni trazos finos.
+- `wordmark.svg`: "Miga Común" en Source Serif 4 Bold **convertido a curvas** con fontTools; no depende de fuentes instaladas.
+- `lockup.svg` (terracota, para fondos claros) y `lockup-inverse.svg` (crema, para fondos oscuros): símbolo + logotipo, también en curvas.
+- `fonts/`: Source Serif 4 Bold e Inter 400/600 en woff2, recortadas a latín (licencia SIL OFL 1.1). La hoja no hace ninguna petición externa.
+- `index.html` + `styles.css`: hoja de marca en español, un acento, sin blanco puro.
 
-## Sin verificar
-Esta ejecución no tenía shell: no se corrieron `design_review_record.py render` ni `modules.cdio.taste`. Los ratios de contraste de la paleta están calculados a mano.
+## Verificado
+- Ratios de contraste de la paleta calculados por script (luminancia relativa WCAG 2.x); coinciden con los publicados en la hoja.
+- Render y revisión: ver `render_*.txt`, `taste_*.txt`, `review_*.json` y `record_*.txt` en esta carpeta.

@@ -9,10 +9,22 @@ not render tablet; tablet is UNMEASURED for every row).
 | b2b_dashboard | 94 | APPROVE (is_done) | 0/0/3 | 0 | 0 | yes | 80k / 56k |
 | pro_service | 90 | APPROVE (is_done) | 0/0/5 | 0 | 0 | yes | 66k / 62k |
 | mobile_app (CDIO-08) | 98 | APPROVE (is_done) | 0/0/1 | 0 | 0 | yes | 65k / 67k |
-| brand_kit | 88 | APPROVE (is_done) | 0/0/6 | 0 | 1 (pre-review) | yes | 54k / 61k |
+| brand_kit (review 1) | 88 | APPROVE (is_done) | 0/0/6 | 0 | 1 (pre-review) | yes | 54k / 61k |
+| brand_kit (review 2, repaired) | 100 | APPROVE (is_done) | 0/0/0 | 0 | 2 | yes | parent / 55k |
 
-Mean 92.5 over 4 sectors, all clean on the first independent review. Subagent spend 511k (builders 265k, reviewers
-246k), against a 450k projection.
+Mean 92.5 over 4 sectors on the first independent review, all clean. After the Owner-approved brand repair the mean is
+95.5. Subagent spend 566k (builders 265k, reviewers 301k), against a 450k projection.
+
+Brand repair (Owner "y", review 2, `brand_kit/review_2.json`, `record_2.txt`):
+- The symbol was redrawn as one elongated loaf with three diagonal cuts, so the brim that read as a hard hat is gone.
+- The wordmark and both lockups (`lockup.svg`, `lockup-inverse.svg` in cream for dark grounds) are Source Serif 4
+  Bold converted to curves with fontTools.
+- The panel grid is an explicit 2x2, single column on phone.
+- The fonts are self-hosted woff2 with a Latin subset (OFL), so Taste went from 1 minor to 0 fail.
+- The contrast ratios were recomputed by script and match the published ones.
+- The README is current.
+- The reviewer tagged one optional note "minor" with status pass (a 120 px logotype is the practical floor), so the
+  scorer does not count it.
 
 ## Notes
 - mobile_app: the reviewer found zero issues; the one minor is the folded Taste Google Fonts finding. Tap targets

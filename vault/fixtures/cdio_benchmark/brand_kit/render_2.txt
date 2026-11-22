@@ -1,0 +1,7 @@
+﻿RENDERED vault\fixtures\cdio_benchmark\brand_kit\index.html -> C:\Users\User\.claude\state\design_route\renders\4608843738f8a417-desktop.png C:\Users\User\.claude\state\design_route\renders\4608843738f8a417-phone.png
+RENDERED vault\fixtures\cdio_benchmark\brand_kit\symbol.svg -> C:\Users\User\.claude\state\design_route\renders\81ba66cc7a498ccf-desktop.png C:\Users\User\.claude\state\design_route\renders\81ba66cc7a498ccf-phone.png
+RENDERED vault\fixtures\cdio_benchmark\brand_kit\wordmark.svg -> C:\Users\User\.claude\state\design_route\renders\49b7d5938b1720be-desktop.png C:\Users\User\.claude\state\design_route\renders\49b7d5938b1720be-phone.png
+RENDERED vault\fixtures\cdio_benchmark\brand_kit\lockup.svg -> C:\Users\User\.claude\state\design_route\renders\ed430fd0e7529132-desktop.png C:\Users\User\.claude\state\design_route\renders\ed430fd0e7529132-phone.png
+RENDERED vault\fixtures\cdio_benchmark\brand_kit\lockup-inverse.svg -> C:\Users\User\.claude\state\design_route\renders\ff642b3181db9dc4-desktop.png C:\Users\User\.claude\state\design_route\renders\ff642b3181db9dc4-phone.png
+Look at every PNG (Read tool) before writing verdicts: the review judges what renders, not the source.
+DEFECT lines are folded into the record as verdicts; a reviewer pass cannot override them.

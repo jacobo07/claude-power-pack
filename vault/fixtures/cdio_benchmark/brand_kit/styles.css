@@ -1,3 +1,6 @@
+@font-face { font-family: "Source Serif 4"; font-weight: 700; font-style: normal; font-display: swap; src: url("fonts/source-serif-4-700.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 400; font-style: normal; font-display: swap; src: url("fonts/inter-400.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 600; font-style: normal; font-display: swap; src: url("fonts/inter-600.woff2") format("woff2"); }
 :root {
   --crema: #F4EEE3;
   --tinta: #2B2420;
@@ -26,16 +29,15 @@ p { margin: 0 0 var(--s2); max-width: 60ch; }
 .hero { display: flex; align-items: center; gap: var(--s4); flex-wrap: wrap; margin-bottom: var(--s4); }
 .hero img { width: 96px; height: 96px; }
 
-.panels { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--s3); }
+.panels { display: grid; grid-template-columns: 1fr; gap: var(--s3); }
+@media (min-width: 640px) { .panels { grid-template-columns: 1fr 1fr; } }
 .panel { border-radius: 12px; padding: var(--s5) var(--s4); display: flex; align-items: center; justify-content: center; min-height: 200px; }
 .panel.light { background: var(--crema); border: 1px solid #D9CFBF; }
 .panel.dark { background: var(--brasa); }
 .panel img { max-width: 100%; height: auto; }
 .panel .sym { width: 96px; height: 96px; }
 .panel .wm { width: 240px; }
-.lockup { display: flex; align-items: center; gap: var(--s2); }
-.lockup img { width: 56px; height: 56px; }
-.lockup span { font-family: var(--serif); font-weight: 700; font-size: 2rem; color: var(--terracota); line-height: 1; }
+.panel .lk { width: 280px; }
 
 .swatches { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: var(--s3); }
 .swatch { border: 1px solid #D9CFBF; border-radius: 12px; overflow: hidden; }
