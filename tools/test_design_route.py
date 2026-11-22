@@ -343,6 +343,15 @@ SEEDED_EXTRA = ('<img src="missing-hero.jpg" alt="Sala" width="400" height="300"
                 '<script>throw new Error("seeded failure")</script>') % NOWHERE
 PLATO_SVG = ('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200">'
              '<rect width="200" height="200" fill="#a33"/></svg>')
+SCREENS_EXTRA = ('</header><div class="app">'
+                 '<section id="s1"><h2>First screen</h2><p>Welcome text long enough to count as content.</p>'
+                 '<button type="button">Next</button></section>'
+                 '<section id="s2" hidden><h2>Second screen</h2><p>Too wide for a phone on purpose here.</p>'
+                 '<div style="width:1200px;height:10px"></div><button type="button">Go</button></section>'
+                 '<section id="s3" hidden><h2>Home</h2><p>Home screen content long enough to count here.</p>'
+                 '<button type="button">Act</button></section>'
+                 '<section id="sheet" role="dialog" hidden><p>A dialog overlay, long enough to have text.</p>'
+                 '<button type="button">Close</button></section></div>')
 SEEDED_WANT = ("RENDER-BROKEN-IMAGE", "RENDER-ASSET-FAILED", "RENDER-CONSOLE-ERROR", "RENDER-DEAD-LINK",
                "RENDER-HORIZONTAL-OVERFLOW", "RENDER-DUPLICATE-IMAGE")
 
@@ -382,6 +391,23 @@ def test_render() -> None:
     ok("V-DSR-RENDER-FACTS-SEEDED", all(w in got for w in SEEDED_WANT) and over is not None
        and "phone" in over.observed and "desktop" not in over.observed,
        ([w for w in SEEDED_WANT if w not in got], {k: v.observed for k, v in got.items()}, (r.stdout + r.stderr)[-300:]))
+    # benchmark 2026-11-22, B-8: a one-file app swaps sibling <section hidden> screens by JS state; the render captured
+    # the first screen only, so the APPROVE bound bytes whose other screens no render showed. Every hidden screen is now
+    # revealed alone, captured and observed. Negative control: a hidden role=dialog section is an overlay, not a screen.
+    d3, app = project(CLEAN.replace("</header>", SCREENS_EXTRA))
+    r = subprocess.run([sys.executable, str(REC), "render", app], capture_output=True, text=True, env=env(),
+                       timeout=240, encoding="utf-8")
+    rows = [x for x in dr.read_rows("renders.jsonl") if x.get("file") == dr.canon(app)]
+    vps = ((rows[-1].get("facts") or {}).get("viewports") or {}) if rows else {}
+    labels = sorted(s.get("label") for s in (vps.get("phone") or {}).get("screens") or [])
+    spngs = [s.get("png") for x in vps.values() for s in x.get("screens") or []]
+    ok("V-DSR-RENDER-SCREENS", labels == ["s2", "s3"] and len(spngs) == 4
+       and all(p and os.path.isfile(p) for p in spngs) and len(rows[-1]["pngs"]) == 6,
+       (labels, spngs, (r.stdout + r.stderr)[-300:]))
+    got = {v.criterion: v for v in rec.facts_verdicts(rows[-1].get("facts") if rows else {}) if v.status == "fail"}
+    over = got.get("RENDER-HORIZONTAL-OVERFLOW")
+    ok("V-DSR-RENDER-SCREEN-FACTS", over is not None and "phone#s2" in over.observed and "#s3" not in over.observed
+       and "RENDER-UNRENDERED-SCREEN" not in got, {k: v.observed for k, v in got.items()})
 
 
 def test_wired() -> None:

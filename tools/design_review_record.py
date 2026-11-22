@@ -72,6 +72,70 @@ FACTS_JS = """() => {
           overflow_px: Math.max(0, de.scrollWidth - window.innerWidth), viewport_px: window.innerWidth};
 }""" % DUP_MIN_PX
 _IGNORED_URL = re.compile(r"/favicon\.ico(?:$|\?)", re.I)
+
+# One-file apps swap sibling screens by JS state (cross-sector benchmark 2026-11-22, B-8: the nurse app's onboarding
+# 2-3 and its home screen were <section hidden>; the render showed screen 1 only and the APPROVE bound all of it).
+# A screen is a section / [data-screen] / [role=tabpanel] with real content, hidden while a sibling screen is shown,
+# under a visible parent, never inside a dialog (sheets and toasts are overlays, not screens). Each one is revealed
+# ALONE (siblings hidden), captured and observed. A forced reveal, not a navigation: JS that runs on entry did not run.
+MAX_SCREENS = 8
+SCREEN_SEL = 'section, [data-screen], [role="tabpanel"]'
+SCREENS_JS = """() => {
+  const sel = %s;
+  const vis = el => el.checkVisibility ? el.checkVisibility({checkOpacity: false, checkVisibilityCSS: true})
+                                       : !!el.offsetParent;
+  const real = el => !el.closest('[role="dialog"],[aria-modal="true"],dialog')
+      && ((el.textContent || '').trim().length >= 40 || el.querySelector('button,a[href],input,select,textarea'));
+  const groups = new Map();
+  for (const el of document.querySelectorAll(sel)) {
+    const p = el.parentElement;
+    if (!p || !real(el) || !vis(p)) continue;
+    if (!groups.has(p)) groups.set(p, []);
+    groups.get(p).push(el);
+  }
+  const out = [];
+  for (const kids of groups.values()) {
+    if (kids.length < 2 || !kids.some(vis)) continue;
+    for (const el of kids) {
+      if (vis(el)) continue;
+      el.setAttribute('data-cdio-screen', String(out.length));
+      out.push(el.id || el.getAttribute('data-screen') || el.getAttribute('aria-label') || ('screen' + out.length));
+    }
+  }
+  return out;
+}""" % json.dumps(SCREEN_SEL)
+REVEAL_JS = """(i) => {
+  const t = document.querySelector('[data-cdio-screen="' + i + '"]');
+  if (!t) return false;
+  for (const s of t.parentElement.children)
+    if (s !== t && s.matches(%s)) { s.hidden = true; s.style.setProperty('display', 'none', 'important'); }
+  t.hidden = false;
+  t.style.removeProperty('display');
+  if (getComputedStyle(t).display === 'none') t.style.setProperty('display', 'block', 'important');
+  window.scrollTo(0, 0);
+  return t.checkVisibility ? t.checkVisibility() : !!t.offsetParent;
+}""" % json.dumps(SCREEN_SEL)
+
+
+def _render_screens(page, out_dir: Path, stem: str) -> tuple:
+    """Reveal, capture and observe every hidden screen of the loaded page. -> (screens, unrendered labels)."""
+    labels = page.evaluate(SCREENS_JS)
+    screens, unrendered = [], [l for l in labels[MAX_SCREENS:]]
+    for i, label in enumerate(labels[:MAX_SCREENS]):
+        try:
+            if not page.evaluate(REVEAL_JS, i):
+                unrendered.append(label)
+                continue
+            page.wait_for_timeout(150)
+            png = out_dir / ("%s-screen-%d.png" % (stem, i))
+            page.screenshot(path=str(png), full_page=True)
+            seen = page.evaluate(FACTS_JS)
+        except Exception:  # noqa: BLE001 -- a screen the browser could not show is reported, never skipped silently
+            unrendered.append(label)
+            continue
+        seen.update(label=str(label), png=str(png))
+        screens.append(seen)
+    return screens, [str(l) for l in unrendered]
 MAX_SCROLL_STEPS = 60
 
 
@@ -146,7 +210,12 @@ def _observe(page, uri: str) -> dict:
 def facts_verdicts(facts: dict) -> list:
     """Render facts -> scorer verdicts. Pure; every criterion is emitted (pass or fail) so the record shows it ran."""
     from modules.cdio import scorer
-    vps = (facts or {}).get("viewports") or {}
+    top = (facts or {}).get("viewports") or {}
+    vps = dict(top)
+    for name, x in top.items():   # each revealed screen is judged like a viewport of its own, named phone#<screen>
+        for s in x.get("screens") or []:
+            vps["%s#%s" % (name, s.get("label"))] = s
+    unrendered = ["%s: %s" % (n, s) for n, x in top.items() for s in x.get("screens_unrendered") or []]
 
     def union(key: str) -> list:
         out = []
@@ -178,8 +247,11 @@ def facts_verdicts(facts: dict) -> list:
           "find the element wider than the viewport (fixed widths, long words, 100vw plus a scrollbar)"),
         v("RENDER-DUPLICATE-IMAGE", "visual", "minor", union("duplicate_images"), "large image(s) shown more than once",
           "a repeated photo reads as a template; use a different asset or drop the repeat"),
+        v("RENDER-UNRENDERED-SCREEN", "ux", "major", unrendered, "hidden screen(s) no render could show",
+          "the review cannot judge a screen nobody saw: render it (at most %d screens per page, or split the page)"
+          % MAX_SCREENS),
     ] + ([v("RENDER-DOCUMENT-STATUS", "ux", "critical",
-            ["%s: HTTP %d" % (n, x["document_status"]) for n, x in vps.items()
+            ["%s: HTTP %d" % (n, x["document_status"]) for n, x in top.items()
              if (x.get("document_status") or 0) >= 400],
             "viewport(s) served an error page", "the route itself fails; an error page is not the surface")]
          # emitted only by an HTTP render (render-url); a file:// render has no document status to judge
@@ -248,8 +320,12 @@ def render(files: list) -> int:
                         facts["viewports"][name]["duplicate_images"] = []
                     png = out_dir / ("%s-%s.png" % (h[:16], name))
                     page.screenshot(path=str(png), full_page=True)
-                    page.close()
                     pngs.append(str(png))
+                    if not asset:   # a brand frame has no screens; a page may hide some behind JS state (B-8)
+                        scr, lost = _render_screens(page, out_dir, "%s-%s" % (h[:16], name))
+                        facts["viewports"][name].update(screens=scr, screens_unrendered=lost)
+                        pngs += [s["png"] for s in scr]
+                    page.close()
                 dr.append_row("renders.jsonl", {"file": c, "sha": h, "pngs": pngs, "facts": facts})
                 print("RENDERED %s -> %s" % (f, " ".join(pngs)))
                 for vd in facts_verdicts(facts):
@@ -283,7 +359,7 @@ def render_url(url: str, files: list) -> int:
     out_dir.mkdir(exist_ok=True)
     bound = [(dr.canon(f), dr.sha256(f)) for f in files]   # hashed BEFORE the render: the bytes the route was built from
     tag = __import__("hashlib").sha256(("%s|%s" % (url, "|".join(h for _, h in bound))).encode()).hexdigest()[:16]
-    pngs, facts = [], {"collected": True, "version": FACTS_VERSION, "url": url, "viewports": {}}
+    pngs, screen_pngs, facts = [], [], {"collected": True, "version": FACTS_VERSION, "url": url, "viewports": {}}
     with sync_playwright() as pw:
         browser = _launch(pw)
         try:
@@ -298,8 +374,11 @@ def render_url(url: str, files: list) -> int:
                     continue
                 png = out_dir / ("url-%s-%s.png" % (tag, name))
                 page.screenshot(path=str(png), full_page=True)
+                scr, lost = _render_screens(page, out_dir, "url-%s-%s" % (tag, name))
+                facts["viewports"][name].update(screens=scr, screens_unrendered=lost)
                 page.close()
                 pngs.append(str(png))
+                screen_pngs += [s["png"] for s in scr]
         finally:
             browser.close()
     changed = [os.path.basename(c) for c, h in bound if dr.sha256(c) != h]
@@ -307,8 +386,8 @@ def render_url(url: str, files: list) -> int:
         print("REFUSED: changed during the render, render again: %s" % ", ".join(changed))
         return 2
     for c, h in bound:
-        dr.append_row("renders.jsonl", {"file": c, "sha": h, "pngs": pngs, "facts": facts, "url": url})
-    print("RENDERED %s (%d viewports) for %d file(s) -> %s" % (url, len(pngs), len(bound), " ".join(pngs)))
+        dr.append_row("renders.jsonl", {"file": c, "sha": h, "pngs": pngs + screen_pngs, "facts": facts, "url": url})
+    print("RENDERED %s (%d viewports) for %d file(s) -> %s" % (url, len(pngs), len(bound), " ".join(pngs + screen_pngs)))
     for vd in facts_verdicts(facts):
         if vd.status == "fail":
             print("  DEFECT %s [%s] %s" % (vd.criterion, vd.severity, vd.observed))
