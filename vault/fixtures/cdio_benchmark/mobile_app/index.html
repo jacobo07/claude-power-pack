@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Vuelta: pantallas de una app de hábito lector (fixture)</title>
+<meta name="description" content="Tres pantallas de Vuelta, una app inventada para el hábito de lectura: bienvenida, inicio y detalle de libro. Datos de ejemplo.">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<main class="board">
+  <header class="board-head">
+    <h1>Vuelta</h1>
+    <p>Tres pantallas de una app de hábito lector. Fixture inventado, datos de ejemplo.</p>
+  </header>
+
+  <div class="screens">
+    <section class="screen" id="bienvenida" aria-labelledby="t-bienvenida">
+      <div class="screen-body">
+        <p class="step"><span class="tnum">Paso 1 de 3</span></p>
+        <h2 id="t-bienvenida" class="display">¿Cuánto quieres leer cada día?</h2>
+        <p class="lead">Elige una meta pequeña. Podrás cambiarla cuando quieras.</p>
+        <ul class="choices" role="list">
+          <li><a class="choice" href="#inicio" aria-current="true"><span class="tnum">10 minutos</span><span class="choice-note">Para empezar</span></a></li>
+          <li><a class="choice" href="#inicio"><span class="tnum">20 minutos</span><span class="choice-note">Un capítulo corto</span></a></li>
+          <li><a class="choice" href="#inicio"><span class="tnum">30 minutos</span><span class="choice-note">Una buena sesión</span></a></li>
+          <li><a class="choice" href="#inicio"><span>Otra duración</span><span class="choice-note">Escríbela tú</span></a></li>
+        </ul>
+      </div>
+      <div class="dock">
+        <a class="btn" href="#inicio">Continuar</a>
+      </div>
+    </section>
+
+    <section class="screen" id="inicio" aria-labelledby="t-inicio">
+      <div class="screen-body">
+        <p class="eyebrow">Jueves</p>
+        <h2 id="t-inicio" class="display">Hoy</h2>
+        <div class="stat">
+          <p class="stat-value tnum">18<span class="unit"> min</span></p>
+          <p class="stat-label">leídos de 20 de tu meta</p>
+          <div class="bar" role="img" aria-label="18 de 20 minutos"><span style="width:90%"></span></div>
+        </div>
+        <a class="book-row" href="#detalle">
+          <span class="cover" aria-hidden="true"></span>
+          <span class="book-text">
+            <span class="book-title">El faro de la sal</span>
+            <span class="book-meta tnum">Página 142 de 320</span>
+          </span>
+        </a>
+        <p class="streak"><span class="tnum">6 días</span> seguidos leyendo</p>
+        <p class="sample">Datos de ejemplo</p>
+      </div>
+      <div class="dock">
+        <a class="btn" href="#detalle">Registrar lectura</a>
+      </div>
+      <nav class="tabs" aria-label="Principal">
+        <a href="#inicio" aria-current="page">Hoy</a>
+        <a href="#detalle">Libros</a>
+        <a href="#bienvenida">Meta</a>
+      </nav>
+    </section>
+
+    <section class="screen" id="detalle" aria-labelledby="t-detalle">
+      <div class="screen-body">
+        <a class="back" href="#inicio" aria-label="Volver a Hoy">‹ Hoy</a>
+        <span class="cover cover-lg" aria-hidden="true"></span>
+        <h2 id="t-detalle" class="display">El faro de la sal</h2>
+        <p class="lead">Novela de ejemplo · autora ficticia</p>
+        <dl class="facts">
+          <div><dt>Leído</dt><dd class="tnum">142 págs.</dd></div>
+          <div><dt>Quedan</dt><dd class="tnum">178 págs.</dd></div>
+          <div><dt>Ritmo</dt><dd class="tnum">14 págs. al día</dd></div>
+        </dl>
+        <p class="sample">Datos de ejemplo</p>
+      </div>
+      <div class="dock">
+        <a class="btn" href="#inicio">Registrar páginas</a>
+      </div>
+    </section>
+  </div>
+</main>
+</body>
+</html>

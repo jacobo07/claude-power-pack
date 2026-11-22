@@ -1,0 +1,20 @@
+﻿{
+ "files": {
+  "c:\\users\\user\\apps\\pp-cdio-bench\\vault\\fixtures\\cdio_benchmark\\brand_kit\\index.html": "4608843738f8a4171526736c3cef00de24fdee1cf37da08ff784dafb2bd687db",
+  "c:\\users\\user\\apps\\pp-cdio-bench\\vault\\fixtures\\cdio_benchmark\\brand_kit\\symbol.svg": "81ba66cc7a498ccfdfb50067259e5e9763b5ab931cd337f7b8fd16683e7feac2",
+  "c:\\users\\user\\apps\\pp-cdio-bench\\vault\\fixtures\\cdio_benchmark\\brand_kit\\wordmark.svg": "49b7d5938b1720bea36988ee9126271ea38f9f06dd94348708102761b5ae82d7",
+  "c:\\users\\user\\apps\\pp-cdio-bench\\vault\\fixtures\\cdio_benchmark\\brand_kit\\lockup.svg": "ed430fd0e7529132129907b9b0b05b48db7639a0243fe993d230ea96df66c82f",
+  "c:\\users\\user\\apps\\pp-cdio-bench\\vault\\fixtures\\cdio_benchmark\\brand_kit\\lockup-inverse.svg": "ff642b3181db9dc4be25ce95462bbcb423b8330ecd9986c1a503fedf45033e74"
+ },
+ "verdict": "APPROVE",
+ "score": 100,
+ "reason": "score 100 >= 80 and zero critical",
+ "is_done": true,
+ "refused": [],
+ "experience": "unassessed",
+ "reviewer_verdicts": 9,
+ "folded_taste": 62,
+ "critical": [],
+ "failed": [],
+ "legal_demoted": []
+}

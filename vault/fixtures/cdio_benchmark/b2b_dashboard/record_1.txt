@@ -1,0 +1,33 @@
+﻿{
+ "files": {
+  "c:\\users\\user\\apps\\pp-cdio-bench\\vault\\fixtures\\cdio_benchmark\\b2b_dashboard\\index.html": "aa4cc9f47ed8845946c6c3d9091c24c52729cc3ba961543ed0bbd39ea7033087",
+  "c:\\users\\user\\apps\\pp-cdio-bench\\vault\\fixtures\\cdio_benchmark\\b2b_dashboard\\styles.css": "fbe8f04d4c12ccd915964b3b24f90b055442946f7b725de389a48cadc6eaa0d9"
+ },
+ "verdict": "APPROVE",
+ "score": 94,
+ "reason": "score 94 >= 80 and zero critical",
+ "is_done": true,
+ "refused": [],
+ "experience": "unassessed",
+ "reviewer_verdicts": 11,
+ "folded_taste": 34,
+ "critical": [],
+ "failed": [
+  [
+   "mobile-chart-text-legibility",
+   "minor",
+   "At 390px the SVG scales about 0.45 (326px for a 720-unit viewBox); axis text 20 units renders about 9px and labels 21-22 units about 9.5-10p"
+  ],
+  [
+   "TASTE-GOOGLE-FONTS-LINK",
+   "minor",
+   "Taste lint: 1 minor, Google Fonts <link> in index.html; blocking=none. BRIEF permits Google Fonts"
+  ],
+  [
+   "TASTE-GOOGLE-FONTS-LINK",
+   "minor",
+   "§3.A self-host fonts; no Google Fonts <link> in production: <link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">; <link href=\"https:/"
+  ]
+ ],
+ "legal_demoted": []
+}

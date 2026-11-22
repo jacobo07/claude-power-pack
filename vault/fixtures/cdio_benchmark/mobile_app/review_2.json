@@ -1,0 +1,11 @@
+[
+{"criterion":"one-primary-action-per-screen","dimension":"ux","status":"pass","severity":"info","observed":"Renders: each of the three screens has exactly one filled docked button (Continuar, Registrar lectura, Registrar páginas)","recommendation":"none"},
+{"criterion":"thumb-zone-primary-action","dimension":"ux","status":"pass","severity":"info","observed":"Phone render: the primary CTA is docked at the bottom of each screen; the Home tab bar sits below the CTA","recommendation":"none"},
+{"criterion":"selection-over-typing","dimension":"ux","status":"pass","severity":"info","observed":"Onboarding offers 3 presets with a selected state plus 'Otra duración' as an escape; no text field","recommendation":"none"},
+{"criterion":"value-over-label","dimension":"visual","status":"pass","severity":"info","observed":"Home '18 min' at large serif size over a small caption; detail facts show bold values against small muted labels","recommendation":"none"},
+{"criterion":"visual-hierarchy-and-spacing","dimension":"visual","status":"pass","severity":"info","observed":"Two typefaces (Source Serif 4 + Inter, now self-hosted), one green accent, one focal point per screen, generous whitespace, no overflow at 390 or 1440","recommendation":"none"},
+{"criterion":"mobile-body-font-and-tap","dimension":"mobile","status":"pass","severity":"info","observed":"Body 16px; 14px used only for captions. Tap targets 56-80px per review_1 CSS measurement; 'Datos de ejemplo' captions are small but muted-contrast compliant. Not re-measured","recommendation":"none"},
+{"criterion":"honesty-and-trust","dimension":"trust","status":"pass","severity":"info","observed":"'Datos de ejemplo' on home and detail, 'Fixture inventado' in the header, 'Novela de ejemplo · autora ficticia'; no fake ratings, testimonials or data-collecting forms","recommendation":"none"},
+{"criterion":"TASTE-GOOGLE-FONTS-LINK","dimension":"visual","status":"pass","severity":"info","observed":"Google Fonts link removed, fonts self-hosted, taste_2.txt 0 fail (not re-run)","recommendation":"none"},
+{"criterion":"experience-contract","dimension":"ux","status":"pass","severity":"info","observed":"No experience: block declared, so unassessed; no motion. Taps and focus not driven","recommendation":"none"}
+]

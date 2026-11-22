@@ -1,0 +1,16 @@
+﻿{
+ "files": {
+  "c:\\users\\user\\apps\\pp-cdio-bench\\vault\\fixtures\\cdio_benchmark\\mobile_app\\index.html": "868bb283b421601ab992e3d8fad693a73ccec7047a170dac30aab3918211648e"
+ },
+ "verdict": "APPROVE",
+ "score": 100,
+ "reason": "score 100 >= 80 and zero critical",
+ "is_done": true,
+ "refused": [],
+ "experience": "unassessed",
+ "reviewer_verdicts": 9,
+ "folded_taste": 34,
+ "critical": [],
+ "failed": [],
+ "legal_demoted": []
+}

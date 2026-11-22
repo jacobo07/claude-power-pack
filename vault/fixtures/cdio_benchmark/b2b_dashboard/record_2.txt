@@ -1,0 +1,22 @@
+﻿{
+ "files": {
+  "c:\\users\\user\\apps\\pp-cdio-bench\\vault\\fixtures\\cdio_benchmark\\b2b_dashboard\\index.html": "9f2273071e7ae0af5adf7854dc0a59aef4b87278f3463f82d615280ef53bf1c4"
+ },
+ "verdict": "APPROVE",
+ "score": 98,
+ "reason": "score 98 >= 80 and zero critical",
+ "is_done": true,
+ "refused": [],
+ "experience": "unassessed",
+ "reviewer_verdicts": 9,
+ "folded_taste": 34,
+ "critical": [],
+ "failed": [
+  [
+   "mobile-chart-edge-clearance",
+   "minor",
+   "Phone render: the end label '94,2 %' ends about 4px from the right edge of the chart card (text right edge about 369px of a 373px card). It "
+  ]
+ ],
+ "legal_demoted": []
+}

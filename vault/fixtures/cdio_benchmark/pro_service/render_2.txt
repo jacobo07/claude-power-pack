@@ -1,0 +1,5 @@
+﻿RENDERED vault\fixtures\cdio_benchmark\pro_service\index.html -> C:\Users\User\.claude\state\design_route\renders\59cecd43658ff254-desktop.png C:\Users\User\.claude\state\design_route\renders\59cecd43658ff254-phone.png
+RENDERED vault\fixtures\cdio_benchmark\pro_service\privacy.html -> C:\Users\User\.claude\state\design_route\renders\f7edc08f91565c70-desktop.png C:\Users\User\.claude\state\design_route\renders\f7edc08f91565c70-phone.png
+RENDERED vault\fixtures\cdio_benchmark\pro_service\terms.html -> C:\Users\User\.claude\state\design_route\renders\b9bef9db429d7479-desktop.png C:\Users\User\.claude\state\design_route\renders\b9bef9db429d7479-phone.png
+Look at every PNG (Read tool) before writing verdicts: the review judges what renders, not the source.
+DEFECT lines are folded into the record as verdicts; a reviewer pass cannot override them.
