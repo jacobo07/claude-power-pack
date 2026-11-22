@@ -5,6 +5,44 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**2026-11-22 21:31Z (pane 2e3b8dd4, Owner "sigue tu"). T2 W3b BUILT, DEPLOYED, PILOT ARMED on WIIPARTY (bounded at 2).**
+- Code: worktree 6453642e (slim-asc) + 1464d06e (bound, port script `throughput/port_slimasc_gex44.py`). Not merged.
+- gsd_mission on GEX44:
+  - The clone is its own line (2e727761 does not exist on the laptop), so it was ported by 5 exact anchors onto the DIRTY
+    working copy, like the T1 O5 hunks.
+  - No live writer: the mtime equals the 16:19Z commit, and no claude process has its cwd in the clone.
+  - Under cron.lock 21:14:15Z: gsd_mission 5b80e53b -> abaaf2b6. slim-critical-settings.json f956ee65 -> c34aeba9 (the
+    template; this fixes the slim-t2 unguarded hole on GEX44). slim-ascension-settings.json 9de33928 is new.
+    tools/test_slim_asc.py is new and untracked there.
+  - Backups `*.bak-2e3b-w3b-20261122T211415Z` (gsd_mission.py, slim-critical-settings.json).
+  - Proof:
+    - Scratch copy first: slim-asc 6/6, control red; envelope 67/67 and admission 43/43 identical to the unported copy.
+    - Live host: slim_settings_file('slim-asc') renders with all 12 scripts present; slim-t2 renders with no C:/ left.
+  - Live probe: `claude -p --settings=<slim-asc>` on GEX44, sonnet-5-5. `echo` was allowed; a self-matching
+    `pgrep -f` was DENIED by self_match_pgrep_guard. 8,793 processed in 3 turns.
+  - Fence: _launch_slim writes the worker index and arms the marker BEFORE the spawn (the hold gate and the wall key on
+    them; SessionStart loses that race to the immediate RUNNING ack). If either fails, the launch is refused
+    (`slim fence refused`).
+- Autopilot:
+  - lanes.json `worker_profile: "slim-asc"` -> `gm envelope --worker-profile slim-asc` while the record is held
+    (authority < envelope < release). A refusal parks, never releases.
+  - command_text replaces /gsd-autonomous with an inline phase loop.
+  - Bounded: after SLIM_PILOT_MAX=2 ok `worker_profile_set` rows the lane returns to the default launch by itself.
+  - Gate /tmp/apgate-2e3b-w3c 390/390, mutants 163/163; control 268/269 EXC.
+  - DEPLOYED 21:25:49Z: autopilot d71b9d56 -> a9596d03, test -> 7f87b436 (backups `*.bak-2e3b-w3c-*`). The 21:14Z
+    intermediate d71b9d56 has backups `*.bak-2e3b-w3b-*`.
+- PILOT ON 21:26:25Z: WIIPARTY lanes.json `worker_profile: slim-asc` (md5 bb8116fc), backup
+  `lanes.json.bak-2e3b-pilot-20261122T212625Z`, ledger `owner_rule`. KILL SWITCH: delete the key.
+  - S307W (m-6fce2f976251) still runs on the default worker. The first slim generation is the one after it, after
+    00:00Z.
+  - Smoke: the 21:30:01Z tick had 0 tracebacks (WIIPARTY day-cap wait).
+- PILOT READ (W3b judgement, after both slim generations close):
+  - Compare against WIIPARTY's last 4 default generations: processed per tool call (mission_spend / transcript first-call
+    usage), certs/M, outcome class, policy refusals, `slim fence refused` / `launch_failed` rows, and any guard deny.
+  - Promote only if certs/M holds with no gate or authority regression.
+- NOT LIVE-PROVEN: mission_hold_gate denying a cost-held SLIM worker (unit-level only: the marker is armed before the
+  spawn, test_slim_asc). Watch the first slim generation's hold/wall rows.
+
 **2026-11-22 17:36Z (pane 2e3b8dd4, /kresume of a52cc240). T2 W2 DONE, live in SHADOW.**
 - Code: worktree b20b30c3 (not merged into feature/knowledge-acquisition yet).
   - (a) J0: the POOL_FLOOR line may end ` via python3 tools/<x>.py`. judge() re-counts each below-floor line at the
