@@ -24,8 +24,8 @@ const os = require('os');
 const path = require('path');
 const { execFileSync } = require('child_process');
 
-const PY = 'C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe';
-const AUDIT = 'C:\\Users\\User\\.claude\\skills\\claude-power-pack\\tools\\quality_audit.py';
+const PY = 'C:\\Users\\Jacobo\\AppData\\Local\\Programs\\Python\\Python313\\python.exe';
+const AUDIT = 'C:\\Users\\Jacobo\\.claude\\skills\\claude-power-pack\\tools\\quality_audit.py';
 
 // --- JOBS-WOZ double-scoped cryptographic exemption (Owner Q2a/Q3a) ---
 const _JW_EXEMPT_BASENAMES = new Set(['dataset_enricher.py', 'quality_audit.py']);

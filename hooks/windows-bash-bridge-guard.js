@@ -229,7 +229,7 @@ function powershellEquivalent(token, command) {
     return [
       "  $env:PYTHONIOENCODING='utf-8';",
       "  Set-Location '<absolute repo path>';",
-      "  & 'C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe' <script.py>",
+      "  & 'C:\\Users\\Jacobo\\AppData\\Local\\Programs\\Python\\Python313\\python.exe' <script.py>",
     ].join("\n");
   }
   return `  & ${token} ${rest}`;

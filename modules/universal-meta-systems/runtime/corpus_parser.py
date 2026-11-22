@@ -64,7 +64,7 @@ class MetaSystemSpec:
 
 # ---- corpus discovery (mirror of corpus-reference.md, read-only) ----------
 
-_DEFAULT_CORPUS = Path(r"C:\Users\User\Apps\universal-meta-systems-corpus")
+_DEFAULT_CORPUS = Path(r"C:\Users\Jacobo\Apps\universal-meta-systems-corpus")
 
 
 def find_corpus_root(start: Path | None = None) -> Path | None:

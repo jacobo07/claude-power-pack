@@ -36,7 +36,7 @@ const CHECKPOINT_TOOL_REL = 'tools/session_checkpoint.py';
 // Absolute path, not bare 'python' — matches the proven-working pattern in
 // hooks/bug-hunter-ceps-bridge.js. Bare 'python' depends on PATH resolution
 // inside the hook runner's child process, which is not guaranteed.
-const PY = 'C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe';
+const PY = 'C:\\Users\\Jacobo\\AppData\\Local\\Programs\\Python\\Python313\\python.exe';
 
 const MISTAKE_HEADER_REGEX = /^## Mistake #(\d+):\s*(.+?)\s*$/gm;
 

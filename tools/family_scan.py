@@ -43,9 +43,9 @@ MARKERS: dict[str, tuple[str, ...]] = {
 DEP_MANIFESTS = ("package.json", "mix.exs", "requirements.txt", "pyproject.toml")
 
 SCAN_ROOTS = (
-    r"C:\Users\User\Desktop\Cursor Projects",
-    r"C:\Users\User\Apps",
-    r"C:\Users\User\.claude\skills",
+    r"C:\Users\Jacobo\Desktop\Cursor Projects",
+    r"C:\Users\Jacobo\Apps",
+    r"C:\Users\Jacobo\.claude\skills",
 )
 
 # FLOOR MOVED, ON THE RECORD -- 120 -> 35.
@@ -68,11 +68,11 @@ POPULATION_FLOOR = 35
 
 PREDECLARED = {
     "InfinityOps": {
-        "path": r"C:\Users\User\Desktop\Cursor Projects\InfinityOps",
+        "path": r"C:\Users\Jacobo\Desktop\Cursor Projects\InfinityOps",
         "expect": "IN",
     },
     "ABSW2-Wii": {
-        "path": r"C:\Users\User\Desktop\Cursor Projects\Wii Projects\ABSW2-Wii",
+        "path": r"C:\Users\Jacobo\Desktop\Cursor Projects\Wii Projects\ABSW2-Wii",
         "expect": "OUT",
     },
 }

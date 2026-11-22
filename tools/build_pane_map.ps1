@@ -61,7 +61,7 @@ $ErrorActionPreference = "Stop"
 # (exit 1); any guard error builds as before. The last active-build still marks the
 # open panes for recovery (idle = no new turns, so the map does not go stale).
 try {
-  $__saPy = Join-Path $env:LOCALAPPDATA 'Programs\Python\Python312\python.exe'
+  $__saPy = Join-Path $env:LOCALAPPDATA 'Programs\Python\Python313\python.exe'
   if (-not (Test-Path $__saPy)) { $__c = Get-Command python -ErrorAction SilentlyContinue; if ($__c) { $__saPy = $__c.Source } }
   $__saGuard = Join-Path $PSScriptRoot 'session_active.py'
   if ((Test-Path $__saPy) -and (Test-Path $__saGuard)) {
@@ -503,7 +503,7 @@ C "=== END CARD ==="
 # map is already written above). Python resolved via PATH, then canonical path.
 try {
   $py = (Get-Command python -EA SilentlyContinue).Source
-  if (-not $py) { $py = "C:\Users\User\AppData\Local\Programs\Python\Python312\python.exe" }
+  if (-not $py) { $py = "C:\Users\Jacobo\AppData\Local\Programs\Python\Python313\python.exe" }
   $snapScript = Join-Path $PSScriptRoot "pane_map_snapshot.py"
   if ((Test-Path $py) -and (Test-Path $snapScript)) {
     & $py $snapScript --snapshot --state-dir $StateDir 2>$null | Out-Null

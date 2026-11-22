@@ -9,7 +9,7 @@
 #>
 [CmdletBinding()]
 param(
-  [string]$CursorCli = "C:\Users\User\AppData\Local\Programs\cursor\resources\app\bin\cursor.cmd"
+  [string]$CursorCli = "C:\Users\Jacobo\AppData\Local\Programs\cursor\resources\app\bin\cursor.cmd"
 )
 $ErrorActionPreference = "Stop"
 Add-Type -AssemblyName System.IO.Compression

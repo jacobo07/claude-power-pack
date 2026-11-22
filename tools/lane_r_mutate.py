@@ -10,7 +10,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-ROOT = Path(r"C:\Users\User\.claude\skills\claude-power-pack")
+ROOT = Path(r"C:\Users\Jacobo\.claude\skills\claude-power-pack")
 PY = sys.executable
 
 

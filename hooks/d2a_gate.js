@@ -100,7 +100,7 @@ function readStdin() {
 
 function pickPython() {
   const cands = [
-    'C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe',
+    'C:\\Users\\Jacobo\\AppData\\Local\\Programs\\Python\\Python313\\python.exe',
     'python', 'python3',
   ];
   for (const c of cands) {

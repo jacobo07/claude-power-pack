@@ -212,7 +212,7 @@ def list_resumeable(top_n=40):
     fresh = set()
     now = time.time()
     for p in glob.glob(os.path.join(
-            r"C:\Users\User\.claude\projects", "**", "*.jsonl.live"),
+            r"C:\Users\Jacobo\.claude\projects", "**", "*.jsonl.live"),
             recursive=True):
         if now - os.path.getmtime(p) < 60:
             fresh.add(os.path.basename(p).rsplit(".", 2)[0])  # strip .jsonl.live

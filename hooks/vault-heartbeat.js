@@ -36,7 +36,7 @@ function _parsePy(raw) {
   return { exe: parts[0] || 'python', args: parts.slice(1) };
 }
 const PY = _parsePy(getPythonCommand());
-const ORCHESTRATOR = 'C:\\Users\\User\\.claude\\skills\\claude-power-pack\\tools\\vault_refresh_all.py';
+const ORCHESTRATOR = 'C:\\Users\\Jacobo\\.claude\\skills\\claude-power-pack\\tools\\vault_refresh_all.py';
 
 function pass(msg) {
   if (msg) process.stdout.write(JSON.stringify({ systemMessage: msg }));

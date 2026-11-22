@@ -3,7 +3,7 @@
 
 Why this exists
 ---------------
-The 2026-05-19 globalization audit found hardcoded ``C:/Users/User/...``
+The 2026-05-19 globalization audit found hardcoded ``C:/Users/Jacobo/...``
 paths in canonicalised hooks (e.g. ``hook-dispatcher.js:15,85``). Any
 host whose Windows username is not ``User`` (or any POSIX host) would
 break. Beyond paths, the same audit named a leak class — kobicraft VPS
@@ -86,7 +86,7 @@ WHITELIST_HISTORICAL = {
 # evidence the allowlist is in effect) but do NOT contribute to the
 # gate-fail counters. Two classes:
 #   * "secret"     — suppress SECRET_RES hits in that file
-#   * "code-path"  — suppress code-class C:\Users\User\... hits
+#   * "code-path"  — suppress code-class C:\Users\Jacobo\... hits
 # Every entry MUST carry a comment explaining WHY the suppression is
 # legitimate (not blanket; documented per file).
 import fnmatch as _fnmatch
@@ -276,7 +276,7 @@ ALLOWLIST: dict[str, set[str]] = {
     # SECRET_RES regex literals it defines. Both classes legitimate.
     "tools/normalize_paths.py":    {"secret", "code-path", "doc-path"},
     # ---- hook-dispatcher.js carries a comment that quotes the OLD
-    # literal (`C:/Users/User/AppData/...`) as the audit-2026-05-19
+    # literal (`C:/Users/Jacobo/AppData/...`) as the audit-2026-05-19
     # before-state inside the explanation of the portable-fallback fix.
     # Rewriting the literal makes the comment vacuous (the comment
     # documents what *was* hardcoded — the fix itself is in the code).
@@ -333,7 +333,7 @@ ALLOWLIST: dict[str, set[str]] = {
     # the PAIRS list literals are the source-of-truth pair definitions.
     "tools/verify_global_mirrors.py": {"code-path"},
     # ---- Test fixture: assertion body intentionally uses an absolute
-    # `C:/Users/User/.claude/commands/resume.md` literal to prove the
+    # `C:/Users/Jacobo/.claude/commands/resume.md` literal to prove the
     # guard *blocks* writes to that exact path. Parametrising would
     # change the test's semantics.
     "modules/session-continuity/tests/guard.test.js": {"code-path"},
@@ -480,7 +480,7 @@ def doctrine_safe_sub(line: str) -> str:
     appeared anywhere on it, so a genuine leak sharing that line was
     silently carried through AND counted as allowed:
 
-        `...\\Python312\\python.exe` deploy.py --key C:\\Users\\User\\.ssh\\id
+        `...\\Python312\\python.exe` deploy.py --key C:\\Users\\Jacobo\\.ssh\\id
 
     The interpreter path must stay absolute; the key path must not. An
     exemption has to be as narrow as the reason for it, and the reason

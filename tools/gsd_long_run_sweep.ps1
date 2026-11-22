@@ -28,7 +28,7 @@ function Get-Setting($name, $default) {
     return $v
 }
 
-$py       = Get-Setting 'CPP_SWEEP_PY' 'C:\Users\User\AppData\Local\Programs\Python\Python312\python.exe'
+$py       = Get-Setting 'CPP_SWEEP_PY' 'C:\Users\Jacobo\AppData\Local\Programs\Python\Python313\python.exe'
 $tools    = Get-Setting 'CPP_SWEEP_TOOLS_DIR' $PSScriptRoot
 $stateDir = Get-Setting 'CPP_SWEEP_STATE_DIR' (Join-Path $env:USERPROFILE '.claude\state')
 $missionTimeout = [int](Get-Setting 'CPP_SWEEP_MISSION_TIMEOUT_S' '600')

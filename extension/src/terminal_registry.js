@@ -91,7 +91,7 @@ if (require.main === module && process.argv.includes("--selftest")) {
     { name: "Last session", processId: 333 },
   ];
   const payload = buildPayload(
-    "C:\\Users\\User\\Desktop\\Cursor Projects\\Jacobo",
+    "C:\\Users\\Jacobo\\Desktop\\Cursor Projects\\Jacobo",
     terms,
     4242,
     "2026-08-11T00:00:00.000Z"
@@ -119,7 +119,7 @@ if (require.main === module && process.argv.includes("--selftest")) {
   });
   check("V-SELFTEST-KEY", () =>
     assert.strictEqual(
-      registryKey("C:\\Users\\User\\Desktop\\Cursor Projects\\Jacobo"),
+      registryKey("C:\\Users\\Jacobo\\Desktop\\Cursor Projects\\Jacobo"),
       "C--Users-User-Desktop-Cursor-Projects-Jacobo"
     )
   );

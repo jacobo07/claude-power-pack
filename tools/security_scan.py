@@ -26,8 +26,8 @@ import sys
 from pathlib import Path
 
 SCAN_TIMEOUT_S = 300
-OSV_DEFAULT = Path(r"C:\Users\User\Apps\osv-scanner\osv-scanner.exe")
-SEMGREP_DEFAULT = Path(r"C:\Users\User\Apps\semgrep-venv\Scripts\semgrep.exe")
+OSV_DEFAULT = Path(r"C:\Users\Jacobo\Apps\osv-scanner\osv-scanner.exe")
+SEMGREP_DEFAULT = Path(r"C:\Users\Jacobo\Apps\semgrep-venv\Scripts\semgrep.exe")
 SEMGREP_CONFIG = "p/default"
 SOURCE_EXT = {".py", ".js", ".jsx", ".mjs", ".cjs", ".ts", ".tsx", ".go", ".java", ".rb", ".php",
               ".cs", ".rs", ".kt", ".scala", ".c", ".cc", ".cpp", ".h", ".sh", ".yaml", ".yml"}

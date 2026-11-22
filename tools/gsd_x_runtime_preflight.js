@@ -42,7 +42,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const DEFAULT_GSD_LIB = 'C:/Users/User/.claude/gsd-core/bin/lib';
+const DEFAULT_GSD_LIB = 'C:/Users/Jacobo/.claude/gsd-core/bin/lib';
 const DEFAULT_MANIFEST = path.join(
   __dirname, '..', 'capabilities', 'cpp-gsd-x-mission', 'capability.json'
 );

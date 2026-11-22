@@ -36,7 +36,7 @@ Resolution chains
 -----------------
 Repo path (Q4a):  --repo-path  ->  $POWERPACK_REPO  ->
   `git rev-parse --show-toplevel` from this script's dir  ->
-  hardcoded host fallback (C:/Users/User/.claude/skills/claude-power-pack).
+  hardcoded host fallback (C:/Users/Jacobo/.claude/skills/claude-power-pack).
 
 Canonical ref (Q1a intent honored, false literal corrected):
   --ref  ->  $POWERPACK_MIRROR_REF  ->  the sealing branch  ->  main  ->
@@ -60,7 +60,7 @@ import subprocess
 import sys
 from pathlib import Path, PurePosixPath
 
-HARDCODED_REPO = r"C:\Users\User\.claude\skills\claude-power-pack"
+HARDCODED_REPO = r"C:\Users\Jacobo\.claude\skills\claude-power-pack"
 
 # Sealing branch: the lineage that actually owns these files (audit-verified
 # 2026-05-16). Used only as a fallback after --ref / env. Overridable so a

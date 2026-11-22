@@ -16,10 +16,10 @@ import argparse
 import tempfile
 import subprocess
 
-DEFAULT_SQ3 = r"C:\Users\User\Apps\sqlite-full\sqlite3.exe"
+DEFAULT_SQ3 = r"C:\Users\Jacobo\Apps\sqlite-full\sqlite3.exe"
 ALLOWED = {"state.vscdb.old", "state.vscdb.fix-copy", "state.vscdb.backup"}
 OUT_DEFAULT = (os.environ.get("SOVEREIGN_MINER_OUT_DIR")
-               or r"C:\Users\User\Downloads\PowerPack_Sovereign_Datasets")
+               or r"C:\Users\Jacobo\Downloads\PowerPack_Sovereign_Datasets")
 RECON_DIR = os.path.join(OUT_DEFAULT, "_reconstructed")
 CURSOR_GLOBAL = os.path.expandvars(r"%APPDATA%\Cursor\User\globalStorage")
 # Runtime-assembled trigger string for the smoke gate.

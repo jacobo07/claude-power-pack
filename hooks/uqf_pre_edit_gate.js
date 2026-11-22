@@ -18,8 +18,8 @@
 const fs = require('fs');
 const { execFileSync } = require('child_process');
 
-const PY = 'C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe';
-const PP_PATH = 'C:\\Users\\User\\.claude\\skills\\claude-power-pack';
+const PY = 'C:\\Users\\Jacobo\\AppData\\Local\\Programs\\Python\\Python313\\python.exe';
+const PP_PATH = 'C:\\Users\\Jacobo\\.claude\\skills\\claude-power-pack';
 
 function readStdin() {
   try {

@@ -35,7 +35,7 @@ const { execFileSync } = require('child_process');
 const PP_PATH = path.resolve(__dirname, '..');
 const BUS_PY = path.join(PP_PATH, 'modules', 'parallel_mesh', 'pm_03_bus.py');
 const PYTHON_EXE =
-  'C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe';
+  'C:\\Users\\Jacobo\\AppData\\Local\\Programs\\Python\\Python313\\python.exe';
 const EXEC_TIMEOUT_MS = 8000;
 
 function emit(obj) {

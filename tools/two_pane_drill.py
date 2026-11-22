@@ -43,7 +43,7 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
 HOME = Path.home()
-PYTHON = Path(r"C:\Users\User\AppData\Local\Programs\Python\Python312\python.exe")
+PYTHON = Path(r"C:\Users\Jacobo\AppData\Local\Programs\Python\Python313\python.exe")
 DAEMON = HOME / ".claude" / "hooks" / "auto-compact-sendkeys-daemon.ps1"
 REAL_SESSIONS = HOME / ".claude" / "sessions"
 REAL_INBOX = HOME / ".claude" / "state" / "terminal-inbox"

@@ -12,7 +12,7 @@ const path = require('node:path');
 const PP_ROOT = path.resolve(__dirname, '..');
 const PY = process.env.PYTHON_BIN
   || (process.platform === 'win32'
-    ? 'C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe'
+    ? 'C:\\Users\\Jacobo\\AppData\\Local\\Programs\\Python\\Python313\\python.exe'
     : 'python3');
 const DETECTOR_TIMEOUT_MS = 2500;
 const MAX_COMMAND_LEN = 2000;  // commands beyond this are truncated for the probe

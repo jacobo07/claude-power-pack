@@ -12,7 +12,7 @@
  *   Add to ~/.claude/settings.json under hooks.Stop[].hooks[]:
  *     { "type": "command",
  *       "command": "node \"<PP>/hooks/session_snapshot_stop.js\"" }
- *   where <PP> = C:/Users/User/.claude/skills/claude-power-pack
+ *   where <PP> = C:/Users/Jacobo/.claude/skills/claude-power-pack
  *
  * Fail-open: any error -> exit 0. A Stop hook must never break turn end.
  */
@@ -25,7 +25,7 @@ const { spawn } = require('child_process');
 
 const PP_PATH = path.resolve(__dirname, '..');
 const PYTHON_EXE =
-  'C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe';
+  'C:\\Users\\Jacobo\\AppData\\Local\\Programs\\Python\\Python313\\python.exe';
 const TOOL = path.join(PP_PATH, 'tools', 'session-snapshot.py');
 const LOG = path.join(os.tmpdir(), 'pp-stop-hooks.log');
 

@@ -30,7 +30,7 @@ const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
 
-const PY = 'C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe';
+const PY = 'C:\\Users\\Jacobo\\AppData\\Local\\Programs\\Python\\Python313\\python.exe';
 // Resolved from this file's own location, not hardcoded. The literal
 // installed path meant a copy of this hook running from a git worktree
 // still wrote to the INSTALLED corpus. test_capture_liveness drives the

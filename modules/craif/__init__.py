@@ -1,6 +1,6 @@
 """craif -- Closed-Loop Repair & Activation Integrity Fabric, Phase 1 runtime.
 
-Phase 1 scope (see vault/knowledge_base/craif/ and C:\\Users\\User\\.claude\\plans\\
+Phase 1 scope (see vault/knowledge_base/craif/ and C:\\Users\\Jacobo\\.claude\\plans\\
 structured-weaving-quill.md): a repair transaction that consumes a real liveness
 Finding, generates a candidate, consults the real Decision Review Kernel, and
 pauses at PRECONDITIONS-CHECKED with an Owner escalation -- because no rollback

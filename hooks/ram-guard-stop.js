@@ -45,7 +45,7 @@ const { execFileSync } = require('child_process');
 const PP_PATH = path.resolve(__dirname, '..');
 const RAM_GUARD_PY = path.join(PP_PATH, 'tools', 'ram_guard.py');
 const PYTHON_EXE =
-  'C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe';
+  'C:\\Users\\Jacobo\\AppData\\Local\\Programs\\Python\\Python313\\python.exe';
 const THROTTLE_FILE = path.join(os.tmpdir(), 'pp-ram-guard-last.txt');
 const THROTTLE_MS = 5 * 60 * 1000;   // sample at most every 5 min
 const EXEC_TIMEOUT_MS = 8000;        // hard cap on the probe subprocess

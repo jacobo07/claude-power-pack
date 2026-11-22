@@ -67,7 +67,7 @@ def _iso(epoch: float) -> str:
 
 def _encode_project_dir(cwd: str) -> str:
     """cwd -> Claude Code projects-dir name. Every non-alphanumeric char
-    maps to '-' (verified against the live store: 'C:\\Users\\User\\.claude'
+    maps to '-' (verified against the live store: 'C:\\Users\\Jacobo\\.claude'
     -> 'C--Users-User--claude'). No dash collapsing."""
     return re.sub(r"[^A-Za-z0-9]", "-", cwd)
 

@@ -29,7 +29,7 @@ from modules.gsd_x.goal import contract as gc     # noqa: E402
 from modules.gsd_x.goal import evidence as ev     # noqa: E402
 from modules.gsd_x.goal import log as gl          # noqa: E402
 
-WT = Path(os.environ.get("UWCP_FP028_WT", r"C:\Users\User\AppData\Local\Temp\ksr_p2w25\parent"))
+WT = Path(os.environ.get("UWCP_FP028_WT", r"C:\Users\Jacobo\AppData\Local\Temp\ksr_p2w25\parent"))
 EVID = ".ksr_vault/evidence/P2_W25_FP028_SEQUENCER_STATIC_20260924.md"
 GOAL = "ksr-p2w25-fp028"
 ACTOR = "uwcp-golden08-import"

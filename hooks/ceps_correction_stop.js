@@ -37,7 +37,7 @@ const { spawn } = require('child_process');
 
 const PP_PATH = path.resolve(__dirname, '..');
 const PYTHON_EXE =
-  'C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe';
+  'C:\\Users\\Jacobo\\AppData\\Local\\Programs\\Python\\Python313\\python.exe';
 const CEPS = path.join(PP_PATH, 'tools', 'ceps.py');
 const LOG = path.join(os.tmpdir(), 'pp-stop-hooks.log');
 const STDIN_TIMEOUT_MS = 3000;

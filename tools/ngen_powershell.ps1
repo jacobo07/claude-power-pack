@@ -24,7 +24,7 @@
   assumed.
 
   RUN (from any shell):
-      Start-Process powershell -Verb RunAs -ArgumentList '-NoProfile','-ExecutionPolicy','Bypass','-File','C:\Users\User\.claude\skills\claude-power-pack\tools\ngen_powershell.ps1'
+      Start-Process powershell -Verb RunAs -ArgumentList '-NoProfile','-ExecutionPolicy','Bypass','-File','C:\Users\Jacobo\.claude\skills\claude-power-pack\tools\ngen_powershell.ps1'
 
   ASCII-only source (PS 5.1 codepage safety).
 #>

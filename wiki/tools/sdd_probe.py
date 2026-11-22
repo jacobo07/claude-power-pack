@@ -1,6 +1,6 @@
 """Live probe of SDD-OS claims, using the real modules against a temp repo."""
 import sys, tempfile, pathlib
-sys.path.insert(0, r"C:\Users\User\.claude\skills\claude-power-pack")
+sys.path.insert(0, r"C:\Users\Jacobo\.claude\skills\claude-power-pack")
 from modules.spec_gate.gate import classify_tier
 from modules.sdd_os.pre_exec_gate import evaluate
 

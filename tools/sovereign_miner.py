@@ -41,7 +41,7 @@ PP_DIR = os.path.join(_HOME, ".claude", "skills", "claude-power-pack")
 CLAUDE_DIR = os.path.join(_HOME, ".claude")
 OUT_DIR = os.path.join(_HOME, "Downloads", "PowerPack_Sovereign_Datasets")
 FFMPEG = os.path.join(_HOME, "tools", "ffmpeg", "ffmpeg.exe")
-VIDEO = r"C:\Users\User\Videos\2026-05-15 18-28-33.mp4"
+VIDEO = r"C:\Users\Jacobo\Videos\2026-05-15 18-28-33.mp4"
 
 LINE_BYTE_CAP = 5 * 1024 * 1024  # skip a single jsonl line larger than 5 MB
 

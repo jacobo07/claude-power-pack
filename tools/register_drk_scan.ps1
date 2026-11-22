@@ -42,7 +42,7 @@ $scanner = Join-Path $repo "modules\decision_review\proactive_scanner.py"
 if (-not (Test-Path $scanner)) { throw "scanner not found: $scanner" }
 
 # Resolve python: prefer the pinned interpreter, fall back to PATH.
-$py = "C:\Users\User\AppData\Local\Programs\Python\Python312\python.exe"
+$py = "C:\Users\Jacobo\AppData\Local\Programs\Python\Python313\python.exe"
 if (-not (Test-Path $py)) {
   $cmd = Get-Command python.exe -ErrorAction SilentlyContinue
   if ($null -eq $cmd) { throw "python.exe not found (checked the pinned path and PATH)" }

@@ -56,7 +56,7 @@ ABSORBED = [
 ]
 
 NODE_EXE_QUOTED = '"/c/Program Files/nodejs/node.exe"'
-DISPATCHER_QUOTED = '"C:/Users/User/.claude/hooks/hook-dispatcher.js"'
+DISPATCHER_QUOTED = '"C:/Users/Jacobo/.claude/hooks/hook-dispatcher.js"'
 
 
 def chain_entry(matcher: str, event: str, timeout_s: int) -> dict:

@@ -196,7 +196,7 @@ function findPython() {
   const fromEnv = process.env.CLAUDEPP_PY_EXE;
   if (fromEnv && fs.existsSync(fromEnv)) return fromEnv;
   // Then look in the obvious places. The user's host has Python at
-  // AppData/Local/Programs/Python/Python312/python.exe.
+  // AppData/Local/Programs/Python/Python313/python.exe.
   const candidates = [
     path.join(HOME, 'AppData', 'Local', 'Programs', 'Python',
                'Python312', 'python.exe'),

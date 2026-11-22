@@ -27,13 +27,13 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import sovereign_miner as v1  # reuse iter_lines + line_text
 
 OUT_DIR = (os.environ.get("SOVEREIGN_MINER_OUT_DIR")
-           or r"C:\Users\User\Downloads\PowerPack_Sovereign_Datasets")
+           or r"C:\Users\Jacobo\Downloads\PowerPack_Sovereign_Datasets")
 RECON_DIR = os.path.join(OUT_DIR, "_reconstructed")
 CURSOR_USER = (os.environ.get("SOVEREIGN_MINER_CURSOR_DIR")
                or os.path.expandvars(r"%APPDATA%\Cursor\User"))
 GLOBAL_DIR = os.path.join(CURSOR_USER, "globalStorage")
 WORKSPACE_DIR = os.path.join(CURSOR_USER, "workspaceStorage")
-PROJECTS_DIR = r"C:\Users\User\.claude\projects"
+PROJECTS_DIR = r"C:\Users\Jacobo\.claude\projects"
 
 # Source priority: lower number = higher precedence.
 P_LIVE = 10

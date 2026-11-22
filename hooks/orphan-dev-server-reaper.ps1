@@ -324,7 +324,7 @@ if ($args -contains '-GhostSelfTest') {
     @{ n = 'inline probe authored by our hook: ours';      c = $probeCmd; s = $tsigs; want = $true  },
     @{ n = 'same probe, no signature discovered: refuse';  c = $probeCmd; s = @();    want = $false },
     @{ n = 'unrelated inline node -e: not ours';           c = 'node.exe -e "require(''http'').createServer().listen(3000) // some user server process"'; s = $tsigs; want = $false },
-    @{ n = 'path under .claude: ours as before';           c = 'node.exe C:/Users/User/.claude/hooks/x.js'; s = @(); want = $true },
+    @{ n = 'path under .claude: ours as before';           c = 'node.exe C:/Users/Jacobo/.claude/hooks/x.js'; s = @(); want = $true },
     @{ n = 'empty command line: refuse';                   c = '';        s = $tsigs; want = $false }
   )
   $ofails = 0
@@ -346,15 +346,15 @@ if ($args -contains '-GhostSelfTest') {
   # Abandoned-hook cases. The FIRST one is the whole point of the rule: it is the
   # process the table above deliberately refuses (burned CPU), and it must be
   # caught here. If these two tables ever agree on a case, one of them is wrong.
-  $hookCmd = 'C:\Program Files\nodejs\node.exe C:/Users/User/.claude/hooks/lazarus-livesnap.js'
-  $ppCmd   = 'python.exe C:\Users\User\.claude\skills\claude-power-pack\modules\zero-crash\hooks\context-watchdog.py'
+  $hookCmd = 'C:\Program Files\nodejs\node.exe C:/Users/Jacobo/.claude/hooks/lazarus-livesnap.js'
+  $ppCmd   = 'python.exe C:\Users\Jacobo\.claude\skills\claude-power-pack\modules\zero-crash\hooks\context-watchdog.py'
   $hcases = @(
     @{ n = 'THE CLASS: ours, parent dead, burned CPU, old'; o = $true;  p = $false; c = $hookCmd;  a = 4000; want = $true  },
     @{ n = 'PP module hook orphan, old';                    o = $true;  p = $false; c = $ppCmd;    a = 900;  want = $true  },
     @{ n = 'parent still alive: it can still read stdout';  o = $true;  p = $true;  c = $hookCmd;  a = 4000; want = $false },
     @{ n = 'young: inside the longest declared budget';     o = $true;  p = $false; c = $hookCmd;  a = 90;   want = $false },
-    @{ n = 'not hook-shaped: user work under .claude';      o = $true;  p = $false; c = 'node.exe C:/Users/User/.claude/mybuild.js'; a = 4000; want = $false },
-    @{ n = 'deliberate survivor: daemon outlives parent';   o = $true;  p = $false; c = 'node.exe C:/Users/User/.claude/hooks/claude-daemon.js'; a = 9000; want = $false },
+    @{ n = 'not hook-shaped: user work under .claude';      o = $true;  p = $false; c = 'node.exe C:/Users/Jacobo/.claude/mybuild.js'; a = 4000; want = $false },
+    @{ n = 'deliberate survivor: daemon outlives parent';   o = $true;  p = $false; c = 'node.exe C:/Users/Jacobo/.claude/hooks/claude-daemon.js'; a = 9000; want = $false },
     @{ n = 'not ours';                                      o = $false; p = $false; c = $hookCmd;  a = 4000; want = $false },
     @{ n = 'no command line: cannot classify, refuse';      o = $true;  p = $false; c = '';        a = 4000; want = $false }
   )

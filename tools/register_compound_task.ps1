@@ -17,8 +17,8 @@
 
 $ErrorActionPreference = 'Stop'
 
-$py     = 'C:\Users\User\AppData\Local\Programs\Python\Python312\pythonw.exe'
-$script = 'C:\Users\User\.claude\skills\claude-power-pack\tools\compound_unattended.py'
+$py     = 'C:\Users\Jacobo\AppData\Local\Programs\Python\Python313\pythonw.exe'
+$script = 'C:\Users\Jacobo\.claude\skills\claude-power-pack\tools\compound_unattended.py'
 $name   = 'PP-Compound-Unattended'
 
 if (-not (Test-Path $py))     { Write-Host "MISSING pythonw: $py";     exit 1 }

@@ -26,10 +26,10 @@ HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[4]
 TASKS = json.loads((HERE / "p3-tasks.json").read_text(encoding="utf-8"))["tasks"]
 RESULTS = HERE / "results.jsonl"
-RUNS = Path(r"C:\Users\User\Apps\p3-runs")
+RUNS = Path(r"C:\Users\Jacobo\Apps\p3-runs")
 GIT = r"C:\Program Files\Git\cmd\git.exe"
 PY = sys.executable
-CLAUDE = r"C:\Users\User\.local\bin\claude.exe"
+CLAUDE = r"C:\Users\Jacobo\.local\bin\claude.exe"
 MODEL = "claude-opus-5-5"
 RULES = Path.home() / ".claude" / "rules"
 R1 = [str(RULES / n).replace("\\", "/") for n in (
