@@ -131,6 +131,21 @@ def main() -> int:
     d = mb.detect_rebind(later, transcript("pre-agent", [], wt["agent-a33215aa"], ahead=worked_after))
     check("V-RB-PREEXISTING-AGENT-WORKTREE-STILL-EXCLUDED", d is not None and d["candidates"] == [], str(d)[:200])
 
+    # 4. a repository whose path is not ASCII (the MG demo: "María Jesús Estética"). git prints UTF-8; read as
+    # the Windows locale, the toplevel never equalled the worktree and the relay never followed it.
+    from gsd_mission import _git_toplevel_and_common
+    acc = TMP / "Peluqueros & María Jesús Estética"
+    acc.mkdir()
+    git("init", "-q", cwd=acc)
+    git("-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "--allow-empty", "-m", "root", cwd=acc)
+    accw = acc / ".claude" / "worktrees" / "mg-demo-build"
+    git("worktree", "add", "-q", "-b", "b-acc", str(accw), cwd=acc)
+    top = _git_toplevel_and_common(str(accw))
+    check("V-RB-NON-ASCII-TOPLEVEL-MATCHES", top is not None and top[0] == os.path.normcase(str(accw.resolve())),
+          ascii(top[0] if top else None)[:160])
+    main_top = _git_toplevel_and_common(str(acc))
+    check("V-RB-NON-ASCII-SAME-REPO", top is not None and main_top is not None and top[1] == main_top[1])
+
     print(f"REBIND_F4_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
     shutil.rmtree(TMP, ignore_errors=True)
     return 0 if fails == 0 else 1

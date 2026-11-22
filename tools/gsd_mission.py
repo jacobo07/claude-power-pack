@@ -4761,8 +4761,10 @@ def _git_toplevel_and_common(path: str) -> tuple[str, str] | None:
     import subprocess
     g = resolve_exe("git") or "git"
     try:
+        # git prints paths in UTF-8. The locale default (cp1252 on Windows) turned "María" into "MarÃ\xada", the
+        # top never equalled the worktree, and effective_workdir never followed an accented worktree (2026-11-22).
         r = subprocess.run([g, "-C", path, "rev-parse", "--show-toplevel", "--git-common-dir"],
-                           capture_output=True, text=True, timeout=20)
+                           capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=20)
     except Exception:
         return None
     lines = [l.strip() for l in (r.stdout or "").splitlines() if l.strip()]
@@ -4845,7 +4847,8 @@ def align_cwd(cwd: str, work_dir: str | None, proven_workstream: str | None = No
     g = resolve_exe("git") or "git"
 
     def git(path, *args):
-        return subprocess.run([g, "-C", path, *args], capture_output=True, text=True, timeout=60)
+        return subprocess.run([g, "-C", path, *args], capture_output=True, text=True, encoding="utf-8",
+                              errors="replace", timeout=60)
 
     try:
         hc = git(cwd, "rev-parse", "HEAD").stdout.strip()
