@@ -98,6 +98,12 @@ const out = mod.run({ prompt: 'Haz el anuncio del cárdigan de punto para Meta' 
 ok('run() returns the injection object in-process', !!(out && /akos:u-native|01ds:copy/.test(out.hookSpecificOutput.additionalContext)));
 ok('run() is silent on a non-creative prompt', mod.run({ prompt: 'arregla el test de phase_status' }) === null);
 ok('run() never throws on garbage input', mod.run(null) === null && mod.run({ prompt: 42 }) === null);
+// Machine turns carry creative words too: a subagent hand-back is not the Owner asking for an ad (2026-11-22).
+const handback = 'Another Claude session sent a message: <agent-message from="a1"> [Subagent hand-back] Haz el anuncio '
+  + 'del cárdigan de punto para Meta: the hook draft is ready.</agent-message>';
+ok('run() is silent on a subagent hand-back with creative words', mod.run({ prompt: handback }) === null);
+ok('run() still fires when the Owner prompt follows a leading system-reminder',
+  !!mod.run({ prompt: '<system-reminder>x</system-reminder>\nHaz el anuncio del cárdigan de punto para Meta' }));
 const disp = fs.readFileSync(path.join(require('os').homedir(), '.claude', 'hooks', 'hook-dispatcher.js'), 'utf8');
 const bundle = (disp.match(/'UserPromptSubmit-default':\s*\[([\s\S]*?)\]/) || [])[1] || '';
 ok('registered in the in-process UserPromptSubmit-default bundle', /creative_grounding\.js/.test(bundle));

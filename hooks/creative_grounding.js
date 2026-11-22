@@ -143,7 +143,9 @@ function render(hits) {
 function run(data) {
   try {
     if (process.env.AKOS_GROUNDING === '0') return null;
-    const prompt = (data && data.prompt) || '';
+    // The Owner's words only: a subagent hand-back that mentions "hooks for" or "landing" is not a creative request
+    // (observed 2026-11-22: ~1 KB of retrieval injected on a hand-back). Shared rule, see prompt_origin.js.
+    const prompt = require('./prompt_origin').ownerText((data && data.prompt) || '');
     if (!isCreative(prompt)) return null;
     if (!fs.existsSync(INDEX)) return null;  // no index: nothing to ground with; never invent
     const hits = search(prompt);
