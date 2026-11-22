@@ -76,3 +76,17 @@ transcript), 9 adversarial (red-team 5, 6, 15, 19, 20, 24 pinned), 10 autonomous
 Partial: 2 autonomy (intent routing existed and fired; tranche 1 added shell coverage), 4 design quality (one fixture).
 UNVERIFIED: 3 resource selection, 6 accessibility beyond tap/contrast on one page, 7 performance, 11 fresh agent,
 12 cross-project transfer, 14 baseline ratchet inheritance in another repo, 15 final engineering review of the whole.
+
+## Review of bb95f710 (pp-code-reviewer: 0 critical, 0 high, 2 medium, 1 low) -- session 5b59546c
+- M1 FIXED (next commit): brand was gating for every path; a film/copy page then needed a review and app source in a
+  brand-only session was judged. Pinned by V-DSR-BRAND-SCOPED-TO-ASSETS (pre-fix behaviour taken from the reviewer's
+  trace, not observed failing).
+- M2 OPEN: `python -m modules.ccf.cli generate` writes `.ccf/images/<id>.png` from inside the process, so CCF's own
+  outputs are never judged (no Write row, no token in the command). Advice text narrowed so it no longer promises it.
+  Fix candidates: collect `.ccf/images/**` changed after the brand prompt, or have the CCF CLI report its outputs.
+- L1 OPEN: asset admission uses the CURRENT session kinds; a logo written under brand drops out when the next prompt
+  is web, and a screenshot written earlier gets judged when brand arrives later. Store kinds with each write.
+- NEW, evidence: the machine-turn filter (efaae877 + 16b2ecd1, `modules/gsd_x/prompt_origin.owner_text`) did NOT stop
+  a real subagent hand-back at ~18:50: `~/.claude/state/design_route/prompts.jsonl` row ts 1795368968 for session
+  5b59546c recorded kinds [calco, motion, dataviz, brand] from a hand-back. V-DRO's fixture shape does not match the
+  live payload. Capture one real hand-back payload (first ~120 chars, local only) before changing the prefixes.
