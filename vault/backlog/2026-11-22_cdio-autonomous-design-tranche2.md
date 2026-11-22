@@ -47,6 +47,12 @@ shipped. This file is the handoff for a fresh agent: it holds no context that is
 - Item 6 DONE 16b2ecd1: family baselines are chosen from `owner_text()` (shared, `modules/gsd_x/prompt_origin.py`);
   V-FINJ-MACHINE-TURN-NO-FAMILY fails on the old code [True, True, True]. Residual: the AKOS creative-grounding
   injector fires on machine turns too (observed 2026-11-22 on a hand-back) and was not audited.
+- Item 1 DONE bb95f710 (brand assets judged: framed render on light/dark at 32/96/320 px). Its pp-code-reviewer
+  review was still running at the context wall: consume it first (re-dispatch on `git show bb95f710` if lost).
+- NEW gap found by bb95f710's first live firing: an asset a rendered page SHOWS (`<img src="pan.svg">`) is not
+  covered by that page's render the way a linked stylesheet is (`_covered_by_render` only parses css/js), so a brand
+  session demands a separate review of `vault/fixtures/cdio_repair_loop/pan.svg`. Extend coverage to img-linked
+  .svg/.png, failing-first test. Also: that session's brand kind came from a pre-efaae877 machine turn.
 - Item 2 left to the session adding `render-url` (still uncommitted in tools/design_review_record.py at 18:05).
 - Paused before item 3 on budget: the campaign passed 2x the Owner's 250k planning reference (subagents alone
   168k measured). Item 3 needs about 4 build + independent-review cycles at ~50k each: Owner budget call first.
