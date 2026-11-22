@@ -9,6 +9,10 @@
 **Evidence snapshot:** existing owner paths inspected in public CPP main on 2026-11-22 (initial HEAD 398216c6b3f281571a8fac8cfa650ea6f19357bc). GitHub repository identities below checked on 2026-11-22; **repository existence does not prove current versions, source licenses, model-weight licenses, third-party photo rights, runtime operation, compatibility or quality**. Reconcile main and deployed/global runtime at execution.
 **Scope semantics:** this is a task and source-disposition register, not a claim that any named upstream was installed, absorbed, benchmarked, audited for licensing, or incorporated into the runtime.
 
+## New source-derived CDIO specialization: chromatic art direction + US kitchen configurator (2026-11-22)
+
+The Owner supplied two Instagram screenshots and seven video files showing palette-driven hero design (base/text/accent and an illustrative 60/30/10 heuristic), sector-specific art direction, and an interactive kitchen configuration demo. [CDIO-VRK-001 — Color Art Direction & US Kitchen Configurator Reverse Engineering](2026-11-22_cdio-color-art-direction-kitchen-web-configurator-reverse-engineering.md) is the authoritative **specialized** intake: 9/9 media identities with hashes and evidence limits, 22 scoped implementation tasks, 24 negative tests, US remodeler/cabinetmaker application classes and Production Reality proof boundaries. Four MP4s contain only one decodable frame. Preserve source/reference rights and distinguish UI mockups from verified backend functionality. Do not fork CGVI automation/brand/QA owners. **Backlog only: no implementation, tests or external media republishing.**
+
 ## 1. The actual problem: attractive template != authentic destination
 
 Owner critique of the V2 (qualitative testimony, not a fresh independently inspected artifact): excessive empty space, flat geometric beer/fish/boat/house illustrations, little real food or human activity, repeated images/symbols, restrained typography, weak material/lighting atmosphere, and a "beautiful branding presentation" instead of an inviting bodeguita where someone wants to enter, eat and remain.
