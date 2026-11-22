@@ -21,7 +21,34 @@
   0963155e -> 3ee48f82. Backups `*.bak-2e3b-w2-20261122T172634Z`; ledger `code_deploy`.
 - Smoke: the 17:35:02Z tick wrote state.json with 0 tracebacks. It was a WIIPARTY budget wait (495.6M + 6M > 500M), so
   NO shadow row exists yet. The first live j0_shadow/prearm_shadow comes after 00:00Z: READ IT.
-- NEXT: W3 (prefix sub-attribution; the slim pilot cannot arm before the 00:00Z day reset).
+- **W3 (a) DONE** (worktree 2c8944d8, `throughput/W3_PREFIX_SUBATTRIBUTION.md`).
+  - S307W's first call processed 77,213 (cache creation 50,391 + read 26,820).
+  - Measured chars: skills listing 43k, agents 31k, CLAUDE.md + rules 27k, hook context 19k.
+  - About 61% (system prompt + tool schemas) is a residual not in the transcript. Token split at 3.75 c/t is an ESTIMATE.
+- **W3 (b) as planned is FALSIFIED**:
+  - slim_argv passes --disable-slash-commands, but the worker command runs /gsd-autonomous.
+  - --setting-sources=local drops the default guards. slim-t1 has no hooks; slim-t2 has only the PreToolUse dispatcher
+    chains.
+- Owner 17:47Z: "slim-t2 + inline loop". Owner 17:55Z: "Approve 12-hook list".
+  - Guard diff: worktree 664a3174, `throughput/W3B_GUARD_DIFF.md`. The default worker on GEX44 runs 69 hooks; slim-t2
+    runs 3.
+  - Profile `slim-asc` = 3 dispatcher chains + mission_session_start, mission_hold_gate, mission_wall_hook,
+    self_match_pgrep_guard, session-file-guard, gsd-secret-read-guard, gsd-validate-commit + gsd-worktree-path-guard,
+    gsd-workflow-guard.
+- **BLOCKER found (live latent hole).**
+  - The GEX44 PP clone (HEAD 2e727761) has slim-critical-settings.json with literal C:/ paths (b64cb245).
+  - Its tools/gsd_mission.py has NO slim_settings_file(); it predates laptop fix 88f71798 (2026-11-09).
+  - So any slim-t2 worker on GEX44 runs unguarded today (no slim mission is armed there; latent).
+  - The fix must land in GEX44 gsd_mission.py, which carries another writer's uncommitted diff (331 lines + the T1 O5
+    hunks). Bring 88f71798 + slim-asc in as a 3-way `git apply` onto that dirty file, after backing it up, then
+    re-verify the other writer's hunks byte for byte.
+- NEXT, in order:
+  1. Build slim-asc in the worktree: settings template, SLIM_PROFILES, slim_argv. The autopilot command_text inlines the
+     packet loop when the lane has `worker_profile: slim-asc`, and passes it at arm.
+  2. Gate on GEX44: every REQUIRED hook driven from both poles; control = slim-t2 red.
+  3. Sync to the GEX44 clone (careful merge, above).
+  4. Set WIIPARTY `worker_profile` after 00:00Z; 2 generations; kill switch = null.
+  Also: read the first j0_shadow/prearm_shadow rows.
 
 **2026-11-22 17:00Z (pane a52cc240). Owner "y" (AskUserQuestion "Approve as written") on T2.**
 - Plan: worktree `vault/plans/ascension-atomic-fabric-T2-20261122.md` (d8ac705b).
