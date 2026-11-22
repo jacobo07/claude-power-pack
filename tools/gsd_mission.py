@@ -3659,9 +3659,15 @@ def verify_owner_turn(ref: str, finder=None) -> dict:
 def set_authority(mission_id: str, tokens=None, extend_hours: float | None = None,
                   now: float | None = None, reason: str = "", owner_turn: str | None = None,
                   actor: str | None = None, expected_seq: int | None = None, recognize_overrun: bool = False,
-                  spent_fn=None, finder=None, stage: str | None = None) -> dict:
+                  spent_fn=None, finder=None, stage: str | None = None, lineage_fn=None) -> dict:
     """Record Owner-granted programme authority on a mission: `authority_tokens` is the processed-token
     ceiling AMR may lease inside; `extend_hours` adds wall time. Both are Owner acts; the reason names it.
+    Lineage (measured 2026-11-22, avatar m-c4569262384c): a renewed mission also carries the lineage's
+    `lineage_authority_tokens` / `lineage_token_budget`, which renewal and autoresume judge against the whole
+    lineage's spend. A raise that moved only `authority_tokens` left the lineage at 199.56M of 200M, so the Owner's
+    typed 90M could never survive a renewal. The raise now carries the same headroom to the lineage:
+    lineage ceiling = lineage spend + (new mission ceiling - mission spend). It never lowers the lineage ceiling,
+    and an unmeasured mission or lineage spend leaves it unchanged (named in the receipt, never read as zero).
     T1 F2: each act appends a receipt (prev, new, owner_turn, actor, expected_seq, spend at the set). The same
     owner turn applied again with the same figure is an idempotent no-op; with another figure it is refused.
     I3: a ceiling that leaves no room above live spend after the closeout reserve is refused unless
@@ -3711,14 +3717,53 @@ def set_authority(mission_id: str, tokens=None, extend_hours: float | None = Non
                 f"refused: authority {new:,} minus closeout reserve {reserve:,} is not above live spend {spent:,} "
                 f"(measured now), so the breaker would trip on arrival. Re-read spend (topology) and choose again, "
                 "or pass --recognize-overrun to record a ceiling that recognises spend already made")
+    lineage = _lineage_authority_carry(rec, fields, spent, lineage_fn or ms.lineage_spend, ms.closeout_reserve)
+    fields.update(lineage.pop("fields"))
     entry = {"at": time.time() if now is None else now, "prev": rec.get("authority_tokens"),
              "new": fields.get("authority_tokens", rec.get("authority_tokens")),
              "extend_hours": float(extend_hours) if extend_hours else None, "owner_turn": turn, "actor": actor,
              "expected_seq": expected_seq, "seq_before": rec.get("seq"), "spent_at_set": spent,
-             "recognize_overrun": bool(recognize_overrun), "stage": eff_stage, "stage_opened": bool(stage_opened)}
+             "recognize_overrun": bool(recognize_overrun), "stage": eff_stage, "stage_opened": bool(stage_opened),
+             "lineage": lineage or None}
     return transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"], expect_seq=expected_seq,
                       event="authority_set", now=now, reason=f"authority: {fields} ({reason[:200]})",
                       authority_receipts=(receipts + [entry])[-20:], ledger_extra={"receipt": entry}, **fields)
+
+
+def _lineage_authority_carry(rec: dict, fields: dict, spent, lineage_fn, reserve_fn) -> dict:
+    """The lineage half of an authority raise (see set_authority). Returns {"fields": <record fields to write>, ...
+    receipt facts}. Only a record that already carries a lineage ceiling is touched; a mission outside a lineage
+    returns no fields and no facts."""
+    out: dict = {"fields": {}}
+    prev = rec.get("lineage_authority_tokens")
+    if "authority_tokens" not in fields or not prev:
+        return out
+    out["prev"] = int(prev)
+    if spent is None:
+        out["unchanged"] = "mission spend unmeasured"
+        return out
+    try:
+        sp = lineage_fn(rec["mission_id"], extra=rec)
+    except Exception as exc:  # noqa: BLE001 -- unmeasured is named, never zero
+        out["unchanged"] = f"lineage spend unmeasured: {type(exc).__name__}: {exc}"[:200]
+        return out
+    if sp.get("unmeasured") or sp.get("processed") is None:
+        out["unchanged"] = f"lineage members unmeasured: {sp.get('unmeasured')}"[:200]
+        return out
+    lin_spent = int(sp["processed"])
+    new_lin = lin_spent + (int(fields["authority_tokens"]) - int(spent))
+    out.update(spent=lin_spent, computed=new_lin)
+    if new_lin <= int(prev):
+        out["unchanged"] = "computed lineage ceiling is not above the current one (never lowered)"
+        return out
+    out["fields"]["lineage_authority_tokens"] = new_lin
+    out["new"] = new_lin
+    budget = rec.get("lineage_token_budget")
+    if budget is not None:
+        nb = max(int(budget), new_lin - int(reserve_fn({**rec, "authority_tokens": new_lin})))
+        out["fields"]["lineage_token_budget"] = nb
+        out["budget_prev"], out["budget_new"] = int(budget), nb
+    return out
 
 
 def _amr_transcript(rec: dict, sid: str | None) -> Path | None:
