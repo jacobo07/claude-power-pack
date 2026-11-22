@@ -57,6 +57,7 @@ shipped. This file is the handoff for a fresh agent: it holds no context that is
     light/dark 32/96/320 review (record() checks ASSET_EXT before `covered` on purpose). Its motivating case was the
     hand-back misroute fixed in a2c58028 (pan.svg judged only because a machine turn set kind brand). Options: drop it,
     or cover img-linked assets only when written outside a brand window (needs L1's per-write kinds first).
+  - DROPPED (Owner, 2026-11-22, "Drop it"): assets keep their own framed review. Next: M2.
 - Item 2 left to the session adding `render-url` (still uncommitted in tools/design_review_record.py at 18:05).
 - (session c711a976) Item 2 debt closed ef8ac725: V-DRU-CHANGED-DURING-RENDER-REFUSED (mutant binds 1 row, rc 0).
 - (session c711a976) AKOS residual DONE 09bc9c1c: creative_grounding.js classifies `ownerText()` from the new
