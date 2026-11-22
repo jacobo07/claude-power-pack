@@ -1,0 +1,356 @@
+[
+ {
+  "ts": "11-12T09:32",
+  "lane": "TENNIS",
+  "action": "repair",
+  "spend": 8378318,
+  "instruments": [
+   "H-T1a float-evidence control pool (frozen rule, n=2<22)",
+   "H-T1a negative row (INSTRUMENT_FAIL)"
+  ]
+ },
+ {
+  "ts": "11-12T11:12",
+  "lane": "TENNIS",
+  "action": "park",
+  "spend": null,
+  "instruments": [
+   "H-T1a widened control pool (n=12 < 22 at freeze)"
+  ]
+ },
+ {
+  "ts": "11-14T00:07",
+  "lane": "TENNIS",
+  "action": "research",
+  "spend": 4818830,
+  "instruments": [
+   "H-T1a widened control pool (lane-flag plantable f32, n>=22)"
+  ]
+ },
+ {
+  "ts": "11-14T09:20",
+  "lane": "TENNIS",
+  "action": "research",
+  "spend": 4818830,
+  "instruments": [
+   "S33T widened control pool (H-T1a positive control, n=12 < 22)"
+  ]
+ },
+ {
+  "ts": "11-14T09:58",
+  "lane": "TENNIS",
+  "action": "park",
+  "spend": 7963853,
+  "instruments": [
+   "q_fallback_cert positive control (first-compiling-type selection)",
+   "q_fallback_cert positive control (negative row with reopen condition)"
+  ]
+ },
+ {
+  "ts": "11-14T11:17",
+  "lane": "TENNIS",
+  "action": "research",
+  "spend": 7963853,
+  "instruments": [
+   "q_fallback_cert positive control (pinned first-compiling-type selection, 67.2% < 90%)"
+  ]
+ },
+ {
+  "ts": "11-14T13:30",
+  "lane": "KSR",
+  "action": "repair",
+  "spend": 9197179,
+  "instruments": [
+   "S43K-VS positive control (frozen variant families byte-neutral)"
+  ]
+ },
+ {
+  "ts": "11-14T13:50",
+  "lane": "KSR",
+  "action": "repair",
+  "spend": 2836032,
+  "instruments": [
+   "S44K known-boundary adequacy (H-TU2 positive control)"
+  ]
+ },
+ {
+  "ts": "11-14T14:15",
+  "lane": "KSR",
+  "action": "repair",
+  "spend": 6024061,
+  "instruments": [
+   "S45K known-boundary adequacy (ogws+mkw agreement, H-TU2 positive control)",
+   "S45K known-boundary adequacy negative row"
+  ]
+ },
+ {
+  "ts": "11-14T16:51",
+  "lane": "KSR",
+  "action": "repair",
+  "spend": 5746190,
+  "instruments": [
+   "H-S49FM fma positive control (>=10 certified fma-bearing fixtures)"
+  ]
+ },
+ {
+  "ts": "11-14T20:01",
+  "lane": "KSR",
+  "action": "research",
+  "spend": 5746190,
+  "instruments": [
+   "H-S49FM positive control (>=10 certified fmadd-bearing fixtures)"
+  ]
+ },
+ {
+  "ts": "11-15T10:40",
+  "lane": "KSR",
+  "action": "repair",
+  "spend": 5392807,
+  "instruments": [
+   "H-S62VS positive-control adequacy (perturbation pool, >=20 moved)"
+  ]
+ },
+ {
+  "ts": "11-16T01:12",
+  "lane": "WIIPARTY",
+  "action": "repair",
+  "spend": 6656570,
+  "instruments": [
+   "mkw two-pole idiom classifier positive control (wp_gcw)"
+  ]
+ },
+ {
+  "ts": "11-16T01:35",
+  "lane": "WIIPARTY",
+  "action": "repair",
+  "spend": 6637679,
+  "instruments": [
+   "R1 strict-absence idiom two-pole classifier (gcw2) positive control",
+   "R2 TU-share log-ratio n-gram classifier (gcw3) positive control",
+   "R2 gcw3 DEV variants (15, all INSTRUMENT_FAIL)"
+  ]
+ },
+ {
+  "ts": "11-16T01:55",
+  "lane": "WIIPARTY",
+  "action": "repair",
+  "spend": 2788133,
+  "instruments": [
+   "R4 planted-token canary (original design)"
+  ]
+ },
+ {
+  "ts": "11-16T11:11",
+  "lane": "FIFA",
+  "action": "repair",
+  "spend": 3315421,
+  "instruments": [
+   "H-F8FRM S1 frame balance + S2 preceding terminator interior control (<=2%)"
+  ]
+ },
+ {
+  "ts": "11-16T19:30",
+  "lane": "FIFA",
+  "action": "repair",
+  "spend": 6106074,
+  "instruments": [
+   "L live-in forward scan, blr-preceded interior-offset negative control (H-F12LIVE)"
+  ]
+ },
+ {
+  "ts": "11-16T19:35",
+  "lane": "WSR",
+  "action": "repair",
+  "spend": 5483327,
+  "instruments": [
+   "wsr_ccver held-out cohort-size precondition (H-CCVER, cohort_v2 held-out 3 < 6)"
+  ]
+ },
+ {
+  "ts": "11-17T00:00",
+  "lane": "KSR",
+  "action": "repair",
+  "spend": null,
+  "instruments": [
+   "H-S93TC positive control pool (libid@1 library-caller control, 2<24)"
+  ]
+ },
+ {
+  "ts": "11-17T13:01",
+  "lane": "WSR",
+  "action": "repair",
+  "spend": 5975165,
+  "instruments": [
+   "H-GAMETC compile-fingerprint positive control (wsr_toolchain_fp dev fit)"
+  ]
+ },
+ {
+  "ts": "11-17T14:07",
+  "lane": "WSR",
+  "action": "repair",
+  "spend": 5885925,
+  "instruments": [
+   "EGG2 GC30-vs-Wii family discriminator (cohort n=54)"
+  ]
+ },
+ {
+  "ts": "11-17T14:25",
+  "lane": "WSR",
+  "action": "repair",
+  "spend": 5158419,
+  "instruments": [
+   "EGG3 control adequacy (S110R donor controls family-divergent >= 8)",
+   "EGG3 control adequacy negative row"
+  ]
+ },
+ {
+  "ts": "11-17T14:41",
+  "lane": "WSR",
+  "action": "repair",
+  "spend": 5758900,
+  "instruments": [
+   "H-CTRL control-pool adequacy + flip positive control"
+  ]
+ },
+ {
+  "ts": "11-17T16:55",
+  "lane": "KSR",
+  "action": "repair",
+  "spend": null,
+  "instruments": [
+   "H-S131SA positive control (certified stmw-saving pool 4 < 24)",
+   "H-S131SA result"
+  ]
+ },
+ {
+  "ts": "11-17T18:48",
+  "lane": "WIIPARTY",
+  "action": "repair",
+  "spend": 6714511,
+  "instruments": [
+   "H-LINK-EXT extern-aliasing link (wp_libdonor3_link.py)"
+  ]
+ },
+ {
+  "ts": "11-18T01:25",
+  "lane": "WIIPARTY",
+  "action": "repair",
+  "spend": 9807387,
+  "instruments": [
+   "H-FN-LINK held-out per-function link identity (n_fn 37 < 60)"
+  ]
+ },
+ {
+  "ts": "11-18T01:54",
+  "lane": "WIIPARTY",
+  "action": "repair",
+  "spend": 5573005,
+  "instruments": [
+   "H-FN-LINK freeze adequacy (wp_fnlink4 freeze, 11 fn < 120)",
+   "S153W freeze controls / adequacy record"
+  ]
+ },
+ {
+  "ts": "11-18T02:14",
+  "lane": "WIIPARTY",
+  "action": "repair",
+  "spend": 6262014,
+  "instruments": [
+   "partial-path positive control (snd_adpcm.cpp DEV 2-run via wp_fnlink5)"
+  ]
+ },
+ {
+  "ts": "11-18T02:50",
+  "lane": "WIIPARTY",
+  "action": "research",
+  "spend": 7733820,
+  "instruments": [
+   "H-FN-LINK held-out link (wp_fnlink6/wp_fnlink5 placement, n_fn floor 60)"
+  ]
+ },
+ {
+  "ts": "11-18T11:41",
+  "lane": "KSR",
+  "action": "repair",
+  "spend": 4537105,
+  "instruments": [
+   "H-S167SIG inverse-perturbation positive control (stmw/lmw r30 pair on s114k control_pool, 0/428 < 24)"
+  ]
+ },
+ {
+  "ts": "11-19T00:34",
+  "lane": "TENNIS",
+  "action": "repair",
+  "spend": 7529850,
+  "instruments": [
+   "H-S182T C6 hand-written slot-getter route (coverage clause: 6 fns to exact or cap)"
+  ]
+ },
+ {
+  "ts": "11-19T10:05",
+  "lane": "KSR",
+  "action": "repair",
+  "spend": 3524991,
+  "instruments": [
+   "H-S197RL REL24 positive control (min_eligible 3, saw 1)"
+  ]
+ },
+ {
+  "ts": "11-21T00:05",
+  "lane": "FIFA",
+  "action": "repair",
+  "spend": 3836547,
+  "instruments": [
+   "v11 N-callee call model positive control (f44_control)"
+  ]
+ },
+ {
+  "ts": "11-22T01:01",
+  "lane": "KSR",
+  "action": "repair",
+  "spend": 5370532,
+  "instruments": [
+   "s269k_ca H1 positive controls (5/7; amend1 also 5/7)",
+   "s269k_ca dev run blocked by failed control"
+  ]
+ },
+ {
+  "ts": "11-22T01:55",
+  "lane": "TENNIS",
+  "action": "repair",
+  "spend": 4837020,
+  "instruments": [
+   "H-S263TW width-narrow held-out population floor",
+   "H-S263TW width-narrow negative row"
+  ]
+ },
+ {
+  "ts": "11-22T04:05",
+  "lane": "TENNIS",
+  "action": "repair",
+  "spend": 4648355,
+  "instruments": [
+   "s284t return-type positive control (negative row)",
+   "s284t return-type positive control (plantable float-callee fns >= 5)"
+  ]
+ },
+ {
+  "ts": "11-22T04:20",
+  "lane": "TENNIS",
+  "action": "repair",
+  "spend": 4717936,
+  "instruments": [
+   "s285t return-type positive control (plantable count)"
+  ]
+ },
+ {
+  "ts": "11-22T04:45",
+  "lane": "TENNIS",
+  "action": "repair",
+  "spend": 3179461,
+  "instruments": [
+   "S287T plantability probe",
+   "S287T srcfix positive-control plantability (R1/R2/R5)"
+  ]
+ }
+]
