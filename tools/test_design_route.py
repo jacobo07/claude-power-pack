@@ -86,9 +86,22 @@ def stop(sid: str, cwd: str, tpath: str, **kw):
     return run_hook(STOP, dict({"session_id": sid, "cwd": cwd, "transcript_path": tpath}, **kw))
 
 
+CLEAN_VP = {"broken_images": [], "duplicate_images": [], "dead_links": [], "overflow_px": 0, "viewport_px": 1440,
+            "failed_requests": [], "console_errors": []}
+CLEAN_FACTS = {"collected": True, "version": 1, "viewports": {"desktop": CLEAN_VP, "phone": dict(CLEAN_VP, viewport_px=390)}}
+
+
+def fake_render(page: str, facts=CLEAN_FACTS) -> None:
+    """A render row shaped like the real one. facts=None reproduces a render taken before facts existed."""
+    row = {"file": dr.canon(page), "sha": dr.sha256(page), "pngs": ["fake.png"]}
+    if facts is not None:
+        row["facts"] = facts
+    dr.append_row("renders.jsonl", row)
+
+
 def approve(page: str) -> dict:
     """What a real cdio-reviewer pass leaves behind: a render row, then a record row."""
-    dr.append_row("renders.jsonl", {"file": dr.canon(page), "sha": dr.sha256(page), "pngs": ["fake.png"]})
+    fake_render(page)
     v = os.path.join(_TMP, "v.json")
     Path(v).write_text(json.dumps(GOOD_VERDICTS), encoding="utf-8")
     sys.path.insert(0, str(ROOT / "tools"))
@@ -184,7 +197,7 @@ def test_stop() -> None:
     ok("V-DSR-STOP-NO-REBLOCK-ON-EDIT", (first or {}).get("decision") == "block" and again is None, again)
     # a recorded, refused review re-blocks up to 3 times in total, through stop_hook_active (GEX44 SaaS run)
     d3, page3 = project(CLEAN.replace("Tidewell", "Tidewell three"))
-    dr.append_row("renders.jsonl", {"file": dr.canon(page3), "sha": dr.sha256(page3), "pngs": ["fake.png"]})
+    fake_render(page3)
     thin = os.path.join(_TMP, "thin3.json")
     Path(thin).write_text(json.dumps(GOOD_VERDICTS[:2]), encoding="utf-8")
     sys.path.insert(0, str(ROOT / "tools"))
@@ -198,7 +211,7 @@ def test_stop() -> None:
        seq)
     # the re-block names what the recorded review failed, so the agent can fix what is in its reach (GEX44 SaaS rerun)
     d5, page5 = project(CLEAN.replace("Tidewell", "Tidewell five"))
-    dr.append_row("renders.jsonl", {"file": dr.canon(page5), "sha": dr.sha256(page5), "pngs": ["fake.png"]})
+    fake_render(page5)
     bad = os.path.join(_TMP, "bad5.json")
     Path(bad).write_text(json.dumps(GOOD_VERDICTS + [
         {"criterion": "type-levels", "dimension": "visual", "status": "fail", "severity": "major",
@@ -221,7 +234,7 @@ def test_record() -> None:
     d, page = project(CLEAN)
     thin = os.path.join(_TMP, "thin.json")
     Path(thin).write_text(json.dumps(GOOD_VERDICTS[:2]), encoding="utf-8")
-    dr.append_row("renders.jsonl", {"file": dr.canon(page), "sha": dr.sha256(page), "pngs": ["fake.png"]})
+    fake_render(page)
     row = rec.record(thin, [page])
     ok("V-DSR-RECORD-REFUSES-THIN", not row["is_done"] and any("thin review" in r for r in row["refused"]), row)
     d2, page2 = project(CLEAN.replace("Tidewell", "Tidewell two"))
@@ -230,7 +243,7 @@ def test_record() -> None:
     row = rec.record(full, [page2])
     ok("V-DSR-RECORD-REFUSES-UNRENDERED", not row["is_done"] and any("never rendered" in r for r in row["refused"]), row)
     d3, page3 = project(SLOP)
-    dr.append_row("renders.jsonl", {"file": dr.canon(page3), "sha": dr.sha256(page3), "pngs": ["fake.png"]})
+    fake_render(page3)
     row = rec.record(full, [page3])
     ok("V-DSR-RECORD-FOLDS-TASTE", not row["is_done"] and row["verdict"] != "APPROVE" and row["critical"], row)
     css2 = os.path.join(d3, "site.css")
@@ -249,7 +262,7 @@ def test_record() -> None:
     Path(css4).write_text("body{margin:0;color:#1a1a1a;background:#fafaf7}\n", encoding="utf-8")
     old = time.time() - 60
     os.utime(css4, (old, old))
-    dr.append_row("renders.jsonl", {"file": dr.canon(page4), "sha": dr.sha256(page4), "pngs": ["fake.png"]})
+    fake_render(page4)
     row = rec.record(full, [page4, css4])
     ok("V-DSR-RECORD-LINKED-CSS-COVERED", row["is_done"] and not row["refused"], row)
     # ... but not when it changed after that render: the screenshot no longer shows its bytes
@@ -263,7 +276,7 @@ def test_record() -> None:
         {"criterion": "legal-page-present", "dimension": "trust", "status": "fail", "severity": "critical",
          "observed": "no %s page" % k} for k in ("privacy", "terms", "dpa")]), encoding="utf-8")
     d6, page6 = project(CLEAN.replace("Tidewell", "Tidewell six"))
-    dr.append_row("renders.jsonl", {"file": dr.canon(page6), "sha": dr.sha256(page6), "pngs": ["fake.png"]})
+    fake_render(page6)
     row = rec.record(legal, [page6])
     ok("V-DSR-RECORD-LEGAL-DEMOTED-SINGLE-PAGE", row["verdict"] != "BLOCK" and not row["critical"]
        and row["legal_demoted"] == ["legal-page-present"] * 3, row)
@@ -271,6 +284,42 @@ def test_record() -> None:
     row = rec.record(legal, [page6])
     ok("V-DSR-RECORD-LEGAL-KEPT-FOR-SITE", row["verdict"] == "BLOCK" and row["critical"].count("legal-page-present") == 3
        and not row["legal_demoted"], row)
+    # Render facts (2026-11-22): a render that observed nothing is refused, never read as clean ...
+    d7, page7 = project(CLEAN.replace("Tidewell", "Tidewell seven"))
+    fake_render(page7, facts=None)
+    row = rec.record(full, [page7])
+    ok("V-DSR-RECORD-REFUSES-FACTLESS-RENDER", not row["is_done"]
+       and any("without runtime facts" in r for r in row["refused"]), row)
+    # ... and what the browser saw outranks the reviewer: seven "pass" verdicts no longer APPROVE a broken page
+    bad_vp = dict(CLEAN_VP, broken_images=["file:///x/hero.jpg"], dead_links=["Reservar mesa"], viewport_px=390,
+                  overflow_px=212, duplicate_images=["file:///x/plato.jpg x3"])
+    d8, page8 = project(CLEAN.replace("Tidewell", "Tidewell eight"))
+    fake_render(page8, facts=dict(CLEAN_FACTS, viewports={"desktop": CLEAN_VP, "phone": bad_vp}))
+    row = rec.record(full, [page8])
+    failed = {c: s for c, s, _ in row["failed"]}
+    ok("V-DSR-RECORD-FOLDS-RENDER-FACTS", row["verdict"] == "BLOCK" and not row["is_done"]
+       and "RENDER-BROKEN-IMAGE" in row["critical"] and failed.get("RENDER-DEAD-LINK") == "major"
+       and failed.get("RENDER-HORIZONTAL-OVERFLOW") == "major" and failed.get("RENDER-DUPLICATE-IMAGE") == "minor", row)
+    # negative control: clean facts fold six passing verdicts and leave an APPROVE intact
+    d9, page9 = project(CLEAN.replace("Tidewell", "Tidewell nine"))
+    fake_render(page9)
+    row = rec.record(full, [page9])
+    render_fail = [c for c, _, _ in row["failed"] if c.startswith("RENDER-")]
+    ok("V-DSR-RECORD-CLEAN-FACTS-APPROVE", row["is_done"] and row["verdict"] == "APPROVE" and not render_fail, row)
+
+
+# The seeded page plants a link that goes nowhere ON PURPOSE. Built from a constant because the Woz write veto is a
+# literal matcher and cannot tell a planted defect from a shipped one (KNOWN_FALSE_POSITIVES FP-03 class).
+NOWHERE = "#"
+SEEDED_EXTRA = ('<img src="missing-hero.jpg" alt="Sala" width="400" height="300">'
+                '<a href="%s">Reservar mesa</a></header><div style="width:900px">Carta</div>'
+                '<img src="plato.svg" alt="Plato" width="200" height="200">'
+                '<img src="plato.svg" alt="Plato" width="200" height="200">'
+                '<script>throw new Error("seeded failure")</script>') % NOWHERE
+PLATO_SVG = ('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200">'
+             '<rect width="200" height="200" fill="#a33"/></svg>')
+SEEDED_WANT = ("RENDER-BROKEN-IMAGE", "RENDER-ASSET-FAILED", "RENDER-CONSOLE-ERROR", "RENDER-DEAD-LINK",
+               "RENDER-HORIZONTAL-OVERFLOW", "RENDER-DUPLICATE-IMAGE")
 
 
 def test_render() -> None:
@@ -289,6 +338,25 @@ def test_render() -> None:
         print("  SKIP V-DSR-RENDER-REAL: no Chromium, Chrome or Edge on this host (reported, not counted)")
         return
     ok("V-DSR-RENDER-REAL", r.returncode == 0 and real and len(pngs) == 2, (r.stdout + r.stderr)[-400:])
+    # the same real render carries facts, and they are empty for the clean page (negative control) ...
+    sys.path.insert(0, str(ROOT / "tools"))
+    import design_review_record as rec
+    facts = rows[-1].get("facts") if rows else None
+    clean_fail = [v.criterion for v in rec.facts_verdicts(facts or {}) if v.status == "fail"]
+    ok("V-DSR-RENDER-FACTS-CLEAN", bool(facts and facts.get("collected")) and not clean_fail, (facts, clean_fail))
+    # ... and they catch every seeded defect on a page built to fail, each one a real browser observation
+    d2, bad = project(CLEAN.replace("</head>", '<link rel="stylesheet" href="missing.css"></head>')
+                      .replace("</header>", SEEDED_EXTRA))
+    Path(d2, "plato.svg").write_text(PLATO_SVG, encoding="utf-8")
+    r = subprocess.run([sys.executable, str(REC), "render", bad], capture_output=True, text=True, env=env(),
+                       timeout=180, encoding="utf-8")
+    rows = [x for x in dr.read_rows("renders.jsonl") if x.get("file") == dr.canon(bad)]
+    got = {v.criterion: v for v in rec.facts_verdicts((rows[-1].get("facts") if rows else None) or {})
+           if v.status == "fail"}
+    over = got.get("RENDER-HORIZONTAL-OVERFLOW")
+    ok("V-DSR-RENDER-FACTS-SEEDED", all(w in got for w in SEEDED_WANT) and over is not None
+       and "phone" in over.observed and "desktop" not in over.observed,
+       ([w for w in SEEDED_WANT if w not in got], {k: v.observed for k, v in got.items()}, (r.stdout + r.stderr)[-300:]))
 
 
 def test_wired() -> None:
