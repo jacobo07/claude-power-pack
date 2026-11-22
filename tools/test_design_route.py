@@ -133,6 +133,11 @@ def test_routes() -> None:
     ok("V-DSR-NONGATING-KEEPS-WEB", "web" in pol["kinds"] and pol["review"] and pol["taste"], pol)
     ok("V-DSR-APP-SOURCE-NEEDS-VISUAL-PROMPT", dr.kinds_for("Foo.tsx", [], routes) is None
        and dr.kinds_for("Foo.tsx", ["app_ui"], routes) == ["app_ui"], dr.kinds_for("Foo.tsx", [], routes))
+    # brand gates its assets since 2026-11-22; a page in a brand session must still be judged as web (Taste on)
+    pol = dr.policy(dr.effective_kinds(["brand"], routes), routes)
+    ok("V-DSR-BRAND-PAGE-KEEPS-WEB", "web" in pol["kinds"] and pol["taste"] and pol["review"], pol)
+    ok("V-DSR-BRAND-ASSET-EXT-SCOPED", dr.extra_ext(["brand"], routes) == (".svg", ".png")
+       and dr.extra_ext(["web"], routes) == (), (dr.extra_ext(["brand"], routes), dr.extra_ext(["web"], routes)))
 
 
 def test_prompt() -> None:
@@ -430,10 +435,60 @@ def test_shell() -> None:
     ok("V-DSR-SHELL-NONVISUAL-IGNORED", stop("shell-md", d4, t4) is None)
 
 
+LOGO_SVG = ('<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120">'
+            '<circle cx="60" cy="60" r="50" fill="#9c3d24"/></svg>')
+
+
+def test_brand() -> None:
+    """Brand kits: CCF produces, CDIO judges (Owner 'rec', 2026-11-22). Assets are judged only in a brand session."""
+    sys.path.insert(0, str(ROOT / "tools"))
+    import design_review_record as rec
+    d = tempfile.mkdtemp(dir=_TMP)
+    logo = os.path.join(d, "logo.svg")
+    Path(logo).write_text(LOGO_SVG, encoding="utf-8")
+    run_hook(PROMPT, {"session_id": "b1", "prompt": "diseña el logo y la paleta de colores de la marca"})
+    out = stop("b1", d, transcript(writes=[logo]))
+    ok("V-DSR-BRAND-SVG-JUDGED", bool(out) and out.get("decision") == "block" and "logo.svg" in out["reason"]
+       and "design-review" in out["reason"], out)
+    d2 = tempfile.mkdtemp(dir=_TMP)
+    icon = os.path.join(d2, "icon.svg")
+    Path(icon).write_text(LOGO_SVG, encoding="utf-8")
+    run_hook(PROMPT, {"session_id": "b2", "prompt": "hazme una landing page para un estudio de yoga"})
+    ok("V-DSR-WEB-SVG-NOT-JUDGED", stop("b2", d2, transcript(writes=[icon])) is None)
+    full = os.path.join(_TMP, "brand_full.json")
+    Path(full).write_text(json.dumps(GOOD_VERDICTS), encoding="utf-8")
+    unrendered = rec.record(full, [logo])
+    fake_render(logo)                                     # a page-style render: no frame, so not a brand render
+    unframed = rec.record(full, [logo])
+    fake_render(logo, facts=dict(CLEAN_FACTS, frame=True))
+    framed = rec.record(full, [logo])
+    ok("V-DSR-RECORD-ASSET-NEEDS-FRAME", not unrendered["is_done"] and not unframed["is_done"]
+       and any("brand asset never rendered" in r for r in unframed["refused"]) and framed["is_done"],
+       (unrendered["refused"], unframed["refused"], framed["verdict"], framed["refused"]))
+    try:
+        import playwright.sync_api  # noqa: F401
+    except ImportError:
+        print("  SKIP V-DSR-RENDER-ASSET-*: playwright not installed (reported, not counted)")
+        return
+    bad = os.path.join(d, "broken.svg")
+    Path(bad).write_text("this is not an svg", encoding="utf-8")
+    r = subprocess.run([sys.executable, str(REC), "render", logo, bad], capture_output=True, text=True, env=env(),
+                       timeout=240, encoding="utf-8")
+    last = {}
+    for x in dr.read_rows("renders.jsonl"):
+        last[x.get("file")] = x
+    good_row, bad_row = last.get(dr.canon(logo), {}), last.get(dr.canon(bad), {})
+    good_fail = [v.criterion for v in rec.facts_verdicts(good_row.get("facts") or {}) if v.status == "fail"]
+    bad_fail = [v.criterion for v in rec.facts_verdicts(bad_row.get("facts") or {}) if v.status == "fail"]
+    ok("V-DSR-RENDER-ASSET-FRAMED", (good_row.get("facts") or {}).get("frame") is True
+       and len(good_row.get("pngs") or []) == 2 and not good_fail, (good_fail, (r.stdout + r.stderr)[-300:]))
+    ok("V-DSR-RENDER-ASSET-BROKEN-CAUGHT", "RENDER-BROKEN-IMAGE" in bad_fail, (bad_fail, (r.stdout + r.stderr)[-300:]))
+
+
 def main() -> int:
     t0 = time.time()
     try:
-        for t in (test_routes, test_prompt, test_stop, test_record, test_render, test_shell, test_wired):
+        for t in (test_routes, test_prompt, test_stop, test_record, test_render, test_shell, test_brand, test_wired):
             try:
                 t()
             except Exception as exc:  # noqa: BLE001 -- a crashed section is a FAIL, never a skip

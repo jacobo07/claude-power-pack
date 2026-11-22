@@ -196,6 +196,30 @@ def _facts_for(c: str, h: str) -> dict | None:
     return facts if isinstance(facts, dict) and facts.get("collected") is True else None
 
 
+# Brand assets (2026-11-22, Owner "rec": CCF produces, CDIO judges). A logo is judged where it will live: on light
+# and on dark, at favicon, UI and hero size. The frame is generated next to the renders and is what gets rendered;
+# the row is bound to the ASSET's bytes. The frame repeats the asset on purpose, so its repeat count is not a defect.
+ASSET_EXT = (".svg", ".png")
+ASSET_SIZES = (32, 96, 320)
+
+
+def _frame(asset: str, sha: str, out_dir: Path) -> Path:
+    uri = Path(asset).as_uri()
+    name = os.path.basename(asset)
+    rows = "".join(
+        '<section class="%s">%s</section>' % (bg, "".join(
+            '<img src="%s" alt="%s on %s at %dpx" style="width:%dpx;height:auto">' % (uri, name, bg, s, s)
+            for s in ASSET_SIZES)) for bg in ("light", "dark"))
+    html = ("<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\">"
+            "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><title>%s</title><style>"
+            "body{margin:0;font-family:system-ui,sans-serif}section{display:flex;flex-wrap:wrap;gap:32px;"
+            "align-items:center;padding:32px}.light{background:#f7f7f5}.dark{background:#151515}"
+            "</style></head><body>%s</body></html>") % (name, rows)
+    p = out_dir / ("frame-%s.html" % sha[:16])
+    p.write_text(html, encoding="utf-8")
+    return p
+
+
 def render(files: list) -> int:
     from playwright.sync_api import sync_playwright
     out_dir = dr.state_dir() / "renders"
@@ -205,15 +229,23 @@ def render(files: list) -> int:
         browser = _launch(pw)
         try:
             for f in files:
-                if not f.lower().endswith(dr.HTML_EXT) or not os.path.isfile(f):
-                    print("SKIP %s: not an HTML file on disk (use --screenshot for app surfaces)" % f)
+                low = f.lower()
+                if not (low.endswith(dr.HTML_EXT) or low.endswith(ASSET_EXT)) or not os.path.isfile(f):
+                    print("SKIP %s: not an HTML page or a brand asset (.svg/.png) on disk; app source renders "
+                          "through `render-url`" % f)
                     rc = 1
                     continue
                 c, h = dr.canon(f), dr.sha256(f)
+                asset = low.endswith(ASSET_EXT)
+                target = _frame(c, h, out_dir) if asset else Path(c)
                 pngs, facts = [], {"collected": True, "version": FACTS_VERSION, "viewports": {}}
+                if asset:
+                    facts["frame"] = True
                 for name, (w, hgt) in VIEWPORTS.items():
                     page = browser.new_page(viewport={"width": w, "height": hgt})
-                    facts["viewports"][name] = _observe(page, Path(c).as_uri())
+                    facts["viewports"][name] = _observe(page, target.as_uri())
+                    if asset:
+                        facts["viewports"][name]["duplicate_images"] = []
                     png = out_dir / ("%s-%s.png" % (h[:16], name))
                     page.screenshot(path=str(png), full_page=True)
                     page.close()
@@ -389,6 +421,14 @@ def record(verdicts_path: str, files: list, screenshot: str | None = None, exper
                     refusals.append("%s: rendered without runtime facts (run `render` again)" % os.path.basename(c))
                 else:
                     folded += facts_verdicts(facts)
+        elif c.lower().endswith(ASSET_EXT):
+            # A brand asset counts only through its framed render (light/dark, 32/96/320 px) for these exact bytes.
+            facts = _facts_for(c, h)
+            if facts is None or not facts.get("frame"):
+                refusals.append("%s: brand asset never rendered for these bytes (run `render %s`)"
+                                % (os.path.basename(c), os.path.basename(c)))
+            else:
+                folded += facts_verdicts(facts)
         elif c in covered:
             continue
         else:

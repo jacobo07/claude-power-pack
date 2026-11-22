@@ -29,9 +29,15 @@ surface kind, chosen by a table, and the choice is checked, not trusted.
 1. `vault/config/design_routes.json` (data): surface kinds (web, app_ui, mobile, calco, motion, dataviz, brand). Each
    kind: prompt regex, required skills, recommended skills, whether Taste and the rendered review apply, and the kinds
    it overrides (calco and motion override web/app_ui: a copy is judged against its reference, a film by its own gate).
+   `brand` gates its assets (2026-11-22, Owner "rec": CCF produces, CDIO judges): `extra_ext` [.svg, .png] adds those
+   extensions to the judged set ONLY in a brand session; `render <asset>` frames it on light and dark at 32/96/320 px
+   and binds the row to the asset's bytes (`facts.frame`); `record` refuses an asset without that framed render. A page
+   in a brand session is still judged as web (Taste on): a page keeps web unless a Taste-bearing or overriding kind is
+   present (V-DSR-BRAND-*, V-DSR-RECORD-ASSET-NEEDS-FRAME, V-DSR-RENDER-ASSET-*). PDF exports are not judged yet.
 2. `modules/cdio/design_route.py` (logic, no I/O policy): classify a prompt; map written paths to kinds; scan a
-   transcript incrementally (Skill tool uses, `<command-name>` slash loads, Write/Edit/MultiEdit targets); hash
-   surfaces; read review records; `judge()` returns per-surface problems.
+   transcript incrementally (Skill tool uses, `<command-name>` slash loads, Write/Edit/MultiEdit targets, and visual
+   paths named in Bash/PowerShell commands, admitted when the file changed at or after the command; V-DSR-SHELL-*);
+   hash surfaces; read review records; `judge()` returns per-surface problems.
 3. `tools/design_route_prompt.py` (UserPromptSubmit-chain member): on a prompt that names a visual surface, inject ONE
    block: the kinds, the skills to load now (Skill tool), the recommended ones, and what the Stop gate will check. Records
    the kinds for the session under `~/.claude/state/design_route/<sid>.json`. Silent otherwise.

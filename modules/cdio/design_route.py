@@ -60,11 +60,26 @@ def kinds_for(path: str, session_kinds: list, routes: dict) -> list | None:
     gating = [k for k in kinds if s[k].get("review")]
     overriding = any(s[k].get("overrides") for k in kinds)
     if (path or "").lower().endswith(HTML_EXT):
-        if not gating and not overriding:
+        # A page keeps web unless a kind that brings its own Taste/review (web, app_ui, mobile) or an overriding kind
+        # (calco, motion) is present. Brand gates its assets since 2026-11-22; keyed on "gating" alone, a brand prompt
+        # would have judged a page as brand only and switched Taste off (the F1 class again).
+        if not any(s[k].get("taste") for k in kinds) and not overriding:
             kinds = kinds + [routes["default_kind"]]
     elif not gating:
         return None
     return _apply_overrides(kinds, routes)
+
+
+def extra_ext(session_kinds: list, routes: dict) -> tuple:
+    """Extensions a session's kinds add to the judged set: brand assets (.svg, .png) only in a brand session, so an
+    icon written during web work is not pulled into the review."""
+    s = routes["surfaces"]
+    out = []
+    for k in session_kinds:
+        for e in (s.get(k) or {}).get("extra_ext", []):
+            if e.lower() not in out:
+                out.append(e.lower())
+    return tuple(out)
 
 
 def effective_kinds(session_kinds: list, routes: dict) -> list:
@@ -167,7 +182,8 @@ SHELL_TOOLS = ("Bash", "PowerShell")
 # the whole command backtracked quadratically on a long run with no dot (an inline base64 image in a heredoc):
 # measured 6.04 s at 20 KB and 18.31 s at 40 KB, against the Stop chain's 8 s kill (review of S2, M1).
 _SHELL_SPLIT_RX = re.compile(r"""[\s"'`<>|;&()=,]+""")
-_SHELL_TOKEN_RX = re.compile(r"""(.{0,1000}?\.(?:html?|css|scss|sass|tsx|jsx|vue|svelte))(?![\w.])""", re.I)
+# svg/png are candidates here too; judge() admits them only in a session whose kinds list them (brand, extra_ext).
+_SHELL_TOKEN_RX = re.compile(r"""(.{0,1000}?\.(?:html?|css|scss|sass|tsx|jsx|vue|svelte|svg|png))(?![\w.])""", re.I)
 _MSYS_DRIVE_RX = re.compile(r"^/(?:mnt/)?([A-Za-z])(?=/)")
 SHELL_TOKEN_MAX = 1024
 SHELL_MTIME_SLACK_S = 2.0
@@ -375,8 +391,10 @@ def judge(st: dict, cwd: str, routes: dict, na: dict | None = None) -> dict:
     """{files, kinds, problems:[{check, file, detail}], waived}. No visual file written in cwd -> no problems."""
     na = na or {}
     files = []
+    extra = extra_ext(st.get("kinds", []), routes)
     for w in list(st.get("writes", [])) + shell_written(st):
-        if w and is_visual(w, routes) and os.path.isfile(w) and inside(w, cwd) and canon(w) not in files:
+        judged_ext = is_visual(w, routes) or os.path.splitext(w or "")[1].lower() in extra
+        if w and judged_ext and os.path.isfile(w) and inside(w, cwd) and canon(w) not in files:
             files.append(canon(w))
     res = {"files": [], "kinds": [], "problems": [], "waived": {}}
     judged = [(f, kinds_for(f, st.get("kinds", []), routes)) for f in files]
