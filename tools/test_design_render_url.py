@@ -214,6 +214,25 @@ def main() -> int:
     row = record([f4])
     ok("V-DRU-STALE-REFUSED", not row["is_done"] and any("render-url" in x for x in row["refused"]), row)
 
+    # a file edited WHILE the route renders (a dev server hot-reloading under the capture): refused, and no row is
+    # bound to either version. In-process so the edit lands between two viewports, deterministically.
+    _, f8 = app("page.tsx", "// before the render\n")
+    rec = _rec()
+    real_observe, calls = rec._observe, []
+
+    def observe_and_edit(page, uri):
+        calls.append(uri)
+        if len(calls) == 2:
+            Path(f8).write_text("// edited mid-render\n", encoding="utf-8")
+        return real_observe(page, uri)
+    rec._observe = observe_and_edit
+    try:
+        rc = rec.render_url(base + "/ok/", [f8])
+    finally:
+        rec._observe = real_observe
+    bound = [x for x in dr.read_rows("renders.jsonl") if x.get("file") == dr.canon(f8)]
+    ok("V-DRU-CHANGED-DURING-RENDER-REFUSED", rc == 2 and not bound and len(calls) == 3, (rc, len(bound), calls))
+
     # the retired proof: a valid 400x400 PNG newer than the file admits nothing on its own
     _, f5 = app("page.tsx", "// screenshot only\n")
     shot = os.path.join(_TMP, "shot.png")
