@@ -341,6 +341,47 @@ def run_all(ap):
     vnf = ap.judge({"name": "L", "cwd": str(ckd)}, "nf.md", str(ckd))
     check("V-AP-NOTFINAL-NO-MODEL-CALL", _rc_calls == [] and vnf["verdict"] == "INCONCLUSIVE"
           and vnf["checkpoint_final"] is False and vnf["_tokens"] == 0)
+    # ---- review M3: the LAST CHECKPOINT_FINAL declaration wins (an interim `false` kept above a final `true`)
+    (ckd / "nf2.md").write_text("## interim\nCHECKPOINT_FINAL: false\n## final\n**CHECKPOINT_FINAL:** true\n")
+    (ckd / "nf3.md").write_text("CHECKPOINT_FINAL: true\nwork reopened\nCHECKPOINT_FINAL: false\n")
+    check("V-AP-NOTFINAL-LAST-DECLARATION-WINS", ap.declared_not_final("nf2.md", str(ckd)) is None
+          and ap.declared_not_final("nf3.md", str(ckd)) is not None)
+    # ---- review M1: a release never exceeds what the ledger booked (authority raised outside the ledger: 45M)
+    raised = [{"ts": d0, "kind": "arm_reserve", "gen": "S5K", "tokens": 20_000_000},
+              {"ts": d1, "kind": "auto_topup", "mission": "m-r", "tokens": 5_000_000}]
+    check("V-AP-RELEASE-CAPPED-BY-BOOKED-NOT-AUTHORITY",
+          ap.reservation_release(raised, "m-r", "S5K", 45_000_000, 30_000_000) == []
+          and sum(a for _, a in ap.reservation_release(raised, "m-r", "S5K", 45_000_000, 10_000_000)) == 15_000_000
+          and ap.reservation_release(raised + [{"ts": d1, "kind": "arm_refund", "gen": "S5K", "tokens": -20_000_000}],
+                                     "m-r", "S5K", 45_000_000, 4_000_000) == [(d1, 1_000_000)])
+    # ---- W3 (Owner "(b) Count-first P1"): a checkpoint halted below its declared floor is measured, still judged
+    (ckd / "pf.md").write_text("# S2\n- **POOL_FLOOR:** ctl_pool count 4 floor 24\nPOOL_FLOOR: heldout count 30 floor 24\n"
+                               "CHECKPOINT_FINAL: true\n")
+    (ckd / "pfok.md").write_text("# S3\nPOOL_FLOOR: ctl count 30 floor 24\nthe pool floor is 24 (prose)\n")
+    check("V-AP-POOLFLOOR-BELOW-READ", ap.pool_floor_below("pf.md", str(ckd)) == [
+        {"name": "ctl_pool", "count": 4, "floor": 24}])
+    check("V-AP-POOLFLOOR-AT-OR-ABOVE-AND-PROSE-NONE", ap.pool_floor_below("pfok.md", str(ckd)) == []
+          and ap.pool_floor_below("prose.md", str(ckd)) == [] and ap.pool_floor_below("gone.md", str(ckd)) == [])
+    _pf_rows = lambda: [r for r in ap.ledger_rows() if r.get("kind") == "pool_floor_halt"]  # noqa: E731
+    _n0 = len(_pf_rows())
+    _jp = Path(ap.HOME) / "judge_prompt.md"
+    _jp_made = not _jp.exists()
+    if _jp_made:
+        _jp.parent.mkdir(parents=True, exist_ok=True)
+        _jp.write_text("judge {CHECKPOINT} in {PRODUCT}\n")
+    vpf = ap.judge({"name": "L", "cwd": str(ckd)}, "pf.md", str(ckd))
+    ap.judge({"name": "L", "cwd": str(ckd)}, "pf.md", str(ckd))
+    ap.judge({"name": "L", "cwd": str(ckd)}, "pfok.md", str(ckd))
+    if _jp_made:
+        _jp.unlink()
+    got = _pf_rows()[_n0:]
+    check("V-AP-POOLFLOOR-BOOKED-ONCE-STILL-JUDGED", len(got) == 1 and got[0]["tokens"] == 0
+          and got[0]["count"] == 4 and got[0]["floor"] == 24 and got[0]["checkpoint"] == "pf.md"
+          and len(_rc_calls) == 3 and vpf["verdict"] == "AGREE")
+    check("V-AP-POOLFLOOR-WORKER-TOLD", "POOL_FLOOR: <name> count <N> floor <F>" in ap.command_text(
+        {"name": "L", "cwd": str(ckd), "product": str(ckd)}, "S9", ckd / "x-PHASES.md", "")
+          and "stop the generation there" in ap.command_text({"name": "L", "cwd": str(ckd), "product": str(ckd)}, "S9",
+                                                              ckd / "x-PHASES.md", ""))
     ap.run_claude = _krc
     # ---- T1 O4: the weekly guard is asked before arming and reads as a wait (11-19/20 it was a MissionError per tick)
     _kg, _gcalls = ap._governor, []
@@ -2127,6 +2168,14 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
              g, n, None))(m._superseded)),
          "superseded_not_recorded": lambda m: setattr(m, "superseded_record", lambda v, prior=None: dict(prior or {})),
          "budget_wait_drops_judgment": lambda m: setattr(m, "BUDGET_WAIT_KEEPS_JUDGMENT", False),
+         "pool_floor_never_booked": lambda m: setattr(m, "book_pool_floor_halt", lambda lane, ck, prod: 0),
+         "notfinal_first_declaration_wins": lambda m: setattr(m, "FINAL_DECL_RE", m.NOT_FINAL_RE),
+         "release_from_authority": lambda m: setattr(m, "reservation_release", (lambda real: (
+             lambda rows, mission, gen, a, s: real(list(rows) + [{"ts": -1.0, "kind": "arm_reserve", "gen": gen,
+                                                                  "tokens": 10 ** 12}], mission, gen, a, s)))(
+             m.reservation_release)),
+         "pool_floor_rebooks": lambda m: setattr(m, "ledger_rows", (lambda real: lambda: [
+             r for r in real() if r.get("kind") != "pool_floor_halt"])(m.ledger_rows)),
          "budget_wait_resume_calls": lambda m: setattr(m, "resume_wait", lambda pend: None),
          "policy_refusal_parks_at_once": lambda m: setattr(m, "POLICY_RETRY_TICKS", 0),
          "policy_retry_forever": lambda m: setattr(m, "POLICY_RETRY_TICKS", 99),

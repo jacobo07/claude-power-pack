@@ -294,14 +294,19 @@ def reservation_release(rows: list[dict], mission: str | None, gen: str | None, 
     unknown is never 0. Lifetime before this: 2,912M reserved for 1,416M spent by closed generations."""
     if spent is None or not authority or not isinstance(spent, int) or spent < 0:
         return []
-    unused = int(authority) - spent
-    if unused <= 0:
-        return []
     released = {(r.get("released_ts"), r.get("mission")) for r in rows if r.get("kind") == "reserve_release"}
     if any(m == mission for _, m in released) and mission:
         return []  # idempotent: this generation was already released
     res = [r for r in rows if (r.get("kind") == "arm_reserve" and gen and r.get("gen") == gen)
            or (r.get("kind") == "auto_topup" and mission and r.get("mission") == mission)]
+    # Review M1 (2026-11-22, pane a52cc240): never release more than the ledger BOOKED for this generation. Authority
+    # can hold a raise made outside the ledger (gsd_mission authority); releasing authority - spent would then count
+    # less than the measured spend against the caps.
+    booked = sum(int(r.get("tokens") or 0) for r in res) + sum(
+        int(r.get("tokens") or 0) for r in rows if r.get("kind") == "arm_refund" and gen and r.get("gen") == gen)
+    unused = min(int(authority), booked) - spent
+    if unused <= 0:
+        return []
     out = []
     for r in sorted(res, key=lambda x: -float(x["ts"])):
         amt = min(unused, int(r.get("tokens") or 0))
@@ -1192,6 +1197,9 @@ def apply_standing_exclusion(v: dict, ls: dict) -> list[str]:
 
 
 NOT_FINAL_RE = re.compile(r"^[ \t>*_-]*CHECKPOINT_FINAL[*_]*\s*[:=]\s*[*_`]*\s*(false|no)\b", re.I | re.M)
+# Review M3 (2026-11-22, pane a52cc240): a checkpoint that kept an interim `CHECKPOINT_FINAL: false` and later says
+# `true` is final. Only the LAST declaration counts.
+FINAL_DECL_RE = re.compile(r"^[ \t>*_-]*CHECKPOINT_FINAL[*_]*\s*[:=]\s*[*_`]*\s*(true|yes|false|no)\b", re.I | re.M)
 
 
 def declared_not_final(checkpoint: str, product: str) -> str | None:
@@ -1204,12 +1212,54 @@ def declared_not_final(checkpoint: str, product: str) -> str | None:
         text = p.read_text(errors="replace")
     except OSError:
         return None
-    m = NOT_FINAL_RE.search(text)
+    decls = list(FINAL_DECL_RE.finditer(text))
+    m = decls[-1] if decls else None
+    if not m or not NOT_FINAL_RE.match(m.group(0)):
+        return None  # no declaration, or the last one says final: the judge runs
     return (f"JUDGMENT_NOT_EXECUTABLE: {p.name} declares '{m.group(0).strip()}' "
-            "(deterministic, no judge call)") if m else None
+            "(deterministic, no judge call)")
+
+
+POOL_FLOOR_RE = re.compile(r"^[ \t>*_`-]*POOL_FLOOR[*_`]*\s*:\s*[*_`]*\s*([\w.\-/]+)\s+count\s+(\d+)\s+floor\s+(\d+)",
+                           re.I | re.M)
+
+
+def pool_floor_below(checkpoint: str, product: str) -> list[dict]:
+    """W3 (Owner 2026-11-22 '(b) Count-first P1', pane a52cc240): the machine lines `POOL_FLOOR: <name> count <N> floor
+    <F>` of a checkpoint whose count is below its floor. [] = no such line, or the file is unreadable. Measurement only: the
+    judge still runs (skipping it would bypass its protected-identity and gate checks for ~0.4M)."""
+    p = Path(checkpoint)
+    p = p if p.is_absolute() else Path(product) / p
+    try:
+        text = p.read_text(errors="replace")
+    except OSError:
+        return []
+    return [{"name": m.group(1), "count": int(m.group(2)), "floor": int(m.group(3))}
+            for m in POOL_FLOOR_RE.finditer(text) if int(m.group(2)) < int(m.group(3))]
+
+
+def book_pool_floor_halt(lane: dict, checkpoint: str, product: str) -> int:
+    """One ledger row `pool_floor_halt` (0 tokens) per below-floor line of a checkpoint, once per (lane, checkpoint):
+    a re-judgment of the same checkpoint books nothing. Returns the rows booked."""
+    below = pool_floor_below(checkpoint, product)
+    if not below:
+        return 0
+    name = lane.get("name")
+    if any(r.get("kind") == "pool_floor_halt" and r.get("lane") == name and r.get("checkpoint") == checkpoint
+           for r in ledger_rows()):
+        return 0
+    for b in below:
+        ledger_add(lane=name, kind="pool_floor_halt", tokens=0, checkpoint=checkpoint, **b)
+    log(f"{name}: {checkpoint} halted below its declared floor: "
+        + ", ".join(f"{b['name']} {b['count']} < {b['floor']}" for b in below))
+    return len(below)
 
 
 def judge(lane: dict, checkpoint: str, product: str, ruling: str = "") -> dict:
+    try:
+        book_pool_floor_halt(lane, checkpoint, product)
+    except Exception as e:  # noqa: BLE001 -- a measurement never blocks a judgment
+        log(f"{lane.get('name')}: pool_floor_halt not booked: {e!r}")
     nf = declared_not_final(checkpoint, product)
     if nf:
         log(f"{lane.get('name')}: {nf}")
@@ -1362,7 +1412,10 @@ def command_text(lane: dict, name: str, packet: Path, notes: str) -> str:
             "never stage pre-existing dirty residue; keep a budget.md with measured spend per phase (gsd_mission.py topology "
             "--mission <this mission>); stop a phase at its cap; no push, no paid API. Each tool call costs ~120k processed "
             "tokens (the resident context is re-read): commit evidence as you go, never leave results uncommitted, and "
-            "commit the checkpoint (or a pivot residual) before 75% of the authority is processed. At the end: "
+            "commit the checkpoint (or a pivot residual) before 75% of the authority is processed. Count before you spend: "
+            "the phase that freezes a population with a declared floor writes the machine line `POOL_FLOOR: <name> count "
+            "<N> floor <F>` into its evidence; when N < F, stop the generation there (no further phase) and commit an "
+            "INSTRUMENT_FAIL (population) checkpoint carrying that line and `CHECKPOINT_FINAL: true`. At the end: "
             "gsd_mission.py checkpoint "
             f"CHECKPOINT_COMPLETE with an evidence checkpoint file for {name} that states new canonical certificates (per "
             "profile, by function identity) and validated capabilities. The checkpoint carries one machine line, "
