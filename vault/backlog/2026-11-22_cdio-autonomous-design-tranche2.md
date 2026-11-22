@@ -23,10 +23,13 @@ shipped. This file is the handoff for a fresh agent: it holds no context that is
 1. **G3a brand-kit review gate.** `vault/config/design_routes.json` kind `brand` has review false and required [].
    CCF owns brand assets (`modules/ccf/`); decide with the Owner whether CCF's own verdicts are the gate or the
    design review applies to its exports. Decision first, then code.
-2. **G3b app-source screenshot binding.** For .tsx/.jsx/.css, `record --screenshot` accepts any PNG >= 300px newer
-   than the file; nothing binds it to the surface. Candidate: a `render-url` against the dev or production build. A
-   concurrent session was adding `render-url` + RENDER-DOCUMENT-STATUS to `tools/design_review_record.py` on
-   2026-11-22 (uncommitted when this was written): check `git log` before starting, never duplicate it.
+2. **G3b app-source screenshot binding: SHIPPED a16b0d01** (session c711a976). `render-url --url --files` renders the
+   running route at desktop/tablet/phone with runtime facts and HTTP status, bound to each file's sha; `record` no
+   longer accepts a bare `--screenshot` for app source. Scroll-driven reveals are finished before capture. Gate
+   `python tools/test_design_render_url.py` (V-DRU 12). Open: the "changed during the render" refusal has no test.
+   Same session also shipped 4597c444 (hooks print ASCII JSON: a cp1252 crash had eaten counted blocks, V-HSA) and
+   efaae877 (the design route ignores machine turns, V-DRO). Item 6 below is the same class as efaae877 in the tower
+   family router (`state/tower/consumption.jsonl` writer), not yet fixed.
 3. **Cross-sector benchmark (mission XVIII).** The denominator so far is 3 surfaces (portfolio, Bodeguita, one
    fixture). Next: B2B dashboard, high-trust professional service, mobile app (CDIO-08), brand kit. One real or
    fixture surface each, same render-facts + independent-review protocol, results tabled per the prompt.

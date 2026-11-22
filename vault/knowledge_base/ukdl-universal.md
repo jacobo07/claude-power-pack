@@ -22955,6 +22955,52 @@ quadratically and took 18.31 s on a 40 KB inline image against an 8 s hook kill,
 them for "what did the worker change".
 **Residual:** a generator that writes a file it never names on its command line; paths with spaces; `cd x && ...`.
 
+### T-HOOK-EMIT-AFTER-COMMIT-001 -- a hook that counts its decision before it can print it #CROSS-PROJECT
+**TRAP:** `design_donegate_stop.py` saved "blocked once" to its state and ledger, THEN wrote the block JSON with
+`ensure_ascii=False` to a cp1252 stdout. A reason with a non-cp1252 character raised UnicodeEncodeError. Fail-open
+swallowed it, the block never reached the agent, and every later Stop said "already blocked": session ad5e5284 passed
+7 Stops with the gate never shown (errors.jsonl x2, block row at the same second as each crash).
+**Why tests missed it:** the suite's `env()` forced `PYTHONIOENCODING=utf-8`; the live dispatcher never sets it. The
+test plane was not the production plane.
+**FIX:** hooks print ASCII JSON (`ensure_ascii=True`; `\u` escapes decode to the same text). Test hooks under the
+dispatcher's real encoding, not a friendlier one. General form: never consume a once-only budget (block count,
+lease, dedupe key) before the effect it pays for has been delivered.
+**Proof:** `tools/test_hook_stdout_ascii.py` (V-HSA) rc 1 on the old hooks, rc 0 fixed (4597c444).
+
+### T-PROMPT-CLASSIFIER-MACHINE-TURNS-001 -- UserPromptSubmit also fires on text nobody typed #CROSS-PROJECT
+**TRAP:** a prompt classifier treated subagent hand-backs ("Another Claude session sent a message"), compaction
+summaries, task notifications and skill bodies as the Owner's request. Replay of 106 live design routes: 53 were machine
+text, including every `motion` route but one. Because the latest prompt decides the session's kind, one hand-back that
+said "trailer" re-routed a web session to motion. That demanded an irrelevant skill and switched off app-source review.
+**FIX:** classify only the Owner's words: strip leading `<system-reminder>` blocks, drop known machine envelopes, keep
+Owner-typed and pasted text (`design_route_prompt.owner_text`, efaae877, V-DRO). Measure on the real ledger joined
+to the transcripts, never on hand-picked prompts.
+**Same shape, not fixed here:** the `web_surface` family baseline fired on a hand-back containing "hero" (tranche-2
+backlog item 6).
+
+### T-FULLPAGE-CAPTURE-SCROLL-DRIVEN-001 -- a full-page screenshot cannot show scroll-driven reveals #CROSS-PROJECT
+**TRAP:** CSS scroll-driven animations (`animation-timeline: view()`) depend on the scroll position at paint time.
+A full-page capture is painted at the top, so every reveal below the fold renders in its pre-entry state, and
+scrolling through first does not help because it reverts. Live bodeguita: sections 01-03 rendered at opacity 0.15,
+1 when scrolled into view, and 0.15 again back at the top (DOM probe). A reviewer looking at that PNG judges a page no
+visitor sees.
+**FIX:** before observing, scroll through with a step cap (lazy images, IntersectionObserver reveals), then move
+every animation with a non-document timeline onto `document.timeline` and `finish()` it, so the end keyframe
+shows. Do not use `animation: none`: it shows the base style, so `.reveal{opacity:0}` is captured invisible (code
+review, MEDIUM). Record how many were finished and how many are still under half opacity. Gate
+V-DRU-SCROLL-DRIVEN-NEUTRALISED (fixture with base opacity 0; the `animation: none` mutant fails it). Live bodeguita:
+4 finished, 0 faint, at every viewport (a16b0d01).
+**Residual:** JS scroll libraries (GSAP ScrollTrigger and similar) that animate from scroll handlers are not
+neutralised; the scroll-through only shows their state at the top.
+
+### PR-APP-SURFACE-RENDERS-THROUGH-ITS-ROUTE-001 -- review app source on the running route, never on "a PNG"
+**RULE:** a design review of app source (tsx/jsx/vue/svelte/css in an app) counts only when the running route was
+rendered for the files' current bytes, with runtime facts (HTTP status, broken images, failed requests, console
+errors, dead links, overflow) at desktop/tablet/phone. An arbitrary screenshot proves that a PNG exists, not that it
+shows this route or these bytes. In the live ledger most of the 28 APPROVEs were admitted on that basis.
+**Consumer:** `design_review_record.py record` refuses app source without a `render-url` row; the Stop design
+done-gate blocks the session until one exists; `cdio-reviewer` step 1 names the command. Gate V-DRU (11).
+
 ### PR-DETECTOR-LIVE-SITE-BEFORE-SEVERITY-BINDS-001 -- run a new detector on a real production page before trusting it
 **RULE:** A detector proven only on fixtures runs on at least one real production page before its severity binds.
 **WHY:** the render-facts collector passed every fixture, then on its first live run (the Owner's Next.js portfolio)
