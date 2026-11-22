@@ -90,6 +90,38 @@ repair-loop fixture, these 4):
 - **B-7 score ceiling:** three of four final reviews scored 100. Independent but same rubric; a 100 says the
   rubric found nothing, not that nothing is there. This is why the blind perception pass matters.
 
+## Blind perception pass (Owner "y", 2026-11-22)
+One fresh general-purpose judge (no CDIO rubric), 12 renders + 4 briefs, told A/B order is unknown. Keys held
+out of its reach, unblinded after: `vault/fixtures/cdio_benchmark/{dashboard,despacho}.key.json` (the random draw
+put the baseline at A in both pairs, a 1-in-4 outcome; the judge never saw the keys). Raw verdict:
+`vault/fixtures/cdio_benchmark/blind_verdict.md`. Cost 112k tokens (estimate was 60k).
+
+| surface | judge's preference | confidence | protagonist | in first phone screen (844 px) |
+|---|---|---|---|---|
+| dashboard | final (B) | high | late/on-hold shipments (data screen) | baseline partly; final partly (first Late card cut at the fold) |
+| despacho | final (B) | high | the offer: 60 EUR / 45 min first consultation | baseline no; final yes |
+| nurseapp | meets the brief on screen 1 | medium | fictional notice, routines, start button | yes |
+| brandkit | covers the brief, no eco cliche | low-medium (render downscaled) | dial mark + wordmark | yes |
+
+Reasons the judge marked OBSERVED (not taste): demo notice present/absent, text status pills vs colour dots, phone
+reflow vs 1128 px table, invented figures vs brief, price/hours/address present/absent. Weak points left in the
+finals: dashboard's first Late card is cut at the phone fold and rows have no action control; despacho is 4,667 px
+long on phone with no sticky call button; nurseapp shows a light theme only for a low-light audience; brandkit's
+16 px favicon legibility unverified.
+
+- **B-8 state-dependent screens are not rendered (OPEN, important):** nurseapp is one HTML file whose screens
+  change by JS state. `design_review_record.py render` captures the initial state only, so onboarding 2-3 and the
+  home screen (half the deliverable) are in no recorder render, yet the APPROVE 100 binds those bytes. The builder
+  screenshotted other states itself; whether its reviewer looked at them is not provable from the record. Fix
+  candidate: a declared list of states (URL hash or a click script) that `render` must capture before `record`
+  accepts an app_ui/mobile review.
+- **Item 4, hero protagonist:** the third sector and the counterexample now exist. Marketing surfaces: despacho
+  baseline had none, the CDIO final has the offer in the first phone screen; nurseapp and brandkit put theirs in the
+  first screen. Counterexample: the dashboard is a data screen, where "hero" does not apply and the real test is
+  "the most urgent data is in the first screen" (it partly failed there). Proposal for the Owner, NOT promoted:
+  scope the criterion to marketing/landing surfaces, and use "most urgent information in the first screen" for data
+  and app screens. Evidence is one LLM judge over fixtures from one author: E2 at best.
+
 ## Budget
 Owner authority 900k tokens. The four builds alone used 1.29M uncached tokens (plus 33.7M cache reads), past the
 authority before any judging; this pane added its own share. Stopped there. NOT run: the blind A/B perception judge

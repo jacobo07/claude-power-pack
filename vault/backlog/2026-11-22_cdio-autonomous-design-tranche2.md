@@ -82,6 +82,9 @@ shipped. This file is the handoff for a fresh agent: it holds no context that is
   `vault/audits/cdio_cross_sector_benchmark_2026-11-22.md`. 4/4 gated + independently reviewed, 17/17 seeded defects
   fixed, 0 human turns. Fixed 7b0a4c93 (B-2 prompt miss). OPEN: B-3 script-written brand assets escape the framed
   review; B-4 shell-tracker non-paths; B-5 hooks litter foreign repos. Not run (over budget): blind A/B judge, item 4.
+  - Owner "y": blind judge RUN (112k): final preferred over baseline in both pairs, high confidence. NEW B-8: JS-state
+    screens never rendered (nurseapp home screen in no recorder render, APPROVE bound anyway). Item 4 has its third
+    sector and a counterexample (data screen); scoped criterion PROPOSED, not promoted (Owner decision).
 - Paused before item 3 on budget: the campaign passed 2x the Owner's 250k planning reference (subagents alone
   168k measured). Item 3 needs about 4 build + independent-review cycles at ~50k each: Owner budget call first.
 
