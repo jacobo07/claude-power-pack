@@ -53,6 +53,10 @@ shipped. This file is the handoff for a fresh agent: it holds no context that is
   covered by that page's render the way a linked stylesheet is (`_covered_by_render` only parses css/js), so a brand
   session demands a separate review of `vault/fixtures/cdio_repair_loop/pan.svg`. Extend coverage to img-linked
   .svg/.png, failing-first test. Also: that session's brand kind came from a pre-efaae877 machine turn.
+  - HELD (session 85563ce8, Owner decision): as written this lets a LOGO embedded in a landing page skip its framed
+    light/dark 32/96/320 review (record() checks ASSET_EXT before `covered` on purpose). Its motivating case was the
+    hand-back misroute fixed in a2c58028 (pan.svg judged only because a machine turn set kind brand). Options: drop it,
+    or cover img-linked assets only when written outside a brand window (needs L1's per-write kinds first).
 - Item 2 left to the session adding `render-url` (still uncommitted in tools/design_review_record.py at 18:05).
 - (session c711a976) Item 2 debt closed ef8ac725: V-DRU-CHANGED-DURING-RENDER-REFUSED (mutant binds 1 row, rc 0).
 - (session c711a976) AKOS residual DONE 09bc9c1c: creative_grounding.js classifies `ownerText()` from the new
