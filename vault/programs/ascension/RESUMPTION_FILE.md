@@ -34,6 +34,22 @@
   END).
 - NEXT (T2 order): W4 merge unblock (move T1's lesson/UKDL additions into append-only candidate files) -> W2 J0 shadow
   -> W3 slim pilot -> W5. Review L2 (wire reservation_overhead into the digest) is still open.
+- **17:05Z W4 merge DONE.**
+  - T1/T2 lessons and UKDL candidates moved to `vault/knowledge_base/candidates/ascension-T1-T2-20261122.md` (e9330c69).
+    The branch no longer touches the foreign-dirty aggregates.
+  - MERGED into feature/knowledge-acquisition as **f5fb6065** (16 files, `tools/gsd_mission.py` auto-merged,
+    MPOL_PASS 66/66 on the merged tree). Not pushed.
+  - Smoke of W1: the 16:55Z tick judged TENNIS S300T deterministically (CHECKPOINT_FINAL false), then a budget wait at
+    495.6M + 8.5M. 0 tracebacks; conservation still 265/265.
+- T2 SPEND (measured, transcript a52cc240 since 16:30Z): 11.97M processed of the 25M hard authority. About 200k per
+  tool call at this context size, against the 120k budgeted. Remaining authority 13.0M; rotate the context before W2.
+- OPEN T2, in order:
+  1. W2: J0 shadow for POOL_FLOOR halts (0 halts so far) + pre-arm precheck when the cited count tool already exists.
+  2. W3: worker prefix sub-attribution (first call 73-91k), then a slim-profile pilot on WIIPARTY (2 gens, kill switch).
+  3. W4 rest: L1 test of the OWNER_DECISION exemption from both sides; wire reservation_overhead into the digest (L2);
+     retire or register backfill_releases; split test_mission_decision_recovery into pure + GEX44.
+  4. W5: duplicate-compile ratio + residual-class census.
+  5. Closeout: Baseline Ratchet assessment, meta-analysis, promotion pass of the candidates file.
 
 **2026-11-22 16:10Z (pane a52cc240). Owner chose "(b) Count-first P1" and "Review, then merge".**
 - Reshaped by measurement: 153 of 314 packets declare a floor, and in 149 of them P1 already freezes the pool (P1 cap
