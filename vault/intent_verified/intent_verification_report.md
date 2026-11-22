@@ -1,23 +1,62 @@
 # Intent verification report
 
-Specs with mechanical criteria: 18
-Criteria declared: 120
+Specs with mechanical criteria: 24
+Criteria declared: 133
 
 | Reach | Count |
 |---|---:|
-| REACHABLE | 31 |
-| UNJOINED | 82 |
-| UNVERIFIABLE | 7 |
+| REACHABLE | 36 |
+| UNJOINED | 91 |
+| UNVERIFIABLE | 6 |
 
 ## Criteria not mechanical
 
+- vault\specs\agent-capability-virtualization.md
+- vault\specs\agent-capability-virtualization.RESUMPTION.md
 - vault\specs\auto-testing-gate.md
+- vault\specs\autocompact-per-session-flags.md
+- vault\specs\cdio-08-mobile-app-surface.md
+- vault\specs\cdio-09-focused-decision-surface.md
+- vault\specs\cdio-edge-states.md
+- vault\specs\cpp-gsd-long.CERTIFICATION.md
 - vault\specs\cursor-window-session-restoration.md
 - vault\specs\deep-research-agent.md
+- vault\specs\exact-target-continuation.md
+- vault\specs\exact-target-continuation.RESUMPTION.md
+- vault\specs\external-capability-assimilation.md
+- vault\specs\external-capability-assimilation.RESUMPTION.md
+- vault\specs\family-baselines.RESUMPTION.md
+- vault\specs\gex44-mission-plane.md
+- vault\specs\gsd-autonomous-autocompact.md
+- vault\specs\gsd-x-n3.RESUMPTION.md
+- vault\specs\gsd-x-n4.RESUMPTION.md
+- vault\specs\gsd-x-n5.RESUMPTION.md
+- vault\specs\gsd-x-n6.RESUMPTION.md
+- vault\specs\gsd-x-n7.RESUMPTION.md
+- vault\specs\gsd-x-n8.RESUMPTION.md
+- vault\specs\interactive-context-rollover.md
+- vault\specs\interactive-context-rollover.RESUMPTION.md
+- vault\specs\kresume-courier.md
+- vault\specs\mission-continuity.md
+- vault\specs\mission-continuity.RESUMPTION.md
+- vault\specs\mobile-game-wii-port.md
+- vault\specs\parent-context-epoch-rotation.md
+- vault\specs\parent-context-epoch-rotation.RESUMPTION.md
+- vault\specs\post-edit-diagnostics.md
+- vault\specs\post-edit-diagnostics.RESUMPTION.md
+- vault\specs\pp-self-eval.md
+- vault\specs\pp-self-eval.RESUMPTION.md
+- vault\specs\security-scan.md
+- vault\specs\tco-meta.md
+- vault\specs\unhealed-knowledge-paths.md
+- vault\specs\uwcp-assimilation.md
+- vault\specs\uwcp-assimilation.RESUMPTION.md
+- vault\specs\uwcp.AMENDMENTS.md
+- vault\specs\uwcp.md
+- vault\specs\uwcp.RESUMPTION.md
 - vault\plans\2026-05-18_lazarus-resume-hardening.md
 - vault\plans\acis-generation-zero-2026-07-11.md
 - vault\plans\aishf-corpus-2026-07-21.md
-- vault\plans\apir-corpus-2026-08-03.md
 - vault\plans\apollo-retrofit-2026-05-18.md
 - vault\plans\arch-decision-skill-2026-05-23.md
 - vault\plans\auto-testing-skill-2026-05-23.md
@@ -32,22 +71,28 @@ Criteria declared: 120
 - vault\plans\CCF_QUALITY_GATES.md
 - vault\plans\cdicf-corpus-2026-08-06.md
 - vault\plans\cdio-build-2026-07-05.md
+- vault\plans\cdio-callable-liveness-resumption-2026-09-13.md
+- vault\plans\cdio-enforcement-trust-root-resumption-2026-09-13.md
 - vault\plans\cgf-phase2-2026-07-22.md
 - vault\plans\claude-md-compaction-2026-07-26.md
 - vault\plans\co-nextgen-datasets-2026-07-04.md
 - vault\plans\code-review-skill-2026-05-23.md
 - vault\plans\cognitive-kernel-datasets-2026-07-03.md
+- vault\plans\cognitive-memory-virtualization-2026-09-30.md
+- vault\plans\cognitive-memory-virtualization-RESUMPTION.md
 - vault\plans\cognitive-os-build-readiness-2026-06-30.md
 - vault\plans\cognitive-os-datasets-2026-06-30T145754Z.md
+- vault\plans\cognitive-resource-os-2026-09-27.md
+- vault\plans\cognitive-resource-os-P3-ablation-protocol.md
+- vault\plans\cognitive-resource-os-RESUMPTION.md
+- vault\plans\context-rent-2026-09-27.md
 - vault\plans\context-watchdog-tier2-2026-05-20.md
 - vault\plans\conversation-quality-audit-2026-07-03.md
 - vault\plans\conversation-quality-report-2026-07-03.md
-- vault\plans\crawlos-corpus-2026-07-19.md
 - vault\plans\cross-repo-reports-2026-08-03.md
 - vault\plans\crpf-2026-07-27.md
 - vault\plans\crpf-option-a-wiring-2026-07-27.md
 - vault\plans\crpf-overlap-audit-2026-07-27.md
-- vault\plans\d2a-replacement-2026-07-17.md
 - vault\plans\d2a-wiring-2026-07-10.md
 - vault\plans\daif-session-compiler-2026-07-13.md
 - vault\plans\daif-two-arm-trial-2026-07-13.md
@@ -55,15 +100,14 @@ Criteria declared: 120
 - vault\plans\dataset-owner-side-2026-06-02.md
 - vault\plans\decision-intelligence-2026-07-11.md
 - vault\plans\deep-research-agent-2026-05-23.md
-- vault\plans\deferred-backlog.md
 - vault\plans\deployment-skill-2026-05-24.md
 - vault\plans\design-baseline-2026-07-12.md
 - vault\plans\drk-wiring-proactive-2026-07-11.md
 - vault\plans\DRK_RESUMPTION.md
 - vault\plans\duplicate-to-advantage-2026-07-10.md
 - vault\plans\e-passes-audit-2026-07-29.md
-- vault\plans\efaif-corpus-2026-08-04.md
 - vault\plans\efaif-expansion-2026-08-06.md
+- vault\plans\effective-state-2026-09-02.md
 - vault\plans\egcc-corpus-2026-08-06.md
 - vault\plans\egcc-expansion-2026-08-07.md
 - vault\plans\emergence-audit-2026-07-31.md
@@ -72,16 +116,17 @@ Criteria declared: 120
 - vault\plans\fd-hooks-activation-2026-07-09.md
 - vault\plans\fios-dispatcher-resync-2026-07-10.md
 - vault\plans\fios-wiring-2026-07-10T124341Z.md
+- vault\plans\frontier-28-2026-08-25.md
 - vault\plans\g1-burndown-2026-08-10.md
 - vault\plans\gap-discovery-2026-07-30.md
 - vault\plans\gap-reverification-2026-08-03.md
 - vault\plans\governance-propagation-2026-06-08.md
 - vault\plans\graphify-activation-2026-07-03.md
 - vault\plans\housekeeping-pm03-wire-2026-07-04.md
+- vault\plans\ic-009-blocking-io-eradication.md
 - vault\plans\igef-2026-07-29.md
 - vault\plans\iic-corpus-architecture-2026-07-12.md
 - vault\plans\iig-compendium-2026-07-30.md
-- vault\plans\imf-corpus-2026-07-17.md
 - vault\plans\INSTITUTIONAL_EXTRACTION.md
 - vault\plans\kclaude-cursor-profile-2026-07-01.md
 - vault\plans\kclaude-new-session-speed-2026-07-01.md
@@ -96,6 +141,7 @@ Criteria declared: 120
 - vault\plans\mcp-vid-analyzer-e2e-verification-2026-05-24T18-12-07Z.md
 - vault\plans\memory-audit-2026-08-09.md
 - vault\plans\meta-systems-runtime-2026-07-10.md
+- vault\plans\observation-coverage-2026-08-27.md
 - vault\plans\OVO_FORENSIC_UPGRADE.md
 - vault\plans\OVO_VPS_CONTINUATION.md
 - vault\plans\pane-map-versioning-2026-07-06.md
@@ -106,13 +152,17 @@ Criteria declared: 120
 - vault\plans\PP_CAPABILITY_INVENTORY.md
 - vault\plans\predictive-governance-2026-08-10.md
 - vault\plans\process-hibernation-fase-a.md
+- vault\plans\product-demo-RESUMPTION.md
 - vault\plans\programmatic-budget-layer-2026-05-19.md
+- vault\plans\prr-physical-working-set-2026-10-12.md
+- vault\plans\prr-same-pid-continuation-2026-10-13.md
 - vault\plans\ram-optimization-2026-06-04.md
 - vault\plans\re-baseline-compendium-2026-07-26.md
 - vault\plans\recovery-beacon-activation-2026-07-10.md
 - vault\plans\recovery-epoch-pinned-reference-2026-07-14.md
 - vault\plans\REVERSE_ENGINEERING_REPORT.md
 - vault\plans\rtk-next-level-2026-05-19.md
+- vault\plans\sdd-os-evolution-2026-10-01.md
 - vault\plans\seip-corpus-2026-08-04.md
 - vault\plans\seip-sprint2-2026-08-06.md
 - vault\plans\session-resilience-datasets-2026-06-27.md
@@ -131,7 +181,9 @@ Criteria declared: 120
 - vault\plans\token-optimization-audit-2026-07-03.md
 - vault\plans\uceimr-corpus-2026-08-04.md
 - vault\plans\uceimr-expansion-2026-08-04.md
+- vault\plans\ucr-cif-compendium-2026-08-25.md
 - vault\plans\ukr-runtime-2026-07-30.md
+- vault\plans\upac-corpus-2026-08-18.md
 - vault\plans\usirc-corpus-2026-07-31.md
 - vault\plans\weekly-limit-burn-rca-2026-06-30.md
 - vault\plans\wrapper-w1-w5-2026-06-23.md
@@ -155,6 +207,10 @@ Criteria declared: 120
 | `V-SKIP-MVN` | `modules\code-review\test_v_block.py` | vault\specs\code-review-skill.md |
 | `V-TIMING` | `modules\arch-decision\test_v_block.py` | vault\specs\code-review-skill.md |
 | `V-CLOSED-LOOP` | `modules\arch-decision\test_closed_loop.py` | vault\specs\code-review-skill.md |
+| `V-D2A-FAMILY-COMMAND` | `tools\test_duplicate_to_advantage.py` | vault\specs\d2a-family-wiring.md |
+| `V-D2A-ADVISORY-DECOMPOSITION` | `tools\test_duplicate_to_advantage.py` | vault\specs\d2a-family-wiring.md |
+| `V-D2A-DUPLICATE-ROUTES-FAMILY` | `tools\test_duplicate_to_advantage.py` | vault\specs\d2a-family-wiring.md |
+| `V-D2A-FAMILY-REACHABLE` | `tools\test_duplicate_to_advantage.py` | vault\specs\d2a-family-wiring.md |
 | `V-C1-DISCOVERED` | `tools\test_egcc_c1.py` | vault\specs\egcc-c1-corpus-reconciliation.md |
 | `V-C1-RECURRENCE` | `tools\test_egcc_c1.py` | vault\specs\egcc-c1-corpus-reconciliation.md |
 | `V-C1-NO-RATIO` | `tools\test_egcc_c1.py` | vault\specs\egcc-c1-corpus-reconciliation.md |
@@ -172,6 +228,7 @@ Criteria declared: 120
 | `V-RC1-COVERAGE-ABSOLUTE` | `tools\test_egcc_residue.py` | vault\specs\egcc-residue-rc1-rc2.md |
 | `V-RC1-CORPUS-UNBROKEN` | `tools\test_egcc_residue.py` | vault\specs\egcc-residue-rc1-rc2.md |
 | `V-RC1-DIGEST-BUDGET` | `tools\test_egcc_residue.py` | vault\specs\egcc-residue-rc1-rc2.md |
+| `V-GSDLR` | `tools\test_gsd_long_run.py` | vault\specs\gsd-long-run-v2.md |
 | `V-LD-DISCOVERED` | `tools\test_ledger_discovery.py` | vault\specs\ledger-discovery.md |
 | `V-LD-SERIES-EXCLUDED` | `tools\test_ledger_discovery.py` | vault\specs\ledger-discovery.md |
 | `V-LD-STORE-EXCLUDED` | `tools\test_ledger_discovery.py` | vault\specs\ledger-discovery.md |
@@ -193,6 +250,7 @@ Criteria declared: 120
 | `V-TERMINALS-OPEN-REPORTED` | `tools\test_terminal_registry.py` | vault\specs\live-terminal-registry.md |
 | `V-ROLLBACK-SUGGEST` | `modules\deployment\test_v_block.py` | vault\specs\rollback-skill.md |
 | `V-NO-AUTO` | `modules\deployment\deploy.py` | vault\specs\rollback-skill.md |
+| `V-TG` | `tools\test_test_gaps.py` | vault\specs\test-gaps.md |
 | `V-SCS-NO-COLLISION` | `tools\test_co12_readiness_telemetry.py` | vault\plans\activate-inert-2026-07-03.md |
 | `V-NO-REGRESSION` | `tools\test_co12_readiness_telemetry.py` | vault\plans\cognitive-leak-taxonomy-2026-07-03.md |
 | `V-EXTENDS-NOT-DUPLICATES` | `tools\test_cognitive_leak_taxonomy.py` | vault\plans\cognitive-leak-taxonomy-2026-07-03.md |
@@ -201,11 +259,14 @@ Criteria declared: 120
 | `V-D2A-EXPANSION-CONFIG` | `tools\test_duplicate_to_advantage.py` | vault\plans\d2a-expansion-2026-08-03.md |
 | `V-D2A-EXPANSION-NO-SELF-DUPLICATE` | `tools\test_duplicate_to_advantage.py` | vault\plans\d2a-expansion-2026-08-03.md |
 | `V-D2A-EXPANSION-NOVELTY-CHECKED` | `tools\test_duplicate_to_advantage.py` | vault\plans\d2a-expansion-2026-08-03.md |
+| `V-EVAL-MISSION-WORKER-NOT-OWNER` | `tools\test_pp_eval.py` | vault\plans\deferred-backlog.md |
 | `V-REALITY-SCAN` | `tools\test_co12_readiness_telemetry.py` | vault\plans\graphify-kernel-datasets-2026-07-03.md |
+| `V-WRITEBACK` | `tools\test_writeback_budget.py` | vault\plans\graphify-kernel-datasets-2026-07-03.md |
 | `V-NO-CODE` | `tools\test_co12_readiness_telemetry.py` | vault\plans\graphify-kernel-datasets-2026-07-03.md |
 | `V-PARENT-REFS` | `tools\test_co12_readiness_telemetry.py` | vault\plans\graphify-kernel-datasets-2026-07-03.md |
 | `V-BASELINE` | `tools\test_dataset_first_protocol.py` | vault\plans\graphify-kernel-datasets-2026-07-03.md |
 | `V-DEPTH` | `tools\test_frontier_intelligence_os.py` | vault\plans\graphify-kernel-datasets-2026-07-03.md |
+| `V-DEMO` | `tools\test_product_demo.py` | vault\plans\product-demo-capability-2026-09-24.md |
 | `V-ROLLBACK-SUGGEST` | `modules\deployment\test_v_block.py` | vault\plans\rollback-skill-2026-05-25.md |
 | `V-NO-AUTO` | `modules\deployment\deploy.py` | vault\plans\rollback-skill-2026-05-25.md |
 | `V-SDDOS-CLAUDE-MD` | `tools\test_sdd_os_activation.py` | vault\plans\sdd-os-activation-2026-07-26.md |
@@ -229,7 +290,6 @@ Criteria declared: 120
 - `V-COORDINATE-SPINE` (vault\plans\graphify-kernel-datasets-2026-07-03.md)
 - `V-GRAPH-CORE` (vault\plans\graphify-kernel-datasets-2026-07-03.md)
 - `V-ROUTE-COMPILER` (vault\plans\graphify-kernel-datasets-2026-07-03.md)
-- `V-WRITEBACK` (vault\plans\graphify-kernel-datasets-2026-07-03.md)
 - `V-OBSERVATORY` (vault\plans\graphify-kernel-datasets-2026-07-03.md)
 - `V-GLOBAL-SCOPE` (vault\plans\graphify-kernel-datasets-2026-07-03.md)
 - `V-HONEST-GUARANTEES` (vault\plans\graphify-kernel-datasets-2026-07-03.md)
@@ -238,5 +298,5 @@ Criteria declared: 120
 
 - withdrawn: none
 - reachable-then-unjoined: none
-- added: 0
+- added: 13
 - repaired: none

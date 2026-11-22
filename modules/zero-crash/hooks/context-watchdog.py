@@ -16,7 +16,7 @@ Two-tier context-pressure response on Stop event:
     Per-session debounced via separate tmp flag.
 
 Reads metrics from /tmp/claude-ctx-<session_id>.json written by
-gsd-statusline.js. Writes via lib/atomic_write.py (BL-0014/0018).
+hooks/pp-statusline.js (the PP statusline; no GSD dependency). Writes via lib/atomic_write.py (BL-0014/0018).
 
 Complements gsd-context-monitor.js (PostToolUse, fires mid-turn at
 35% remaining for pre-compact vault dump). This hook fires turn-end

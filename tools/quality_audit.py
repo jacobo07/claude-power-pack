@@ -31,9 +31,9 @@ import time
 import glob
 from datetime import date
 
-LEDGER = r"C:\Users\User\.claude\knowledge_vault\global_vetoes.md"
+LEDGER = r"C:\Users\Jacobo\.claude\knowledge_vault\global_vetoes.md"
 DEFAULT_DISTILLED = (
-    r"C:\Users\User\.claude\skills\claude-power-pack"
+    r"C:\Users\Jacobo\.claude\skills\claude-power-pack"
     r"\vault\distilled\Dataset_KobiiDistillerOS_1.txt"
 )
 
@@ -77,7 +77,9 @@ SLOP_RULES: list[tuple[re.Pattern, str, str]] = [
      "Never ship a FIXME — a known defect left in place is an unshipped defect."),
     (re.compile(r"\b(?:HACK|XXX)\b"), "WOZ",
      "Never ship a HACK/XXX marker — fragile by author's own admission."),
-    (re.compile(r"\bPLACEHOLDER\b", re.I), "WOZ",
+    # Owner 2026-11-03: the hint-text prop/attribute name (`placeholder=`,
+    # `placeholder:`, `.placeholder`) is a platform API, not a stand-in marker.
+    (re.compile(r"(?<![.\w-])PLACEHOLDER\b(?!\s*\??\s*[=:])", re.I), "WOZ",
      "Never ship a PLACEHOLDER — zero placeholders in delivered code."),
     (re.compile(r"raise\s+NotImplementedError"), "WOZ",
      "Never ship raise NotImplementedError in a delivered path — wire it end-to-end."),
