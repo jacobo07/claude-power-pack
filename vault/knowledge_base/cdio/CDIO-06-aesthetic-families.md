@@ -449,9 +449,10 @@ that list is an artefact of three template kits sold in the same year.
 
 ## 10. The F1 dark zero-accent variant — PARTIAL
 
-**Status: PARTIAL.** Rules 1–4 below were tested against a measured reference bank on
-2026-10-02 and are binding as written; rules 5 and 6 are still open hypotheses and may not
-fail a review on their own. Backlog: `vault/backlog/2026-10-02_cdio-modern-saas-styles.md`,
+**Status: PARTIAL.** Rules 1–4 were tested against a measured reference bank on 2026-10-02 and
+are binding as written. Rules 5 and 6 were tested on 2026-11-22 (below) and are binding as
+rewritten there. The variant stays PARTIAL for one reason: the bank was chosen by the agent and
+one engine at one viewport measured it. Backlog: `vault/backlog/2026-10-02_cdio-modern-saas-styles.md`,
 item 1.
 
 ### The bank, and how it was measured
@@ -513,11 +514,39 @@ WCAG 2.1 asks 3:1 for what identifies a control, and the floor is not arbitrable
 The references being wrong does not make the floor wrong; it makes this the variant's second
 characteristic collision. Give controls their own border token; keep the hairline for layout.
 
-### Open hypotheses (not binding)
+### Rules 5 and 6 (binding since 2026-11-22; both hypotheses were wrong as first written)
 
-5. **The focus ring may need the one permitted hue.** Linear's focus ring is its indigo, the only
-   hue on the surface. The other sites' focus styles were not measurable: programmatic focus did
-   not reliably trigger `:focus-visible` in the measuring browser, so their result is
-   INCONCLUSIVE, not "no ring".
-6. **A focused decision surface on a dark ground cannot de-emphasise its backdrop by dimming
-   alone** (CDIO-09). No page in the bank showed a modal; untested.
+The measurement used a real Tab key press and real `Ctrl+K` modals, in Chromium 148 at 1280×800
+with the dark scheme. Rings were read from pixels as well as computed styles. The data is in
+`vault/programs/bcap-2/saas-styles/LIVE_MEASURE_2026-11-22.json`; the screenshots stay private
+on the laptop.
+
+5. **The focus ring is the one place hue is allowed, but hue is not what makes it work. What
+   makes it work is at least 3:1 against the ground.**
+   - Linear draws a 1px indigo ring, #5e69d1, offset 2px: 4.19:1.
+   - Vercel draws a 2px blue ring, #52a8ff, offset 4px: 8.4:1.
+   - Raycast leaves the ring to the browser (`outline-style: auto`), which paints it white at
+     about 19:1. Its computed colour, #101010, is only the inner half of that ring.
+
+   So the earlier "may need the one permitted hue" was wrong. A focus ring is an exception to
+   rule 1, not a requirement of it. Linear's 4.19:1 is the one closest to the floor. The
+   hypothesis's own caveat also held: a computed outline colour is not the painted ring, so a
+   review must read the pixels.
+6. **Dimming alone does de-emphasise a dark backdrop, because it works on the ink and not on the
+   ground.** Both measured modals use a plain overlay with no backdrop blur:
+   - Linear: overlay rgba(0,0,0,.85);
+   - Vercel docs: overlay #0a0a0a at opacity .8.
+
+   **What dimming does to the ink, and to the ground:**
+   - On the backdrop, the brightest ink against the ground fell from 15.73:1 to 1.31:1 on Linear
+     and from 11.91:1 to 1.53:1 on Vercel.
+   - The ground itself moved only 1.05:1.
+
+   **What separates the modal:** the modal surface sits only 1.05–1.06:1 off the ground
+   (#0f1011 on #08090a, #0a0a0a on #000). It is separated by a drawn edge:
+   - on Linear, a 0.8px rgba(255,255,255,.05) border plus shadow;
+   - on Vercel, a white 0.14-alpha ring shadow.
+
+   That is rule 3 applied to the modal. The first-written rule ("cannot de-emphasise by dimming
+   alone") was falsified. Raycast shows no modal on its public pages, so n=2. CDIO-09 is still
+   the floor for the modal's own focus and escape behaviour.

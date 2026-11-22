@@ -133,5 +133,95 @@
    "note": "composer is behind a Terms of Service accept modal; not accepted (accepting terms is the Owner's act); headless got a Cloudflare challenge"
   }
  },
- "verdict": "B3: rule 5 measured on 3/3 sites, rule 6 on 2/3 (Raycast has no public modal). B1: 4/4 surfaces captured, composer measured on 2/4. Data only; no rule status changed here."
+ "verdict": "B3 reviewed 2026-11-22: CDIO-06 sec.10 rules 5 and 6 rewritten and made binding (both first-written hypotheses falsified). B1: 4/4 surfaces captured, composer measured on 2/4.",
+ "B3_rule6_modal_anatomy": {
+  "linear": {
+   "rect": [
+    272.3999938964844,
+    104,
+    992.3999938964844,
+    555.6000061035156
+   ],
+   "border": {
+    "width": "0.8px",
+    "color": "rgba(255, 255, 255, 0.05)",
+    "radius": "12px"
+   },
+   "box_shadow": "rgba(0, 0, 0, 0.1) 0px 4px 40px 0px, rgba(0, 0, 0, 0.125) 0px 3px 20px 0px, rgba(0, 0, 0, 0.125) 0px 3px 12px 0px, rgba(0, 0, 0, 0.125) 0px 2px 8px 0px, rgba(0,",
+   "modal_backdrop_filter": "none",
+   "overlays": [
+    {
+     "bg": "rgba(0, 0, 0, 0.85)",
+     "backdropFilter": "none",
+     "opacity": "1"
+    }
+   ],
+   "backdrop_before": {
+    "median_L": 0.00304,
+    "p99_L": 0.7841,
+    "samples": 42355
+   },
+   "backdrop_after": {
+    "median_L": 0.0003,
+    "p99_L": 0.016,
+    "samples": 42355
+   },
+   "ink_vs_ground_before": 15.73,
+   "ink_vs_ground_after": 1.31,
+   "ground_change": 1.05
+  },
+  "vercel_docs": {
+   "rect": [
+    320,
+    120,
+    960,
+    512.8000183105469
+   ],
+   "border": {
+    "width": "0px",
+    "color": "rgb(31, 31, 31)",
+    "radius": "12px"
+   },
+   "box_shadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(255, 255, 255, 0.14",
+   "modal_backdrop_filter": "none",
+   "overlays": [
+    {
+     "bg": "rgb(10, 10, 10)",
+     "backdropFilter": "none",
+     "opacity": "0.8"
+    }
+   ],
+   "backdrop_before": {
+    "median_L": 0.0,
+    "p99_L": 0.54572,
+    "samples": 47005
+   },
+   "backdrop_after": {
+    "median_L": 0.00243,
+    "p99_L": 0.03028,
+    "samples": 47005
+   },
+   "ink_vs_ground_before": 11.91,
+   "ink_vs_ground_after": 1.53,
+   "ground_change": 1.05
+  },
+  "method": "headed Chromium; backdrop = screenshot pixels outside the modal rect (+8px), sampled every 4px, WCAG relative luminance; ink = p99, ground = median, before vs after Ctrl+K"
+ },
+ "B3_rule5_raycast_painted_ring": {
+  "method": "same element focused (one Tab) vs blurred, pixel difference in a 6px band; headed Chromium",
+  "changed_px": 492,
+  "top_ring_colours": [
+   "#ffffff",
+   "#a5a5a6",
+   "#f0f0f0"
+  ],
+  "ground": "#0d0f11",
+  "painted_contrast_approx": "~19:1 (white on ground)",
+  "note": "computed outline-color #101010 is the inner half of Chromium two-tone auto ring, not the visible colour"
+ },
+ "B3_rule5_contrast": {
+  "linear #5e69d1 on #08090a": 4.19,
+  "vercel #52a8ff on #000000": 8.4,
+  "raycast painted #ffffff on #0d0f11": "~19"
+ }
 }

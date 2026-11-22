@@ -55,7 +55,9 @@ visible text stay off the public repo, at `~/.claude/private/bcap2-saas-refs/` o
   This bank stays external corroboration for style 3, never a PASS.
 - **B2 already DONE 2026-11-20** (coordinator pane adcdff7b, `UPSTREAM_BRAND_PROBE.json` `bi16_cross_platform`). The Windows run
   gave combined hash 84c031a31fbb, identical to GEX44's Linux run. macOS was not measured. No CCF adapter was built. Not re-run.
-- **B3 measured; rules stay PROVISIONAL until someone reviews this data.**
+- **B3 measured and reviewed the same day.** CDIO-06 sec.10 rules 5 and 6 were rewritten and made binding:
+  - rule 5: the ring needs at least 3:1 against the ground, not a hue (Raycast's painted ring is white, about 19:1);
+  - rule 6: dimming alone works on a dark ground. The backdrop's ink fell from 15.7:1 to 1.3:1, and the modal is set off by a hairline.
   - Rule 5, focus ring after one Tab, measured on all 3 sites:
     - Linear: 1px solid rgb(94,105,209), offset 2px;
     - Vercel: 2px solid rgb(82,168,255), offset 4px;
