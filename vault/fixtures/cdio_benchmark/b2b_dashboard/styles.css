@@ -1,3 +1,6 @@
+@font-face{font-family:"Inter";font-weight:400;font-style:normal;font-display:swap;src:url("fonts/inter-400.woff2") format("woff2")}
+@font-face{font-family:"Inter";font-weight:500;font-style:normal;font-display:swap;src:url("fonts/inter-500.woff2") format("woff2")}
+@font-face{font-family:"Inter";font-weight:600;font-style:normal;font-display:swap;src:url("fonts/inter-600.woff2") format("woff2")}
 :root{
   --bg:#f6f7f9; --surface:#fcfcfd; --ink:#14181f; --muted:#5b6472; --line:#e3e6eb;
   --accent:#1f4fd8; --accent-soft:#eaf0fd; --warn:#a4360f; --up:#0f6a3c;
@@ -87,8 +90,8 @@ tbody tr:last-child th,tbody tr:last-child td{border-bottom:0}
   td[data-l]{display:flex;justify-content:space-between;gap:var(--s4)}
   td[data-l]::before{content:attr(data-l);color:var(--muted);font-size:14px}
   .num{text-align:left}
-  .axis text{font-size:20px}
-  .lbl{font-size:21px}
-  .lbl--end{font-size:22px}
+  .axis text{font-size:27px}
+  .lbl{font-size:28px}
+  .lbl--end{font-size:28px;text-anchor:end;transform:translateY(-26px)}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}

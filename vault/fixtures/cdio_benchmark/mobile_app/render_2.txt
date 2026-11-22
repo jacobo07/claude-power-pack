@@ -1,0 +1,3 @@
+﻿RENDERED vault\fixtures\cdio_benchmark\mobile_app\index.html -> C:\Users\User\.claude\state\design_route\renders\868bb283b421601a-desktop.png C:\Users\User\.claude\state\design_route\renders\868bb283b421601a-phone.png
+Look at every PNG (Read tool) before writing verdicts: the review judges what renders, not the source.
+DEFECT lines are folded into the record as verdicts; a reviewer pass cannot override them.

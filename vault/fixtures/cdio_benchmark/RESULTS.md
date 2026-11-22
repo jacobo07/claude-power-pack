@@ -15,6 +15,25 @@ not render tablet; tablet is UNMEASURED for every row).
 Mean 92.5 over 4 sectors on the first independent review, all clean. After the Owner-approved brand repair the mean is
 95.5. Subagent spend 566k (builders 265k, reviewers 301k), against a 450k projection.
 
+Font and minors pass (Owner "y"; independent reviews, official `record` output):
+
+| surface | score | crit/major/minor | evidence |
+|---|---|---|---|
+| b2b_dashboard | 100 | 0/0/0 | `review_3.json`, `record_3.txt` (review 2 gave 98, 1 minor: end label 4 px from the card edge on phone, then fixed) |
+| pro_service | 100 | 0/0/0 | `review_2.json`, `record_2.txt` |
+| mobile_app (CDIO-08) | 100 | 0/0/0 | `review_2.json`, `record_2.txt` |
+| brand_kit | 100 | 0/0/0 | `review_2.json`, `record_2.txt` |
+
+Final mean 100. Changes in this pass:
+- Every surface self-hosts its fonts (woff2 latin subsets, OFL), so no page makes an external request.
+- The phone chart text on the dashboard went from about 9 px to about 12 px, and its end label sits above the final point.
+- The legal pages get paragraph spacing.
+- The privacy copy now says the fonts are served from the same site.
+
+Reviewer spend for this pass: 62k + 47k. Running subagent total: 675k.
+
+Caveat: `record` hashes the HTML and SVG files, not `styles.css` or `fonts/`. A CSS-only edit therefore keeps the same file hash, so the renders, not the hash, are the evidence that these exact styles were judged.
+
 Brand repair (Owner "y", review 2, `brand_kit/review_2.json`, `record_2.txt`):
 - The symbol was redrawn as one elongated loaf with three diagonal cuts, so the brim that read as a hard hat is gone.
 - The wordmark and both lockups (`lockup.svg`, `lockup-inverse.svg` in cream for dark grounds) are Source Serif 4

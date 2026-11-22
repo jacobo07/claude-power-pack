@@ -1,0 +1,18 @@
+﻿{
+ "files": {
+  "c:\\users\\user\\apps\\pp-cdio-bench\\vault\\fixtures\\cdio_benchmark\\pro_service\\index.html": "59cecd43658ff2544cb225aee27b53f82e5187d7c615b4411f2d56c289d6ea79",
+  "c:\\users\\user\\apps\\pp-cdio-bench\\vault\\fixtures\\cdio_benchmark\\pro_service\\privacy.html": "f7edc08f91565c70513b81d32f5440271ef576f950e0342fa9a19df33ac96c59",
+  "c:\\users\\user\\apps\\pp-cdio-bench\\vault\\fixtures\\cdio_benchmark\\pro_service\\terms.html": "b9bef9db429d7479a23128b62b5b140b2baa5e41593811d8a53e7f7a046c9865"
+ },
+ "verdict": "APPROVE",
+ "score": 100,
+ "reason": "score 100 >= 80 and zero critical",
+ "is_done": true,
+ "refused": [],
+ "experience": "unassessed",
+ "reviewer_verdicts": 8,
+ "folded_taste": 102,
+ "critical": [],
+ "failed": [],
+ "legal_demoted": []
+}

@@ -5,4 +5,4 @@ It is not a real product and does not imitate one. The book, the author and ever
 sample data and carry the label "Datos de ejemplo". Nothing collects real data.
 
 Three screens drawn at 390x844 without a device bezel: onboarding, home, book detail.
-Judged under CDIO-08 (mobile app surface). Static HTML/CSS, Google Fonts only (Source Serif 4, Inter).
+Judged under CDIO-08 (mobile app surface). Static HTML/CSS. Source Serif 4 and Inter are self-hosted woff2 latin subsets in `fonts/` (SIL OFL 1.1); no external requests.
