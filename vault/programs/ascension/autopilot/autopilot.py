@@ -45,6 +45,11 @@ DAY_CAP = 500_000_000  # Owner 2026-11-16 'Day cap 500M and total +1B' (pane 4de
 GEN_CAP = 25_000_000
 FRESH_GEN_CAP = 1_000_000
 CALL_RESERVE = 2_000_000  # booked for a judge/planner call whose usage could not be measured (never 0)
+# Ascension throughput T1 O2 (Owner "y" 2026-11-22, pane 37612bb0): what judging a checkpoint asks of the day cap. It was
+# GEN_CAP + 2 * CALL_RESERVE = 29M, i.e. the NEXT generation's caps, so finished generations waited 16 h unjudged at 477M/500M.
+# Measured on the GEX44 ledger 2026-11-22 (315 judges, 477 plans, 49 levers, all measured): judge p99 1.15M, plan p99 2.21M,
+# lever design mean 0.9M (max about 3.5M) -> 6M. Arming keeps its own GEN_CAP ask and its kept-judgment wait.
+JUDGE_ASK = 6_000_000
 # Authority granted before the autopilot existed that the Owner counts inside TOTAL_CAP (not inside a day's cap:
 # it was not granted by the autopilot). Owner 2026-11-11 (pane fa41bae9): "S27's 200M ... it adds to that".
 PRIOR_AUTHORITY = (("m-10566700b1fe", "S27", 200_000_000),)
@@ -277,6 +282,70 @@ def budget_admits(rows: list[dict], now: float, ask: int = GEN_CAP) -> str | Non
     if today + ask > DAY_CAP:
         return f"today {today:,} + {ask:,} > {DAY_CAP:,} (waits for the next UTC day)"
     return None
+
+
+RESERVATION_KINDS = ("arm_reserve", "auto_topup")
+
+
+def reservation_release(rows: list[dict], mission: str | None, gen: str | None, authority, spent) -> list[tuple[float, int]]:
+    """T1 O1 (Owner "y" 2026-11-22, Q1: the day cap counts measured spend + open reservations): at close, the part of a
+    generation's reservations it never spent is released, each piece on the DAY its reservation was booked (ts of that
+    row), newest first and never more than that row booked. Unmeasured spend or no authority releases nothing: an
+    unknown is never 0. Lifetime before this: 2,912M reserved for 1,416M spent by closed generations."""
+    if spent is None or not authority or not isinstance(spent, int) or spent < 0:
+        return []
+    unused = int(authority) - spent
+    if unused <= 0:
+        return []
+    released = {(r.get("released_ts"), r.get("mission")) for r in rows if r.get("kind") == "reserve_release"}
+    if any(m == mission for _, m in released) and mission:
+        return []  # idempotent: this generation was already released
+    res = [r for r in rows if (r.get("kind") == "arm_reserve" and gen and r.get("gen") == gen)
+           or (r.get("kind") == "auto_topup" and mission and r.get("mission") == mission)]
+    out = []
+    for r in sorted(res, key=lambda x: -float(x["ts"])):
+        amt = min(unused, int(r.get("tokens") or 0))
+        if amt > 0:
+            out.append((float(r["ts"]), amt))
+            unused -= amt
+        if unused <= 0:
+            break
+    return out
+
+
+def release_reservations(ln: str, mission: str | None, gen: str | None, authority, spent) -> int:
+    """Books the reserve_release rows (negative tokens, back-dated to the reservation's day). Returns tokens released."""
+    total = 0
+    for ts, amt in reservation_release(ledger_rows(), mission, gen, authority, spent):
+        ledger_add(lane=ln, kind="reserve_release", gen=gen, mission=mission, tokens=-amt, ts=ts + 0.001,
+                   released_ts=_now(), spend=spent, authority=authority)
+        total += amt
+    return total
+
+
+def backfill_releases(rows: list[dict]) -> list[dict]:
+    """One-off: the release rows closed generations would have booked under O1 (generation_closed carries mission,
+    spend, authority; the gen name comes from its generation_armed row). Idempotent through reservation_release."""
+    gen_of = {r.get("mission"): r.get("gen") for r in rows if r.get("kind") == "generation_armed"}
+    out, seen = [], list(rows)
+    for r in rows:
+        if r.get("kind") != "generation_closed" or not r.get("measured"):
+            continue
+        m = r.get("mission")
+        for ts, amt in reservation_release(seen, m, gen_of.get(m), r.get("authority"), r.get("spend")):
+            row = {"lane": r.get("lane"), "kind": "reserve_release", "gen": gen_of.get(m), "mission": m,
+                   "tokens": -amt, "ts": ts + 0.001, "released_ts": float(r["ts"]), "spend": r.get("spend"),
+                   "authority": r.get("authority"), "backfill": True}
+            out.append(row)
+            seen.append(row)
+    return out
+
+
+def reservation_overhead(rows: list[dict]) -> dict:
+    """Reserved vs released, lifetime: the share of booked reservations that closed generations never spent."""
+    reserved = sum(int(r.get("tokens") or 0) for r in rows if r.get("kind") in RESERVATION_KINDS)
+    released = -sum(int(r.get("tokens") or 0) for r in rows if r.get("kind") == "reserve_release")
+    return {"reserved": reserved, "released": released, "ratio": round(released / reserved, 3) if reserved else None}
 
 
 def call_tokens(measured) -> tuple[int, bool]:
@@ -1122,7 +1191,30 @@ def apply_standing_exclusion(v: dict, ls: dict) -> list[str]:
     return moved
 
 
+NOT_FINAL_RE = re.compile(r"^[ \t>*_-]*CHECKPOINT_FINAL[*_]*\s*[:=]\s*[*_`]*\s*(false|no)\b", re.I | re.M)
+
+
+def declared_not_final(checkpoint: str, product: str) -> str | None:
+    """T1 O3 (judgment executability): a checkpoint that DECLARES itself not final, in the machine line
+    `CHECKPOINT_FINAL: false`, is not judged by a model (the FIFATC S261C judge spent 183,084 tokens to read that). None =
+    no declaration or unreadable: the judge runs as before (prose saying "interim" is still the judge's to read)."""
+    p = Path(checkpoint)
+    p = p if p.is_absolute() else Path(product) / p
+    try:
+        text = p.read_text(errors="replace")
+    except OSError:
+        return None
+    m = NOT_FINAL_RE.search(text)
+    return (f"JUDGMENT_NOT_EXECUTABLE: {p.name} declares '{m.group(0).strip()}' "
+            "(deterministic, no judge call)") if m else None
+
+
 def judge(lane: dict, checkpoint: str, product: str, ruling: str = "") -> dict:
+    nf = declared_not_final(checkpoint, product)
+    if nf:
+        log(f"{lane.get('name')}: {nf}")
+        return {"verdict": "INCONCLUSIVE", "checkpoint_final": False, "notes": nf, "_tokens": 0, "_session": None,
+                "_not_executable": True}
     prompt = (HOME / "judge_prompt.md").read_text().replace("{CHECKPOINT}", checkpoint).replace("{PRODUCT}", product)
     prompt += ruling
     # 2026-11-19 (pane 08cba76c): the judge's bare gate runs rewrote tracked evidence (MKW s184m/seq_gate_run.json,
@@ -1273,7 +1365,8 @@ def command_text(lane: dict, name: str, packet: Path, notes: str) -> str:
             "commit the checkpoint (or a pivot residual) before 75% of the authority is processed. At the end: "
             "gsd_mission.py checkpoint "
             f"CHECKPOINT_COMPLETE with an evidence checkpoint file for {name} that states new canonical certificates (per "
-            "profile, by function identity) and validated capabilities.")
+            "profile, by function identity) and validated capabilities. The checkpoint carries one machine line, "
+            "`CHECKPOINT_FINAL: true` or `CHECKPOINT_FINAL: false` (false = work remains: it is continued, not judged).")
 
 
 def envelope_admits(lane: dict, rows: list[dict], caps: int) -> str | None:
@@ -1605,12 +1698,55 @@ def checkpoint_from_branch(product: str, base, head) -> str:
 BUDGET_WAIT_KEEPS_JUDGMENT = True
 
 
+def _governor(*args, timeout=120) -> tuple[int, str]:
+    """tools/account_governor.py, the account-level weekly guard that gsd_mission arm enforces (Owner Q2, 85%)."""
+    try:
+        r = subprocess.run([sys.executable, str(PP / "tools" / "account_governor.py"), *args], capture_output=True,
+                           text=True, timeout=timeout)
+        return r.returncode, (r.stdout or "") + (r.stderr or "")
+    except Exception as exc:  # noqa: BLE001 -- unreadable: the arm's own governor check stays authoritative
+        return -1, f"{type(exc).__name__}: {exc}"
+
+
+_WEEKLY = {"at": 0.0, "why": None}
+WEEKLY_TTL_S = 240  # one governor read per tick for every lane, not one per lane
+
+
+def weekly_admits(now: float | None = None) -> str | None:
+    """T1 O4 (Owner "y" 2026-11-22): the arm-time weekly guard, asked BEFORE arming instead of discovered as a
+    MissionError inside `gsd_mission arm` (11-19/20: tracebacks, arm_refund, a parked lane). None = admitted or not
+    measurable (the arm's own check still refuses then); else a day-cap-like wait reason, so the judgment is kept.
+    Kill switch AP_WEEKLY_CHECK=off."""
+    if os.environ.get("AP_WEEKLY_CHECK", "").strip().lower() == "off":
+        return None
+    now = _now() if now is None else now
+    if now - _WEEKLY["at"] < WEEKLY_TTL_S:
+        return _WEEKLY["why"]
+    rc, out = _governor("check", "--action", "arm")
+    why = None
+    if rc == 3:
+        line = next((l.strip() for l in reversed(out.splitlines()) if "refused" in l), out.strip()[-200:])
+        nxt = ""
+        src, sout = _governor("status", "--json")
+        try:
+            ra = float(json.loads(sout[sout.index("{"):]).get("reset_at") or 0)
+            while ra and ra <= now:
+                ra += 7 * 86400
+            if ra:
+                nxt = "; next weekly reset " + dt.datetime.fromtimestamp(ra, dt.timezone.utc).strftime("%FT%H:%MZ")
+        except (ValueError, TypeError, json.JSONDecodeError):
+            nxt = "; next weekly reset unreadable"
+        why = f"weekly guard: {line[:200]}{nxt} (waits for the reset or a lower bound under the guard)"
+    _WEEKLY.update(at=now, why=why)
+    return why
+
+
 def resume_wait(pend: dict) -> str | None:
-    """The budget reason a kept budget-wait plan still waits for (a day-cap wait only), else None."""
+    """The budget reason a kept budget-wait plan still waits for (a day-cap or weekly wait), else None."""
     caps = pend.get("wait_caps")
     if type(caps) is not int or caps <= 0:
         return None
-    why = budget_admits(ledger_rows(), _now(), caps)
+    why = budget_admits(ledger_rows(), _now(), caps) or weekly_admits()
     return why if why and not why.startswith(PARK_REASONS) else None
 
 
@@ -1728,7 +1864,9 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
         checkpoint = str(hits[-1])
         ls["judged_for"] = key = "bootstrap"
     save_state(st)
-    why = budget_admits(ledger_rows(), _now(), GEN_CAP + 2 * CALL_RESERVE)
+    # T1 O2: judging asks only what a judge + planner (+ lever) call costs; the next generation's caps are asked at arming,
+    # whose day-cap wait keeps the judgment (BUDGET_WAIT_KEEPS_JUDGMENT), so no finished generation waits a day unjudged.
+    why = budget_admits(ledger_rows(), _now(), JUDGE_ASK)
     if why:
         ls["judged_for"] = None
         if why.startswith(PARK_REASONS):  # only the day cap is a wait; frozen/total/wall need the Owner
@@ -2015,7 +2153,7 @@ def plan_and_arm(st: dict, lane: dict, ls: dict, key: str, checkpoint: str, prod
         ls.update(snap)  # judged again after the Owner's look: its class must not be counted twice
         return _park(st, ls, lane["name"], f"lane envelope before arming {name}: {ew}",
                      f"PARKED at the lane envelope before arming {name}: {ew}", kind="envelope")
-    why = budget_admits(ledger_rows(), _now(), caps)
+    why = budget_admits(ledger_rows(), _now(), caps) or weekly_admits()  # T1 O4: daily and weekly, jointly
     if why and BUDGET_WAIT_KEEPS_JUDGMENT and not why.startswith(PARK_REASONS):
         # a day-cap wait: keep the judgment, the design and the directive (counted once, like a RETRY)
         ls["judged_for"] = None
@@ -2140,6 +2278,15 @@ def arm_generation(st, lane, ls, name, text, notes, phases, caps, dry) -> str:
             return "RETRY"
         ledger_add(lane=ln, kind="generation_closed", mission=old, tokens=over, spend=spent, authority=prior_auth,
                    measured=spent is not None)
+        freed = 0 if dry else release_reservations(ln, old, ls.get("gen"), prior_auth, spent)
+        if freed:
+            log(f"{ln}: released {freed:,} unspent reservation of {ls.get('gen')} ({old}): spent {spent:,} of {prior_auth:,}")
+    elif old and not dry and ls.get("authority"):
+        # the mission ended on its own (terminal): nothing to close, but its unspent reservation is still released
+        spent = mission_spend(old)
+        freed = release_reservations(ln, old, ls.get("gen"), ls.get("authority"), spent)
+        if freed:
+            log(f"{ln}: released {freed:,} unspent reservation of {ls.get('gen')} ({old}, terminal): spent {spent:,}")
     step("arm")
     ledger_add(lane=ln, kind="arm_reserve", gen=name, tokens=caps)
     hours = min(16.0, max(1.0, (WALL - dt.datetime.now(dt.timezone.utc)).total_seconds() / 3600))
