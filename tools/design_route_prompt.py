@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -42,9 +43,35 @@ def block(pol: dict) -> str:
     return "\n".join(lines)
 
 
+# Text that reaches UserPromptSubmit without the Owner typing it. Measured 2026-11-22 over the live prompts.jsonl
+# (106 routes): ~54 fired on these, including all 44 `motion` routes -- a subagent hand-back that mentions a "trailer"
+# re-routed the session to motion, demanded motion-promo, and (latest prompt decides) switched off the review of app
+# source. The Owner's own words, typed or pasted, are never filtered (V-DRO-*).
+_MACHINE_PREFIXES = (
+    "another claude session sent a message",          # subagent / peer hand-back
+    "this session is being continued from a previous conversation",  # compaction summary
+    "<task-notification>",                            # background task completion
+    "base directory for this skill",                  # a loaded skill's body
+    "userpromptsubmit hook additional context",       # hook output echoed as a turn
+    "caveat: the messages below were generated",      # local-command transcript
+)
+_LEADING_REMINDERS = re.compile(r"(?s)^\s*(?:<system-reminder>.*?</system-reminder>\s*)+")
+
+
+def owner_text(prompt: str) -> str:
+    """The part of a prompt the Owner wrote, or '' when the whole turn is machine-originated."""
+    rest = _LEADING_REMINDERS.sub("", prompt or "").lstrip(" \t\r\n\"'")
+    low = rest[:200].lower()
+    if not rest or any(low.startswith(p) for p in _MACHINE_PREFIXES):
+        return ""
+    return rest
+
+
 def run(payload: dict) -> dict | None:
     from modules.cdio import design_route as dr
-    prompt = str(payload.get("prompt") or payload.get("user_prompt") or "")
+    prompt = owner_text(str(payload.get("prompt") or payload.get("user_prompt") or ""))
+    if not prompt:
+        return None
     routes = dr.load_routes()
     kinds = dr.classify(prompt, routes)
     if not kinds:
