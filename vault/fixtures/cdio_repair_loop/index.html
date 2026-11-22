@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Horno Mirabel | Panadería de barrio (página de prueba)</title>
+<meta name="description" content="Página de prueba del sistema de revisión de diseño. Horno Mirabel es un negocio ficticio.">
+<style>
+  :root {
+    --paper: #f3f1ea;
+    --ink: #23271f;
+    --muted: #4f5547;
+    --brick: #9c3d24;
+    --line: #d9d5c8;
+    --radius: 6px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #1b1e19;
+      --ink: #ecebe3;
+      --muted: #b9bcae;
+      --brick: #e3866a;
+      --line: #383d33;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink);
+         font-family: "Avenir Next", "Segoe UI", "Helvetica Neue", sans-serif; line-height: 1.55; }
+  a { color: var(--brick); }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+  header.top { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; }
+  .brand, nav a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 8px; text-decoration: none;
+                  color: var(--ink); }
+  .brand { font-weight: 700; font-size: 1.15rem; letter-spacing: .01em; margin-left: -8px; }
+  .brand, nav a { white-space: nowrap; }
+  header.top { flex-wrap: wrap; gap: 0 16px; }
+  nav { display: flex; gap: 14px; margin-left: -8px; }
+  .hero { display: grid; grid-template-columns: 1.1fr 1fr; gap: 48px; align-items: center; padding: 56px 0 72px; }
+  .hero h1 { font-size: clamp(2.2rem, 5vw, 3.6rem); line-height: 1.08; margin: 0 0 18px; letter-spacing: -.015em; }
+  .hero p { font-size: 1.15rem; color: var(--muted); max-width: 34ch; margin: 0 0 28px; }
+  .btn { display: inline-block; background: var(--brick); color: #fff8f2; padding: 14px 22px; border-radius: var(--radius);
+         text-decoration: none; font-weight: 600; }
+  .hero img { width: 100%; height: auto; display: block; }
+  .hero figure { margin: 0; }
+  .hero figcaption { margin-top: 10px; font-size: .9rem; color: var(--muted); text-align: center; }
+  .band { padding: 18px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+          color: var(--muted); }
+  section { padding: 56px 0; }
+  section + section { padding-top: 0; }
+  .visit { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; }
+  .visit p { margin: 0 0 10px; color: var(--muted); max-width: 42ch; }
+  .visit p:first-of-type { color: var(--ink); font-weight: 600; }
+  .visit .note { font-size: .9rem; }
+  h2 { font-size: 1.7rem; margin: 0 0 20px; }
+  .bake { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; margin: 0; padding: 0;
+          list-style: none; }
+  .bake li strong { display: block; margin-bottom: 4px; }
+  dl.hours { display: grid; grid-template-columns: max-content 1fr; gap: 8px 32px; margin: 0; }
+  dt { font-weight: 600; }
+  dd { margin: 0; color: var(--muted); }
+  footer { padding: 32px 0 48px; color: var(--muted); font-size: .92rem; border-top: 1px solid var(--line); }
+  @media (max-width: 760px) {
+    .hero, .bake, .visit { grid-template-columns: 1fr; gap: 28px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="#inicio">Horno Mirabel</a>
+    <nav><a href="#horneamos">Qué horneamos</a><a href="#horarios">Horarios</a></nav>
+  </header>
+
+  <main id="inicio">
+    <div class="hero">
+      <div>
+        <h1>Pan de masa madre, horneado cada mañana.</h1>
+        <p>Hogazas de fermentación lenta, harina molida en piedra y un horno que se enciende a las cinco.</p>
+        <a class="btn" href="#horarios">Ver horarios</a>
+      </div>
+      <figure>
+        <img src="pan.svg" alt="Ilustración de una hogaza de masa madre" width="560" height="385">
+        <figcaption>Ilustración original. Sin fotografía real: el negocio es ficticio.</figcaption>
+      </figure>
+    </div>
+
+    <div class="band">Abrimos de martes a domingo. El pan de centeno sale los jueves.</div>
+
+    <section id="horneamos">
+      <h2>Qué horneamos</h2>
+      <ul class="bake">
+        <li><strong>Hogaza de trigo</strong>Corteza gruesa, miga abierta, 36 horas de fermento.</li>
+        <li><strong>Centeno integral</strong>Denso y ácido, para cortar fino.</li>
+        <li><strong>Pan de aceite</strong>Masa con aceite de oliva, ideal para tostar.</li>
+      </ul>
+    </section>
+
+    <section id="horarios" class="visit">
+      <div>
+        <h2>Horarios</h2>
+        <dl class="hours">
+          <dt>Martes a viernes</dt><dd>7:30 a 14:00</dd>
+          <dt>Sábado y domingo</dt><dd>8:00 a 13:30</dd>
+          <dt>Lunes</dt><dd>Cerrado</dd>
+        </dl>
+      </div>
+      <div>
+        <h2>Dónde estamos</h2>
+        <p>Calle del Molino 14, barrio de San Lorenzo.</p>
+        <p>Los encargos para el fin de semana se piden en el mostrador hasta el jueves.</p>
+        <p class="note">Dirección de ejemplo: el negocio es ficticio.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer>Horno Mirabel es un negocio ficticio. Esta página es una prueba del sistema de revisión de diseño de Claude Power Pack.</footer>
+</div>
+</body>
+</html>
