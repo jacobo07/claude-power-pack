@@ -107,6 +107,20 @@ def main() -> int:
         check("V-FINJ-POSITIVE-CONTROL", cli.family_block(NONE_PROMPT, {}) == "",
               "a prompt of no family receives no baseline")
 
+        # -- machine turns arm no family gate, through the real entrypoint (2026-11-22) ---------
+        # A subagent hand-back that said "hero" injected web_surface and armed its turn-end done-gate on a tooling
+        # repo. The same words typed by the Owner must still inject (the control is the same text, unwrapped).
+        m_fid, (m_in, _) = next(iter(PROMPTS.items()))
+        typed = run_main({"prompt": m_in, "session_id": "finj-machine-typed"})
+        handback = ("Another Claude session sent a message: <agent-message from=\"a1\"> [Subagent hand-back] "
+                    + m_in + " </agent-message>")
+        wrapped = "<system-reminder id=\"r1\">\n" + handback + "\n</system-reminder>"
+        machine = [run_main({"prompt": t, "session_id": "finj-machine-%d" % i})
+                   for i, t in enumerate((handback, wrapped, "<task-notification> " + m_in + " </task-notification>"))]
+        check("V-FINJ-MACHINE-TURN-NO-FAMILY", header(m_fid) in typed and all(header(m_fid) not in o for o in machine),
+              "typed injects=%s; machine turns inject=%s" % (header(m_fid) in typed,
+                                                               [header(m_fid) in o for o in machine]))
+
         # -- kill switch, with the same prompt as its own control ----------------------
         k_in = PROMPTS["kobiicraft_mode"][0]
         os.environ[cli.FAMILY_SWITCH] = "off"

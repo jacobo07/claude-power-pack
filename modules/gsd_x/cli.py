@@ -240,7 +240,11 @@ def main() -> int:
     # prompt, deduped per session. Its own fail-open; "" when nothing earns a place. Its cost
     # is bounded inside recall.py (WAL + 0.2 s reader timeout), because stdout is written once
     # at exit and gsd_x_tier.js drops the stdout of a killed child: ordering here protects nothing.
-    parts = [advisory(v), inherited_block(pl), family_block(prompt, pl)]
+    # A family baseline arms a turn-end done-gate, so it is chosen from the Owner's words only: a subagent hand-back
+    # that said "hero" armed the web_surface gate on a tooling repo (2026-11-22). Advisory blocks keep the full text.
+    from modules.gsd_x.prompt_origin import owner_text
+    owner = owner_text(prompt)
+    parts = [advisory(v), inherited_block(pl), family_block(owner, pl) if owner else ""]
     try:
         from modules.gsd_x.recall import recall_block
         parts.append(recall_block(prompt, pl))

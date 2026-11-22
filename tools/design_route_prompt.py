@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import json
 import os
-import re
 import sys
 from pathlib import Path
 
@@ -47,24 +46,9 @@ def block(pol: dict) -> str:
 # (106 routes): ~54 fired on these, including all 44 `motion` routes -- a subagent hand-back that mentions a "trailer"
 # re-routed the session to motion, demanded motion-promo, and (latest prompt decides) switched off the review of app
 # source. The Owner's own words, typed or pasted, are never filtered (V-DRO-*).
-_MACHINE_PREFIXES = (
-    "another claude session sent a message",          # subagent / peer hand-back
-    "this session is being continued from a previous conversation",  # compaction summary
-    "<task-notification>",                            # background task completion
-    "base directory for this skill",                  # a loaded skill's body
-    "userpromptsubmit hook additional context",       # hook output echoed as a turn
-    "caveat: the messages below were generated",      # local-command transcript
-)
-_LEADING_REMINDERS = re.compile(r"(?s)^\s*(?:<system-reminder>.*?</system-reminder>\s*)+")
-
-
-def owner_text(prompt: str) -> str:
-    """The part of a prompt the Owner wrote, or '' when the whole turn is machine-originated."""
-    rest = _LEADING_REMINDERS.sub("", prompt or "").lstrip(" \t\r\n\"'")
-    low = rest[:200].lower()
-    if not rest or any(low.startswith(p) for p in _MACHINE_PREFIXES):
-        return ""
-    return rest
+# One definition, shared with the family-baseline injector (modules/gsd_x/cli.py), which fired on the same machine
+# text and armed a turn-end gate (2026-11-22). Re-exported under the old name for callers and V-DRO.
+from modules.gsd_x.prompt_origin import MACHINE_PREFIXES as _MACHINE_PREFIXES, owner_text  # noqa: E402,F401
 
 
 def run(payload: dict) -> dict | None:
