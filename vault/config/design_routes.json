@@ -42,6 +42,15 @@
       "review": false,
       "overrides": ["web", "app_ui"]
     },
+    "hero_mockup": {
+      "prompt": "\\b(hero (mock-?ups?|art|graphics?|posters?|directions?)|mock-?ups? (de(l)?|for (a|an|the|my|our)) hero|mock[- ]?up (a|an|the|my|our|some|two|three|four|five|six) hero(es)?|maquetas? (de(l)?|para (el|la|un|una)) hero|art directions? for (the|a|an|my|our) (site|landing|website|homepage|first screen)|direcci[oó]n(es)? de arte (para|de) (la|el|una|un|mi) (web|landing|p[aá]gina|sitio|portada)|awwwards[- ]style hero|poster[- ]like (site|hero|website))\\b",
+      "required": ["charles-hero-mockups"],
+      "recommended": [],
+      "advice": "Hero mockups are IMAGES of a site's first screen (GPT Image), not code. Run the skill with `python -X utf8 -I <skill>/scripts/heroes.py <check|render|fix|review|board> --project <folder>`: -X utf8 is required on Windows. `check` and `render --dry-run` need no key; a real render needs OPENAI_API_KEY and costs about $0.05 per image (5 per page). Spend up to $5 per batch without asking; above $5, show the cost to the Owner first. Keep `<folder>/out/` and reference screenshots out of git.",
+      "taste": false,
+      "review": false,
+      "overrides": ["web", "app_ui"]
+    },
     "dataviz": {
       "prompt": "\\b((bar|line|pie|area|scatter|donut) (chart|graph)|gr[aá]fic[oa]s? de (barras|l[ií]neas|tarta|datos)|data ?vi[sz](ualization)?|visuali[sz]aci[oó]n de datos|kpi tiles?|sparklines?|heatmap)\\b",
       "required": [],
