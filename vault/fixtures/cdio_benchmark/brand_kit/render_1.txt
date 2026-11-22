@@ -1,0 +1,6 @@
+﻿RENDERED vault\fixtures\cdio_benchmark\brand_kit\symbol.svg -> C:\Users\User\.claude\state\design_route\renders\98319117af355df3-desktop.png C:\Users\User\.claude\state\design_route\renders\98319117af355df3-phone.png
+RENDERED vault\fixtures\cdio_benchmark\brand_kit\wordmark.svg -> C:\Users\User\.claude\state\design_route\renders\e7df80c0521290ce-desktop.png C:\Users\User\.claude\state\design_route\renders\e7df80c0521290ce-phone.png
+RENDERED vault\fixtures\cdio_benchmark\brand_kit\index.html -> C:\Users\User\.claude\state\design_route\renders\b6918e285b980910-desktop.png C:\Users\User\.claude\state\design_route\renders\b6918e285b980910-phone.png
+SKIP vault\fixtures\cdio_benchmark\brand_kit\styles.css: not an HTML page or a brand asset (.svg/.png) on disk; app source renders through `render-url`
+Look at every PNG (Read tool) before writing verdicts: the review judges what renders, not the source.
+DEFECT lines are folded into the record as verdicts; a reviewer pass cannot override them.

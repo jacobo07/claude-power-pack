@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Operaciones · Rutaviva (fixture)</title>
+<meta name="description" content="Panel de operaciones de ejemplo para una plataforma logística B2B ficticia.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="skip" href="#main">Saltar al contenido</a>
+<header class="top">
+  <div class="wrap top__in">
+    <p class="brand">Rutaviva</p>
+    <p class="sample" role="note">Datos de ejemplo</p>
+  </div>
+</header>
+
+<main id="main" class="wrap">
+  <div class="head">
+    <h1>Operaciones</h1>
+    <p class="muted">Últimas 12 semanas · todas las plataformas</p>
+  </div>
+
+  <section aria-labelledby="kpi-h" class="kpis">
+    <h2 id="kpi-h" class="sr">Indicadores clave</h2>
+    <dl class="kpi-grid">
+      <div class="kpi kpi--main">
+        <dt>Entregas a tiempo</dt>
+        <dd><span class="kpi__v">94,2 %</span><span class="kpi__d up">+1,8 pts</span></dd>
+      </div>
+      <div class="kpi">
+        <dt>Envíos activos</dt>
+        <dd><span class="kpi__v">1.284</span><span class="kpi__d">sin cambio</span></dd>
+      </div>
+      <div class="kpi">
+        <dt>Incidencias abiertas</dt>
+        <dd><span class="kpi__v">37</span><span class="kpi__d down">+5 esta semana</span></dd>
+      </div>
+      <div class="kpi">
+        <dt>Tiempo medio de tránsito</dt>
+        <dd><span class="kpi__v">2,6 d</span><span class="kpi__d up">−0,2 d</span></dd>
+      </div>
+    </dl>
+  </section>
+
+  <section aria-labelledby="chart-h" class="card">
+    <h2 id="chart-h">Entregas a tiempo por semana</h2>
+    <p class="muted">Porcentaje de envíos entregados dentro de la ventana prometida.</p>
+    <figure class="chart">
+      <svg viewBox="0 0 720 272" role="img" aria-labelledby="c-t c-d">
+        <title id="c-t">Entregas a tiempo por semana</title>
+        <desc id="c-d">Línea que sube de 90,1 % en la semana 1 a 94,2 % en la semana 12, con una caída a 89,7 % en la semana 6.</desc>
+        <g class="grid">
+          <line x1="48" x2="640" y1="30" y2="30"/>
+          <line x1="48" x2="640" y1="90" y2="90"/>
+          <line x1="48" x2="640" y1="150" y2="150"/>
+          <line x1="48" x2="640" y1="210" y2="210"/>
+        </g>
+        <g class="axis">
+          <text x="40" y="34" text-anchor="end">96 %</text>
+          <text x="40" y="94" text-anchor="end">94 %</text>
+          <text x="40" y="154" text-anchor="end">92 %</text>
+          <text x="40" y="214" text-anchor="end">90 %</text>
+          <text x="48" y="256">Sem 1</text>
+          <text x="344" y="256" text-anchor="middle">Sem 6</text>
+          <text x="640" y="256" text-anchor="end">Sem 12</text>
+        </g>
+        <polyline class="line" points="48,207 102,192 156,171 210,180 264,150 318,219 372,132 426,120 480,105 534,96 588,90 640,84"/>
+        <circle class="dot" cx="640" cy="84" r="5"/>
+        <text class="lbl lbl--end" x="652" y="89">94,2 %</text>
+        <circle class="dot dot--low" cx="318" cy="219" r="5"/>
+        <text class="lbl" x="332" y="224">Sem 6: 89,7 %</text>
+      </svg>
+    </figure>
+  </section>
+
+  <section aria-labelledby="t-h" class="card">
+    <h2 id="t-h">Envíos con retraso</h2>
+    <p class="muted">Los cinco más antiguos sin resolver.</p>
+    <div class="table">
+      <table>
+        <thead>
+          <tr><th scope="col">Envío</th><th scope="col">Ruta</th><th scope="col">Cliente</th><th scope="col" class="num">Retraso</th><th scope="col">Estado</th></tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row" data-l="Envío">RV-20418</th><td data-l="Ruta">Valencia → Lyon</td><td data-l="Cliente">Mercados Alba</td><td data-l="Retraso" class="num">31 h</td><td data-l="Estado"><span class="tag tag--hi">Aduana</span></td></tr>
+          <tr><th scope="row" data-l="Envío">RV-20391</th><td data-l="Ruta">Zaragoza → Milán</td><td data-l="Cliente">Textiles Orión</td><td data-l="Retraso" class="num">22 h</td><td data-l="Estado"><span class="tag">Transbordo</span></td></tr>
+          <tr><th scope="row" data-l="Envío">RV-20377</th><td data-l="Ruta">Bilbao → Rotterdam</td><td data-l="Cliente">Herrajes Norte</td><td data-l="Retraso" class="num">18 h</td><td data-l="Estado"><span class="tag">Muelle ocupado</span></td></tr>
+          <tr><th scope="row" data-l="Envío">RV-20352</th><td data-l="Ruta">Madrid → Lisboa</td><td data-l="Cliente">Granja Solana</td><td data-l="Retraso" class="num">9 h</td><td data-l="Estado"><span class="tag">Conductor asignado</span></td></tr>
+          <tr><th scope="row" data-l="Envío">RV-20340</th><td data-l="Ruta">Sevilla → Madrid</td><td data-l="Cliente">Cerámica Duero</td><td data-l="Retraso" class="num">6 h</td><td data-l="Estado"><span class="tag">En ruta</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<footer class="wrap foot">
+  <p class="muted">Rutaviva es una empresa ficticia creada como fixture de pruebas. Todas las cifras son datos de ejemplo.</p>
+</footer>
+</body>
+</html>

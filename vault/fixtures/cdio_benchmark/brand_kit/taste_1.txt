@@ -1,0 +1,2 @@
+﻿  MINOR      TASTE-GOOGLE-FONTS-LINK    §3.A self-host fonts; no Google Fonts <link> in production: <link rel="preconnect" href="https://fonts.googleapis.com">; <link href="https://fonts.googleapis.com/css2?family=Source+
+taste: 27 checks, 1 fail, blocking=none

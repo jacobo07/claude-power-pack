@@ -1,0 +1,23 @@
+﻿{
+ "files": {
+  "c:\\users\\user\\apps\\pp-cdio-bench\\vault\\fixtures\\cdio_benchmark\\mobile_app\\index.html": "21461ab5c3de2b5430e9be45c407b7960a5925116867a1fd68df988102e9184a",
+  "c:\\users\\user\\apps\\pp-cdio-bench\\vault\\fixtures\\cdio_benchmark\\mobile_app\\styles.css": "a89e51ed3fad647cc8430434f40e0c5bc63c16609a5c86aa45737351668e5218"
+ },
+ "verdict": "APPROVE",
+ "score": 98,
+ "reason": "score 98 >= 80 and zero critical",
+ "is_done": true,
+ "refused": [],
+ "experience": "unassessed",
+ "reviewer_verdicts": 14,
+ "folded_taste": 34,
+ "critical": [],
+ "failed": [
+  [
+   "TASTE-GOOGLE-FONTS-LINK",
+   "minor",
+   "§3.A self-host fonts; no Google Fonts <link> in production: <link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">; <link href=\"https:/"
+  ]
+ ],
+ "legal_demoted": []
+}

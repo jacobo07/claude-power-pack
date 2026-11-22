@@ -1,0 +1,45 @@
+﻿{
+ "files": {
+  "c:\\users\\user\\apps\\pp-cdio-bench\\vault\\fixtures\\cdio_benchmark\\pro_service\\index.html": "c0cf0027ed2ddf015e37ee085617bee8cdfe2a0de02f52f5fa2cff6d24fc4dc3",
+  "c:\\users\\user\\apps\\pp-cdio-bench\\vault\\fixtures\\cdio_benchmark\\pro_service\\privacy.html": "8cbd3ff0075119678195b1b242ba3fcbc94d6f8c473ec530872266a4de8d3f00",
+  "c:\\users\\user\\apps\\pp-cdio-bench\\vault\\fixtures\\cdio_benchmark\\pro_service\\terms.html": "191da8a418f840ec5164b1db0e9671e53c663847f0e66383998bf56ced72f0c9",
+  "c:\\users\\user\\apps\\pp-cdio-bench\\vault\\fixtures\\cdio_benchmark\\pro_service\\styles.css": "6a0540ec6c7da93e0c20718ffe5057f9449c4d83aac248d2dbe2d451ec48a859"
+ },
+ "verdict": "APPROVE",
+ "score": 90,
+ "reason": "score 90 >= 80 and zero critical",
+ "is_done": true,
+ "refused": [],
+ "experience": "unassessed",
+ "reviewer_verdicts": 11,
+ "folded_taste": 102,
+ "critical": [],
+ "failed": [
+  [
+   "legal-page-spacing",
+   "minor",
+   "The 'Volver al inicio' link sits directly under the last paragraph, with zero gap, on privacy.html and terms.html, desktop and phone. There "
+  ],
+  [
+   "taste-google-fonts-link",
+   "minor",
+   "TASTE-GOOGLE-FONTS-LINK (MINOR) on index.html. The BRIEF explicitly allows Google Fonts, and privacy.html discloses the request."
+  ],
+  [
+   "TASTE-GOOGLE-FONTS-LINK",
+   "minor",
+   "§3.A self-host fonts; no Google Fonts <link> in production: <link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">; <link href=\"https:/"
+  ],
+  [
+   "TASTE-GOOGLE-FONTS-LINK",
+   "minor",
+   "§3.A self-host fonts; no Google Fonts <link> in production: <link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">; <link href=\"https:/"
+  ],
+  [
+   "TASTE-GOOGLE-FONTS-LINK",
+   "minor",
+   "§3.A self-host fonts; no Google Fonts <link> in production: <link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">; <link href=\"https:/"
+  ]
+ ],
+ "legal_demoted": []
+}

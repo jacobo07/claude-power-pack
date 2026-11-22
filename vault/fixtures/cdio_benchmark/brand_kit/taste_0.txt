@@ -1,0 +1,4 @@
+﻿  CRITICAL   TASTE-EMDASH               §9.G zero em-dash / en-dash separators in visible text: …Miga Común — hoja de marca (ficticia…
+  MAJOR      TASTE-BANNED-SERIF         §4.1 no Fraunces / Instrument Serif as default: Fraunces
+  MINOR      TASTE-GOOGLE-FONTS-LINK    §3.A self-host fonts; no Google Fonts <link> in production: <link rel="preconnect" href="https://fonts.googleapis.com">; <link href="https://fonts.googleapis.com/css2?family=Fraunce
+taste: 27 checks, 3 fail, blocking=['TASTE-EMDASH']

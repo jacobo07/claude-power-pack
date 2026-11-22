@@ -1,0 +1,50 @@
+﻿{
+ "files": {
+  "c:\\users\\user\\apps\\pp-cdio-bench\\vault\\fixtures\\cdio_benchmark\\brand_kit\\symbol.svg": "98319117af355df3e73f15b8fb9c73b5f74564f56627521b61532b9bbfaa4e1d",
+  "c:\\users\\user\\apps\\pp-cdio-bench\\vault\\fixtures\\cdio_benchmark\\brand_kit\\wordmark.svg": "e7df80c0521290ceab3ee29e2315c00f4af4c233d47bd358bd6ae9bf2b30e227",
+  "c:\\users\\user\\apps\\pp-cdio-bench\\vault\\fixtures\\cdio_benchmark\\brand_kit\\index.html": "b6918e285b9809107cb6bf0d10ef7d7c8d97340366c18b35ccd66233835ee495",
+  "c:\\users\\user\\apps\\pp-cdio-bench\\vault\\fixtures\\cdio_benchmark\\brand_kit\\styles.css": "28d74057ab35a1a540fcb012a17e92b4756aaca752b83c728028bba790c5740f"
+ },
+ "verdict": "APPROVE",
+ "score": 88,
+ "reason": "score 88 >= 80 and zero critical",
+ "is_done": true,
+ "refused": [],
+ "experience": "unassessed",
+ "reviewer_verdicts": 13,
+ "folded_taste": 48,
+ "critical": [],
+ "failed": [
+  [
+   "wordmark-font-fallback",
+   "minor",
+   "wordmark.svg uses <text> loaded via <img>, so Source Serif 4 cannot load. It rendered in the fallback (Georgia-like) face. On the sheet it d"
+  ],
+  [
+   "symbol-concept-reads-as-bread",
+   "minor",
+   "A semicircle over a flat bar with three slashes reads as a hard hat or burger bun, not as a loaf. The brand copy says 'hogaza con tres corte"
+  ],
+  [
+   "lockup-wrapping",
+   "minor",
+   "In the sheet, the 'Miga Comun' text in the lockup panels wraps to two lines (light and dark panels at 1440px) because the panel is 260px or "
+  ],
+  [
+   "readme-honesty-stale",
+   "minor",
+   "README correctly says fixture, hand-authored SVG, CCF generate not run. Its 'Sin verificar' section says render and taste were not run, but "
+  ],
+  [
+   "external-font-dependency",
+   "minor",
+   "Taste lint: 1 minor (Google Fonts link). It is permitted by BRIEF as the only external dependency, and the system-font fallbacks are declare"
+  ],
+  [
+   "TASTE-GOOGLE-FONTS-LINK",
+   "minor",
+   "§3.A self-host fonts; no Google Fonts <link> in production: <link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">; <link href=\"https:/"
+  ]
+ ],
+ "legal_demoted": []
+}
