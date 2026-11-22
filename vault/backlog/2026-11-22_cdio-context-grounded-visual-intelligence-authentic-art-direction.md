@@ -94,6 +94,58 @@ A resource's repo MIT license never automatically licenses its sample photograph
 
 **Intake completion obligations:** exact upstream commit/tag; canonical project and product scope; latest declared license and nested font/photo/model assets; security/dependencies; maintenance and archived state; rights to scrape/access; API surface and real tests; runtime cost/footprint; CPP existing owner; useful primitive vs hype; disposition; positive/negative fixtures; update/retirement plan. Keep all 27 records, including rejected and already-owned ones. Every unknown stays UNKNOWN, never silently APPROVED.
 
+## 4A. P0 — OWNER CORRECTION: autonomous design quality by default (2026-11-22)
+
+**Owner directive:** No manual commands required to get maximum feasible visual quality. When the user asks to build or improve a site, design, identity, UI, brand kit or visually meaningful asset, relevant CDIO resources must be discovered, selected, executed, inspected and improved **automatically**. Commands such as /cpp-design, critique, polish, typeset and bolder remain optional overrides/diagnostics, never completion prerequisites. 100% autonomy means 100% of eligible tasks have a verifiable autonomous quality path, **not that 100% of resources execute on 100% of tasks**. Quality is constrained by brief, evidence, authenticity, legal rights, accessibility, function, provider spending, compute and diminishing returns; limitless iterations and all-tool execution are explicitly rejected.
+
+### Evidence / architecture boundary
+
+- On repository main, hooks/cdio_visual_advisory.js already checks qualifying PreToolUse Write/Edit frontend changes, requires DESIGN.md or a justified repository opt-out in certain cases and invokes tools/design_gate.py for canonical DESIGN.md. It does **not** prove that every live project/runtime has the hook installed, nor that after-render review automatically ran.
+- hooks/hook-dispatcher.js has a PreToolUse-Edit-chain path referencing the CDIO hook. Check installed/live event reachability separately; source registration is not runtime proof. Some alternative file writes, tool families and rendered/exported assets are not covered by that PreToolUse check alone.
+- The existing hook itself requests later cdio-reviewer inspection of the **rendered** UI and admits that token review is necessary but not sufficient. A statement asking the agent to run review is not evidence that review executed.
+- commands/cpp-design.md invokes design_index lookup; commands/design-md.md invokes design-md init/lint/export. Turn them into automatically selected **providers** of design intelligence, not commands the Owner must remember.
+- CDIO-00 explicitly describes CDIO as a cross-cutting quality intelligence layer **not the author**. Therefore CDIO owns design policy, art direction, critique and quality/done verdict; existing CPP execution/SDD/GSD/UWCP runtime owns workflow scheduling, CCF assets/identity, CDICF third-party admission/licensing and browser QA real execution. Do not create a rival CDIO orchestrator.
+- This clarification elevates the automatic applicability mentioned in CGVI-31 from a later P4 concern to **P0**. Preserve CGVI-31 as knowledge/UKDL ratchet owner, no parallel engine.
+
+### New P0/P1 execution backlog (open; no implementation claim)
+
+- [ ] **CGVI-A00 — Visual intent coverage census.** Enumerate triggers for new site, redesign, single component, UI patch, visual asset, brand/logo/kit, motion, mobile, email templates and exported design; measure false negatives and false positives including Bash/script-created assets. Map the existing runtime owner.
+- [ ] **CGVI-A01 — Autonomous activation.** Auto-enter a design-quality mission upon eligible user intent, load approved project/product context and DESIGN.md, route tools without slash commands, avoid unrelated-task activation.
+- [ ] **CGVI-A02 — Typed capability selector.** Reuse existing CDICF/design_index and skill registries to describe candidates by capability, task/industry fit, source/rights, requirements, trust, cost, availability, priority, fallback and measurable benefit. Select just the relevant resources; record selected, skipped and missing reasons.
+- [ ] **CGVI-A03 — Evidence-grounded art direction.** Research actual business/consumer goals, materials, product, photographic assets, comparable references and context-specific composition. Declare intended direction before implementation. Never turn a style category into a false real-business fact.
+- [ ] **CGVI-A04 — Automatic source/asset routing.** Choose authorized real media, cleared references, programmatic vectors or selective generative concepts according to existing CGVI asset policy and cost/rights approvals; abstain when authentic claims cannot be supported.
+- [ ] **CGVI-A05 — Render/Observe/Repair loop.** After visual work, render with real browser or artifact renderer at supported target breakpoints, capture screenshots plus version/hash, run CDIO and functional/performance/accessibility tests, propose specific fixes, apply and recheck. A token gate alone is not a completion gate.
+- [ ] **CGVI-A06 — Independent context-aware critique.** Evaluate actual screenshot and relevant objective criteria, plus separately labeled subjective assessments of hierarchy, distinctiveness, photographic direction, premium perception, atmosphere and usability. Compare methods from Impeccable, Taste Skill and design-taste without duplicate reviewers or manufactured precision.
+- [ ] **CGVI-A07 — Real done authority.** Existing scorer and completion owner consume proof of actual rendered review, not merely agent prose or a design-file APPROVE. Distinguish APPROVE, REVISE, BLOCK, SKIP and ABSTAIN. Missing browser/asset evidence, timeout or fail-open must never become a false green; preserve ability to continue work safely.
+- [ ] **CGVI-A08 — Bounded quality optimization.** Prioritize defects with greatest effect, cap iterations/compute/provider calls, rollback regressions and stop when marginal improvement falls below cost or external human/rights decision is required; report unresolved defects without declaring full quality.
+- [ ] **CGVI-A09 — Progressive context and workload tiers.** Lightweight guard for small edits; full rendered UX/art direction QA at relevant milestones; richer benchmark for major redesigns and brand kits. No repeated all-repository scans or downloading 27 repos on every UI edit.
+- [ ] **CGVI-A10 — Real autonomous liveness receipts.** Trace eligible user intent -> selected resources -> actual calls -> rendered output/hash -> criterion verdict -> repair(s) -> done decision. Installed/source existence is never proof of activation; manual invocation counter should trend toward zero.
+- [ ] **CGVI-A11 — Four-context transfer benchmark.** Test personal premium dark portfolio, restaurant/bodeguita, sensitive human/neuroinclusive service, and enterprise SaaS dashboard. Measure design quality/brand specificity, task usability, mobile proof, autonomous activation, missing reviews, time/cost, human prompts and tool bloat. No global cinematic/dark/ornament bias.
+- [ ] **CGVI-A12 — Institutional promotion and maintenance.** Commit validated bug root cause + red/green replay + cross-sector counterexample to existing Knowledge Vault, CDIO standards and UKDL; require proven consumer, owner approval where needed and rollback/retirement.
+- [ ] **CGVI-A13 — Human authority and opt-out.** Respect approved brand/identity, licensed assets, spend/security limits and explicit quiet/opt-out. Human intervenes for genuine subjective creative stakes, lack of permission or irreversible decisions—not to remember quality tools.
+
+### 12 adversarial autonomy fixtures (NOT EXECUTED)
+
+| ID | Input/problem | Pass condition |
+| --- | --- | --- |
+| V-CGVI-A01 | Owner asks only "build a restaurant website" | Auto quality activation and final rendered review without slash |
+| V-CGVI-A02 | User changes one hero line | Selective lightweight checks; affected rendered surface reviewed |
+| V-CGVI-A03 | Visual files change through Bash/codegen | Source-gate coverage gap detected and compensated at completion |
+| V-CGVI-A04 | Hook source exists but installed runtime missing | Autonomy cannot claim active; liveness test fails |
+| V-CGVI-A05 | DESIGN.md scores high, browser shows blank hero | No DONE until rendered-surface evidence/rework |
+| V-CGVI-A06 | SKIP exit zero or renderer timeout | UNASSESSED, never APPROVE |
+| V-CGVI-A07 | Law service website asks high trust | No auto hospitality art or forced motion |
+| V-CGVI-A08 | All 27 tools proposed for 1px padding edit | Selector refuses irrelevant tools and logs decision |
+| V-CGVI-A09 | Hero generation falsely depicts actual venue | Rights/authenticity refusal and labeled fallback |
+| V-CGVI-A10 | Animation polish harms LCP/mobile/reduced motion | Measured regression rolled back or rejected |
+| V-CGVI-A11 | Screenshot receipt predates changed hero image | Stale receipt rejected; review re-run |
+| V-CGVI-A12 | Repair loop stalls/no gain or hits budget | Bounded stop with truthfully unresolved status |
+
+### Acceptance sequencing
+
+P0 first: demonstrate a genuine end-to-end path from **user intent without any manual commands** through selection, build, real render, independent critique, repair, release verdict and trace receipt, with the negative controls above. Only then increase reference/asset/model breadth: a tool with no actual consumer is inert inventory. CDIO must be reliably activated for eligible design tasks, avoid irrelevant activation, deliver demonstrable cross-sector improvement, respect budgets and never report DONE without the required observed evidence. **This section is backlog-only, not an autonomous system already running.**
+
+
 ## 5. P0: reality, ownership, evidence, and guardrails
 
 - [ ] **CGVI-00 — Live reality scan and conflict audit.** Record fresh repo HEAD, active writers/worktrees, installed/runtime owner status, existing CCF/CDIO/CDICF/design-md/design_index/photo/motion/QA capability, versioned source inventory. Contrast against BI, D21, VP-019 and CPP-AIA; explicitly link to them rather than reopen their generic implementation tasks.
