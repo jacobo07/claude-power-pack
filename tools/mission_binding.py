@@ -291,20 +291,6 @@ def detect_rebind(rec: dict, transcript: Path | None) -> dict | None:
         return None
     text = _canon("\n".join(_flat(u.get("input")) for u in uses))
     current = _norm(execution_root(rec))
-    cands, excluded, detached = [], [], []
-    for w in rows:
-        root = w["root"]
-        if _norm(root) in (current, _norm(rec["cwd"])):
-            continue
-        made = created_at(root)
-        if made is None or made < since - 5 or not mentions(text, root):
-            continue
-        if is_agent_worktree(root):
-            excluded.append(root)
-        elif w.get("detached") or not w.get("branch"):
-            detached.append(root)
-        else:
-            cands.append(root)
     wcwd = worker_cwd(transcript)
 
     def inside(p: str, root: str) -> bool:
@@ -317,6 +303,30 @@ def detect_rebind(rec: dict, transcript: Path | None) -> dict | None:
     def owned(c: str) -> bool:
         return bool((wcwd and inside(wcwd, c)) or any(inside(p, c) for p in wrote) or mentions(shell, c, ENTERS))
 
+    cands, excluded, detached, preexisting = [], [], [], []
+    for w in rows:
+        root = w["root"]
+        if _norm(root) in (current, _norm(rec["cwd"])):
+            continue
+        made = created_at(root)
+        if made is None:
+            continue
+        # NEVER_AGAIN 2026-11-22 (m-d3d2b709130d): a mission re-armed on the worktree its predecessor mission
+        # created was never rebound -- the tree predated `since` -- so the breaker judged the untouched main
+        # checkout and held 12.3M tokens of real phase work as a stall. An older tree qualifies only on this
+        # worker's own write evidence; being named is still not enough.
+        old = made < since - 5
+        if (not old and not mentions(text, root)) or (old and not owned(root)):
+            continue
+        if is_agent_worktree(root):
+            excluded.append(root)
+        elif w.get("detached") or not w.get("branch"):
+            detached.append(root)
+        else:
+            cands.append(root)
+            if old:
+                preexisting.append(root)
+
     unowned = [c for c in cands if not owned(c)]
     cands = [c for c in cands if c not in unowned]
     if wcwd and len(cands) > 1:
@@ -324,7 +334,7 @@ def detect_rebind(rec: dict, transcript: Path | None) -> dict | None:
         if len(hit) == 1:
             cands = hit
     return {"candidates": cands, "excluded_agent_worktrees": excluded, "excluded_detached": detached,
-            "unowned": unowned, "worker_cwd": wcwd}
+            "unowned": unowned, "worker_cwd": wcwd, "preexisting": [c for c in preexisting if c in cands]}
 
 
 # ----------------------------------------------------------------------------- children

@@ -46,8 +46,8 @@ def git(*args, cwd):
 
 
 def transcript(name: str, paths: list[Path], cwd: Path | None, writes: list[Path] = (),
-               entered: list[Path] = ()) -> Path:
-    ts = time.strftime("%Y-%m-%dT%H:%M:%S.000Z", time.gmtime(time.time() + 5))
+               entered: list[Path] = (), ahead: float = 5) -> Path:
+    ts = time.strftime("%Y-%m-%dT%H:%M:%S.000Z", time.gmtime(time.time() + ahead))
     rows = [{"type": "assistant", "timestamp": ts, "message": {"content": [
         {"type": "tool_use", "id": f"t{i}", "name": "Bash", "input": {"command": f"ls {p.as_posix()}"}}]}}
         for i, p in enumerate(paths)]
@@ -113,6 +113,23 @@ def main() -> int:
     check("V-RB-AGENT-CWD-NEVER-CHOSEN", d and len(d["candidates"]) == 2
           and all(not mb.is_agent_worktree(c) for c in d["candidates"]), str(d)[:200])
     check("V-RB-UNREADABLE-TRANSCRIPT-UNJUDGED", mb.detect_rebind(rec, TMP / "absent.jsonl") is None)
+
+    # 3. the MG shape (m-d3d2b709130d, 2026-11-22): the mission was armed AFTER the worktree existed (a previous
+    # mission made it). The worker lives in it -> it is bound; a pre-existing tree only named stays out.
+    armed_after, worked_after = 60, 120   # seconds: the mission starts well after the trees, the worker after it
+    later = dict(rec, created_at=time.time() + armed_after)
+    d = mb.detect_rebind(later, transcript("pre-cwd", [], wt["exec2"], ahead=worked_after))
+    check("V-RB-PREEXISTING-WORKTREE-OWNED-IS-BOUND", d and len(d["candidates"]) == 1
+          and mb._norm(d["candidates"][0]) == mb._norm(wt["exec2"]) and d["preexisting"] == d["candidates"],
+          str(d)[:200])
+    d = mb.detect_rebind(later, transcript("pre-write", [], repo, [wt["exec3"]], ahead=worked_after))
+    check("V-RB-PREEXISTING-WORKTREE-WRITTEN-IS-BOUND", d and len(d["candidates"]) == 1
+          and mb._norm(d["candidates"][0]) == mb._norm(wt["exec3"]), str(d)[:200])
+    d = mb.detect_rebind(later, transcript("pre-named", [wt["exec2"], wt["exec3"]], repo, ahead=worked_after))
+    check("V-RB-CONTROL-PREEXISTING-NAMED-ONLY-STAYS-OUT", d is not None and d["candidates"] == []
+          and d["unowned"] == [], str(d)[:200])
+    d = mb.detect_rebind(later, transcript("pre-agent", [], wt["agent-a33215aa"], ahead=worked_after))
+    check("V-RB-PREEXISTING-AGENT-WORKTREE-STILL-EXCLUDED", d is not None and d["candidates"] == [], str(d)[:200])
 
     print(f"REBIND_F4_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
     shutil.rmtree(TMP, ignore_errors=True)
