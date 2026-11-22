@@ -1,7 +1,7 @@
 # CDIO Backlog — Universal Absorption of the 21 Design Resources (six screenshots)
 
 **Created:** 2026-10-30  
-**Status:** BACKLOG RECORDED; RESEARCH PARTIALLY VERIFIED; NO EXTERNAL CODE OR ASSETS ABSORBED; NO TESTS EXECUTED  
+**Status:** BACKLOG RECORDED; BCAP-2 CAMPAIGN B 2026-11-21: PARTIALLY_PROVEN, live_verified 21/21 from page reads, 8 capability denominators OBSERVED (13 UNKNOWN with reason), 36/36 V-D21 failure scenarios driven from both poles (tools/test_bcap2_d21*.py); NO EXTERNAL CODE OR ASSETS ABSORBED; C01/C02, D01/D02/D04, E01-E04, F, G, H03-H09 still need page/registry reads or a real browser  
 **Owner instruction:** "añade todo esto al backlog de CDIO para absorberlo absolutamente todo" — all six user-supplied @nocodealex slides, including every named resource, its useful capability categories, cross-resource composition, new failure classes and long-term institutional learning.  
 **Source evidence:** six screenshots uploaded in conversation on 2026-10-30; screenshot inventory below. Website and GitHub checks 2026-10-30. Site counters are volatile.  
 **Purpose:** actionable intake and completeness register, not a new CDIO constitution or blanket authorization to copy other people's sites, prompts, components or art.  

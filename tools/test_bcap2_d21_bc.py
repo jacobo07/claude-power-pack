@@ -261,5 +261,62 @@ check("D21-F06 pole: no opaque baseline comparison fails", not SR.arbitrate_mate
 check("D21-F06 pole: no fallback fails", not SR.arbitrate_material(dict(_mat, fallback=""))[0])
 check("D21-F06 pole: glass on trust-critical surface fails", not SR.arbitrate_material(dict(_mat, material="glass", trust_posture="critical"))[0])
 
+# V-D21 failure-table scenarios, each from both poles. Owners that already existed are driven; the rest are in scenario_guards.
+from modules.cdicf import scenario_guards as SG  # noqa: E402
+from modules.cdicf import reference_records as RR  # noqa: E402
+from modules.cdicf import source_intake as SIN  # noqa: E402
+_gal = {f: "UNKNOWN" for f in RR.GALLERY_FIELDS}; _gal["sector"] = "fintech"
+check("V-D21-08 control: observed gallery record without clone intent passes", RR.validate_gallery_record(_gal)[0])
+check("V-D21-08 pole: 1:1 recreation as an unrelated brand (clone_intent) is refused", not RR.validate_gallery_record(dict(_gal, clone_intent=True))[0])
+check("V-D21-08 pole: a brief whose result equals the source is refused", not RI.validate_brief({**good, "differs_by": good["source"]})[0])
+check("V-D21-35 pole: competitor logo/template treated as an open template is refused", not RR.validate_gallery_record(dict(_gal, clone_intent=True))[0]
+      and "trademark_cloning" in RR.STOP_CONDITIONS and not RR.validate_transform_trace({"reference_id": "r", "brief_id": "b", "render_evaluation": "e", "stop_conditions": ["exact_copy"]})[0])
+check("V-D21-14 pole: an unaudited registry is refused and a REFUSE plan runs no step", CI.plan_install(dict(_it, registry="evil"), _pj)["verdict"] == "REFUSE"
+      and CI.run_install(CI.plan_install(dict(_it, registry="evil"), _pj), [lambda: 1 / 0], None)["status"] == "NOT_RUN")
+check("V-D21-14 control: an accepted, verified registry plans ALLOW", CI.plan_install(_it, _pj)["verdict"] == "ALLOW")
+check("V-D21-15 pole: a component whose keyboard/focus is unconfirmed fails the stack gate", not CM.resolve_stack(dict(_m, keyboard_focus=None), _pr)[0])
+check("V-D21-15 control: confirmed keyboard/focus passes", CM.resolve_stack(_m, _pr)[0])
+check("V-D21-16 pole: animation without a reduced-motion equivalent is refused", not MS.check_motion_semantics(_c, dict(_an, reduced_motion_equivalent=False))[0])
+check("V-D21-16 control: with the equivalent it passes", MS.check_motion_semantics(_c, _an)[0])
+check("V-D21-17 pole: listener cleanup / unmount unobserved fails the lifecycle report", not MS.check_runtime_report({"results": {k: v for k, v in _rep["results"].items() if k not in ("listener_cleanup", "unmount_while_active")}})[0])
+check("V-D21-17 pole: a recorded double-trigger leak (listener_cleanup failed) fails", not MS.check_runtime_report({"results": dict(_rep["results"], listener_cleanup={"observed": True, "evidence": "heap", "pass": False})})[0])
+check("V-D21-19 pole: a new local motion engine beside the Anime.js owner is an overlap", not SG.ownership_overlap("motion", "local-tween-engine")[0])
+check("V-D21-19 control: extending the existing owner is allowed", SG.ownership_overlap("motion", "extend:" + SG.OWNERS["motion"])[0] and SG.ownership_overlap("map", "anything")[0])
+check("V-D21-20 pole: CARTO basemap in a commercial product without a grant is blocked and wants an alternate", not SG.tile_license_gate("carto", True)[0])
+check("V-D21-20 control: a grant, a non-commercial use or another provider passes", SG.tile_license_gate("carto", True, "agreement-1")[0]
+      and SG.tile_license_gate("carto", False)[0] and SG.tile_license_gate("osm-self-hosted", True)[0])
+_loc = {"reads_location": True, "permission_prompt": True, "user_gesture": True, "denied_path": True}
+check("V-D21-21 control: prompted, gesture-driven, denial-handled location passes", SG.location_authorization(_loc)[0])
+for _k in ("permission_prompt", "user_gesture", "denied_path"):
+    check(f"V-D21-21 pole: location control without {_k} fails", not SG.location_authorization(dict(_loc, **{_k: None}))[0])
+check("V-D21-22 pole: no WebGL falls back to no-glass and the core UI still works", SG.glass_plan({"webgl": False, "cost_ms": 0}, {"core_ui_functions": True}) == {"use_glass": False, "ok": True, "reasons": ["glass: unavailable or over the mobile budget"]})
+check("V-D21-22 pole: expensive on mobile with no fallback is not ok", not SG.glass_plan({"webgl": True, "mobile": True, "cost_ms": 40}, {})["ok"])
+check("V-D21-22 pole: unmeasured capability is not assumed available", SG.glass_plan({}, {"core_ui_functions": True})["use_glass"] is False)
+check("V-D21-22 control: observed cheap WebGL uses glass", SG.glass_plan({"webgl": True, "mobile": True, "cost_ms": 4}, {})["use_glass"] is True)
+check("V-D21-23 control: white-on-near-black clears 4.5 at every sample", SG.glass_readability((255, 255, 255), [(10, 10, 10), (30, 30, 40)])[0])
+check("V-D21-23 pole: one bright sample under the text fails (worst case, not mean)", not SG.glass_readability((255, 255, 255), [(10, 10, 10), (240, 240, 240)])[0])
+check("V-D21-23 pole: no measured background is not a pass", not SG.glass_readability((255, 255, 255), [])[0])
+check("V-D21-23 instrument: black on white is 21:1", abs(SG.contrast_ratio((0, 0, 0), (255, 255, 255)) - 21.0) < 0.01)
+_bud = {"lcp_ms": 2500, "cls": 0.1}
+check("V-D21-26 control: within budget passes", SG.perf_budget({"lcp_ms": 1800, "cls": 0.02}, _bud, True)[0])
+check("V-D21-26 pole: heavy 3D icons over LCP budget fail", not SG.perf_budget({"lcp_ms": 4100, "cls": 0.02}, _bud, True)[0])
+check("V-D21-26 pole: unmeasured CLS fails, over-budget without a fallback adds a reason", not SG.perf_budget({"lcp_ms": 1000}, _bud, True)[0]
+      and "perf: no simpler fallback named" in SG.perf_budget({"lcp_ms": 9000, "cls": 0}, _bud, False)[1])
+check("V-D21-27 pole: 'premium' with no instrument gets no CDIO promotion", not SG.premium_claim("a premium feel", {})[0])
+check("V-D21-27 control: premium with a measured instrument, or no premium claim, passes", SG.premium_claim("premium", {"instrument": "cdio-05", "value": 86})[0] and SG.premium_claim("a clean layout", {})[0])
+check("V-D21-28 pole: third-party marks or missing provenance block item reuse", not SIN.asset_license_ok({"tier": "v1", "provenance": "p", "third_party_marks": True})[0]
+      and not SIN.asset_license_ok({"tier": "v1"})[0] and CI.reference_only_catalog({"rights_status": "REFERENCE_ONLY"})["mode"] == "REFERENCE_ONLY")
+check("V-D21-29 pole: identical component from two registries is refused / duplicate variants flagged", CI.plan_install(_it, _pj, {"hero": "reg-b"})["verdict"] == "REFUSE"
+      and not CM.composition_qa([{"button_variants": ["primary"]}, {"button_variants": ["primary"]}])[0])
+check("V-D21-30 control: forms, mobile and RTL observed good passes", SG.cross_state({"forms": True, "mobile": True, "rtl": True})[0])
+check("V-D21-30 pole: a broken or unobserved required state fails regardless of the screenshot", not SG.cross_state({"forms": False, "mobile": True, "rtl": True})[0]
+      and not SG.cross_state({"forms": True, "mobile": True})[0])
+check("V-D21-32 pole: an upstream that invalidates a permitted item (version drift) makes it uninstallable", CI.plan_install(dict(_it, snapshot_version="1.1.0"), _pj)["verdict"] == "REFUSE")
+check("V-D21-33 pole: a hugely popular but unlicensed or costly option never outranks the safer one", [o["id"] for o in SR.select(_cs, {"framework": "react"})["ranked"]] == ["a", "b"]
+      and [o["id"] for o in SR.select(_cs, {"framework": "react"})["refused"]] == ["r"])
+check("V-D21-34 pole: a social post alone cannot support more than HYPOTHESIS", not SG.evidence_tier("TESTED", [{"kind": "social"}])[0] and SG.evidence_tier("HYPOTHESIS", [{"kind": "social"}])[0])
+check("V-D21-34 control: an observed test supports PROVEN", SG.evidence_tier("PROVEN", [{"kind": "test", "observed": True}])[0]
+      and not SG.evidence_tier("PROVEN", [{"kind": "test", "observed": False}])[0])
+
 print(f"{'PASS' if not FAILS else 'FAIL'}: {len(FAILS)} failures")
 sys.exit(1 if FAILS else 0)

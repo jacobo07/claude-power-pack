@@ -98,6 +98,10 @@ def test_seeded_red():
     check("V-AJS-RED-UNKNOWN-SURFACE", not e and bool(errs), str(errs))
 
 
+def unverified_rows(rows):
+    return [r[0] for r in rows if r[2] == "UNVERIFIED"]
+
+
 def test_ledger():
     print("test_ledger")
     d = ROOT / "vault/programs/bcap-2/animejs"
@@ -107,6 +111,8 @@ def test_ledger():
             if ln.startswith("|") and not ln.startswith("|---") and not ln.startswith("| capability")]
     check("V-AJS-LEDGER-ROWS", len(rows) >= 20 and all(len(r) == 5 for r in rows), f"{len(rows)} rows")
     check("V-AJS-LEDGER-VOCAB", all(r[2] in VOCAB for r in rows), str(sorted({r[2] for r in rows} - VOCAB)))
+    check("V-AJS-LEDGER-NO-UNVERIFIED-LEFT", not unverified_rows(rows), "every capability row was read at the pin")
+    check("V-AJS-LEDGER-UNVERIFIED-POLE", unverified_rows([["a", "p", "UNVERIFIED"], ["b", "p", "EXTEND"]]) == ["a"], "pole: the predicate sees an UNVERIFIED row")
     check("V-AJS-LEDGER-UNIQUE", len({r[0] for r in rows}) == len(rows), "unique capability names")
     missing = [r[3] for r in rows if not (ROOT / r[3]).exists()]
     check("V-AJS-LEDGER-OWNERS-EXIST", not missing, f"missing={missing}")

@@ -3,6 +3,7 @@ Drives V-D21-01/02/03/04/05/06/07/09/10/24/25/31/36 from both poles on the REAL 
 Scope: source identity + rights posture only. Capability denominators, catalog entries and browser-real checks are NOT here.
 python3 tools/test_bcap2_d21.py (exit 0 == PASS)"""
 import copy
+import json
 import sys
 from pathlib import Path
 
@@ -23,7 +24,27 @@ R = SI.load()
 by = {s["id"]: s for s in R["sources"]}
 cov = SI.coverage(R)
 check("D21-A01 control: real registry has 21/21 sources, none malformed", cov["ok"] and cov["registered"] == 21, str(cov))
-check("D21 control: every source has a canonical URL and is not claimed live-verified", all(s["urls"] and not s["live_verified"] for s in R["sources"]))
+LIVE = {r["url"]: r for r in json.loads((ROOT / "vault/programs/bcap-2/design-resources/LIVE_READ.json").read_text(encoding="utf-8"))["rows"]}
+
+
+def live_problems(sources, live):
+    """live_verified is true only when every non-GitHub URL has a recorded HTTP 200 read with a title; false must stay false."""
+    out = []
+    for s in sources:
+        web = [u for u in s["urls"] if "github.com" not in u]
+        ev = bool(web) and all(live.get(u, {}).get("status") == 200 and live.get(u, {}).get("title") for u in web)
+        if s["live_verified"] and not ev:
+            out.append(s["id"])
+    return out
+
+
+check("D21 control: every source has a canonical URL", all(s["urls"] for s in R["sources"]))
+check("V-D21-LIVE-VERIFIED: every live_verified source has recorded LIVE_READ evidence", not live_problems(R["sources"], LIVE), str(live_problems(R["sources"], LIVE)))
+check("V-D21-LIVE-VERIFIED: all 21 sources are live_verified", sum(s["live_verified"] for s in R["sources"]) == 21)
+_m = copy.deepcopy(R); _m["sources"][0]["urls"] = ["https://never-read.invalid/"]
+check("V-D21-LIVE-VERIFIED pole: a live_verified claim with no LIVE_READ row is caught", live_problems(_m["sources"], LIVE) == ["D21-01"])
+_s = copy.deepcopy(LIVE); _s[R["sources"][1]["urls"][0]]["status"] = 503
+check("V-D21-LIVE-VERIFIED pole: a recorded non-200 read cannot back the claim", live_problems(R["sources"], _s) == ["D21-02"])
 check("D21 control: all 6 slide groups present", {s["group"] for s in R["sources"]} == {1, 2, 3, 4, 5, 6})
 
 # V-D21-01 / 31: missing or shrunk corpus fails and names the resource
@@ -89,8 +110,34 @@ check("V-D21-36 pole: 21 URLs and zero vetted entries is NOT done", not d["ok"] 
 check("V-D21-36 control: full coverage plus a vetted entry passes the source-gate arithmetic", SI.done_check(R, 1)["ok"])
 
 # honest scope + provenance of the registry itself
-check("D21 scope: no source is marked live-verified or has a derived capability denominator (Workstream A03 is NOT done)",
-      all(s["capability_denominator"].startswith("UNKNOWN") for s in R["sources"]))
+import re as _re
+
+
+def denom_problems(sources, live):
+    """OBSERVED only when every number in the denominator equals a labeled count recorded in that source's LIVE_READ row;
+    UNKNOWN must carry a reason ('not derived' placeholder refused)."""
+    out = []
+    for s in sources:
+        d = s["capability_denominator"]
+        if d.startswith("UNKNOWN"):
+            if "not derived" in d or "(" not in d:
+                out.append(s["id"])
+            continue
+        rec = {v for r in live.values() if r["id"] == s["id"] for v in r.get("labeled_counts", {}).get("counts", {}).values()}
+        claimed = {_re.sub(r"[+,]", "", n) for n in _re.findall(r"\d[\d,]*\+?", d.split("page", 1)[-1].split(":", 1)[-1].split("(")[0])}
+        if not d.startswith("OBSERVED") or not claimed or not claimed <= rec:
+            out.append(s["id"])
+    return out
+
+
+check("D21-A03 capability denominators: 8 OBSERVED from page text, 13 UNKNOWN with a reason, none 'not derived'",
+      sum(s["capability_denominator"].startswith("OBSERVED") for s in R["sources"]) == 8
+      and sum(s["capability_denominator"].startswith("UNKNOWN") for s in R["sources"]) == 13)
+check("D21-A03 gate: every OBSERVED denominator is backed by a labeled LIVE_READ count", not denom_problems(R["sources"], LIVE), str(denom_problems(R["sources"], LIVE)))
+_d = copy.deepcopy(R); _d["sources"][1]["capability_denominator"] = "OBSERVED 2026-11-21 page text: 9,999 designs"
+check("D21-A03 pole: an invented number is caught", "D21-02" in denom_problems(_d["sources"], LIVE))
+_d = copy.deepcopy(R); _d["sources"][0]["capability_denominator"] = "UNKNOWN (not derived)"
+check("D21-A03 pole: the old 'UNKNOWN (not derived)' placeholder is refused", "D21-01" in denom_problems(_d["sources"], LIVE))
 check("D21-A06 pole: known conflicts recorded (Kinetics no licence, mapcn tiles, 3dicons split, DESIGN.md drift)",
       "licen" in by["D21-15"]["rights_note"].lower() and "CARTO" in by["D21-17"]["rights_note"]
       and "premium" in by["D21-21"]["rights_note"] and "Proprietary" in by["D21-05"]["rights_note"])
@@ -113,7 +160,7 @@ check("V-D21-05 pole: no-licence repos (motion-primitives, kinetics) stay refuse
       not SI.admit_code(by["D21-14"], _ev(by["D21-14"]))[0] and not SI.admit_code(by["D21-15"], _ev(by["D21-15"]))[0])
 mut = copy.deepcopy(by["D21-10"]); mut["license_pin"]["license_sha256"] = None
 check("V-D21-05 pole: seeded mutant (licence hash dropped) is refused", not SI.admit_code(mut, _ev(mut))[0])
-check("V-D21-05 control: pinning a licence did not flip live_verified (page content still unread)", not any(s["live_verified"] for s in R["sources"]))
+check("V-D21-05 control: live_verified is backed by LIVE_READ, not by the licence pin", not live_problems(R["sources"], LIVE))
 
 print(f"\n{'V-BCAP2-D21 PASS' if not FAILS else 'V-BCAP2-D21 FAIL: ' + ', '.join(FAILS)}")
 sys.exit(1 if FAILS else 0)

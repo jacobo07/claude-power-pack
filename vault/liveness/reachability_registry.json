@@ -613,22 +613,6 @@
     "wrapper/verify_before_emit": {
       "class": "LIBRARY",
       "note": "kclaude wrapper module, consumed by tools/kclaude.ps1 -- see wrapper/__init__ note"
-    },
-    "ccf/brand_color": {
-      "class": "LIBRARY",
-      "note": "pure BI-20 contrast/deltaE palette checker, driven from both poles by tools/test_bcap2_brand.py; not yet called by the CLI, so a library, not activated"
-    },
-    "ccf/brand_release": {
-      "class": "LIBRARY",
-      "note": "pure BI-15/22/23/25/26/29/34 derivative, DTCG, manifest, preview, similarity and applicability validators, driven from both poles by tools/test_bcap2_brand.py; not yet called by the CLI, so a library, not activated"
-    },
-    "ccf/brand_review": {
-      "class": "LIBRARY",
-      "note": "pure BI-17/19/28/31/35 typed SVG parts, multilingual glyph coverage, logo lens, benchmark and independent-review validators, driven from both poles by tools/test_bcap2_brand.py; not yet called by the CLI, so a library, not activated"
-    },
-    "ccf/trace_lane": {
-      "class": "LIBRARY",
-      "note": "pure BI-18 traced-SVG measurement and inspect/repair/reject check, driven from both poles by tools/test_bcap2_brand.py against a real VTracer 0.6.15 output; not called by the CLI, so a library, not activated"
     }
   }
 }

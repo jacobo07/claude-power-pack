@@ -31,27 +31,27 @@ push, deploy or activate anything; Ruflo stays HOLD (activation is the Owner's).
 
 ## Phases
 
-- [ ] **Phase 1: Upstream fetch pass.** One batched, read-only pass for Phases 1, 2, 3, 7, 8: pin commit + licence for
+- [x] **Phase 1: Upstream fetch pass.** One batched, read-only pass for Phases 1, 2, 3, 7, 8: pin commit + licence for
   every upstream named in their ledgers; turn each HYPOTHESIS/UNVERIFIED row into READ (with the file:line read) or
   DECLINE (with the reason). Includes AGSK's 34 HYPOTHESIS + 7 UNVERIFIED rows and Phase 8 `live_verified` for the 21
   resources. Ceiling 30M.
-- [ ] **Phase 2: Phase 8 remaining workstreams.** Spec `2026-10-30_cdio-21-design-resources-universal-absorption.md`.
+- [x] **Phase 2: Phase 8 remaining workstreams.** Spec `2026-10-30_cdio-21-design-resources-universal-absorption.md`.
   Close what STATE.md names open: C01/C02, D01/D02/D04, E/F/G/H rest, the 23 undriven V-D21 scenarios as poles, capability
   denominators measured not UNKNOWN. Put `tools/test_bcap2_d21_bc.py` into done_gate (it is not yet). Ceiling 50M.
-- [ ] **Phase 3: BI-27 / BI-30 page-level reads.** DesignHub 148e8c3f (MIT) source and the Impeccable b49177d3
+- [x] **Phase 3: BI-27 / BI-30 page-level reads.** DesignHub 148e8c3f (MIT) source and the Impeccable b49177d3
   (Apache-2.0) detector: read, decide port vs principle per licence, implement in modules/ccf or modules/cdio. Ceiling 20M.
-- [ ] **Phase 4: BI-24 illustrated brand book PDF.** Extend the existing kit PDF path in modules/ccf (residual: the PDF
+- [x] **Phase 4: BI-24 illustrated brand book PDF.** Extend the existing kit PDF path in modules/ccf (residual: the PDF
   embeds a hash, not the image). Render toolchain installed in a scratch venv outside the repo; real PDF bytes checked
   (page count, embedded image present), both poles. Ceiling 25M.
-- [ ] **Phase 5: BI-15..35 on the CLI path.** Same rule as slice A (`vault/specs/bcap2-activation.md`): absent is
+- [x] **Phase 5: BI-15..35 on the CLI path.** Same rule as slice A (`vault/specs/bcap2-activation.md`): absent is
   UNASSESSED never FAIL, report by default, enforce opt-in per check via `config["creative_checks"]`; extend
   creative_checks.run, do not add a second runner. Includes BI-16 cross-platform + CCF adapter. AC1 of that spec must stay
   true (existing CCF suites byte-for-byte). Ceiling 30M.
-- [ ] **Phase 6: CDIO SaaS style 3.** Spec `2026-10-02_cdio-modern-saas-styles.md`; the Owner confirmed option (b) for
+- [x] **Phase 6: CDIO SaaS style 3.** Spec `2026-10-02_cdio-modern-saas-styles.md`; the Owner confirmed option (b) for
   style 3 (session_lessons 2026-11-20 "style-3 (b) confirmed"). All three styles selectable and scored. Ceiling 15M.
-- [ ] **Phase 7: Ruflo residuals runnable on GEX44.** Inside the existing sandbox `/home/kobii/ruflo-sandbox-bcap2` only:
+- [x] **Phase 7: Ruflo residuals runnable on GEX44.** Inside the existing sandbox `/home/kobii/ruflo-sandbox-bcap2` only:
   runtime advisory verification, dist identity, `npm audit` recorded in the ledger. Activation stays refused. Ceiling 15M.
-- [ ] **Phase 8: Closeout.** done_gate aggregates every gate incl. the new ones; per-item verdict by plan law 4 (ACTIVATED
+- [x] **Phase 8: Closeout.** done_gate aggregates every gate incl. the new ones; per-item verdict by plan law 4 (ACTIVATED
   only with execution evidence on the real path); `vault/programs/bcap-2/HANDOFF-B.md` with per-item verdict and the
   laptop-only residuals listed. Ceiling 10M.
 

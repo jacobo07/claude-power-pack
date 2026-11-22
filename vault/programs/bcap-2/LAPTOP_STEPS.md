@@ -45,7 +45,28 @@ Evidence: `ruflo/CANARY_2026-11-20.json`, raw `ruflo/canary/{adv,retry}.out.json
 - NEW: Ruflo attempted unsolicited egress to IPFS gateways (cloudflare-ipfs.com, w3s.link); blocked by isolation.
 Nothing left the sandbox.
 
+## BLOCKED-ON-LAPTOP (campaign B) - Phase 1 / Phase 6 inputs
+B1. SaaS style 3 reference bank (conversational AI surface): ChatGPT, Perplexity, Claude.ai and Mistral return 403 to GEX44, so
+    no reference could be read here (`saas-styles/REUSE_LEDGER.md` row 2). On the laptop, in a real browser, save one screenshot
+    plus the visible text of each of the four chat surfaces (logged out landing/composer view) under
+    `vault/programs/bcap-2/saas-styles/refs/` and commit them. Owner confirmed option (b) for style 3, so Phase 6 builds it from
+    the dataset's own rules and records this bank as the missing external corroboration, never as a PASS.
+
+B2. BI-16 cross-platform determinism (sigilgen c3f605b7): GEX44 measured same-host, two processes, 11 cases, one combined hash
+    (`UPSTREAM_BRAND_PROBE.json`). On the laptop (Windows, Node >= 22): clone sigilgen at c3f605b7, `pnpm install --ignore-scripts`,
+    build, run `scripts/check-determinism.mjs`, and commit the combined hash beside the GEX44 one. Same hash = cross-platform
+    identity PASS; a different hash is the finding, recorded as-is. A CCF adapter for the vector lane is NOT built (needs that
+    result and Owner direction on shipping a Node dependency); BI-16 stays PARTIALLY_PROVEN.
+
+B3. SaaS style 1 (dark monochrome) CDIO-06 sec.10 rules 5 and 6 are still open: rule 5 needs a real Tab-key focus-ring
+    measurement and rule 6 a reference with a dark modal, both against live third-party sites. On the laptop, in a real
+    browser, record for Linear, Vercel and Raycast: the focus-ring colour/width after one Tab press, and the modal background
+    vs page background (computed styles). Commit the numbers under `vault/programs/bcap-2/saas-styles/` as data; the rules stay
+    PROVISIONAL until then.
+
 ## Platform note
 On Windows, `test_bcap2_dbg` (Linux-path real-bug replay), `test_bcap2_tdd` (needs the pytest+coverage interpreter) and
 `test_bcap2_ruflo` (symlink privilege, WinError 1314) fail for platform reasons; `test_bcap2_synsation` 38/0 and
 `test_bcap2_animejs` 35/0 pass. done_gate is a GEX44-plane gate.
+
+B4. Ruflo (campaign B Phase 7): the GEX44 residuals are measured (audit 0 vulns, dist structure). Still needs a clean-room plane: build `v3/@claude-flow/cli` from tag v3.78.0 in an isolated VM with scripts reviewed, then byte-compare against the tarball dist (GEX44 refuses to run upstream build scripts); and drive hgp6/rx87/jwwq/#4750 with a networked, throwaway ruflo. Activation stays refused.

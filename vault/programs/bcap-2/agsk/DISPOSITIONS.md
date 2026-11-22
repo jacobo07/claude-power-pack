@@ -3,47 +3,47 @@
 Upstream: https://github.com/addyosmani/agent-skills @ 8c99fa36d90068c82d547f7c12a9d67a3e95f4ee (MIT, (c) 2025 Addy Osmani).
 Observed: 26 skill directories (backlog said 25: `accessibility-engineering` is the extra) and 10 command TOMLs (backlog said nine; it lists a11y, build, code-simplify, constraints, planning, review, ship, spec, test, webperf = ten).
 
-Honesty column `basis`: `READ` = upstream content AND CPP owner were read this phase; `HYPOTHESIS` = the backlog's initial
-disposition mapped to the closed vocabulary, with the owner path verified to EXIST but the overlap NOT yet analysed.
-Only the pilot (constraint-driven-development, AGSK-C) is READ. A HYPOTHESIS row is not an absorption claim.
+Honesty column `basis`: `READ` = upstream content AND CPP owner were read, with file:line evidence recorded in
+`vault/programs/bcap-2/upstream-read-b/AGSK_{A,B}_rows.tsv` (campaign B Phase 1; the `owner` column is the verified primary path, the
+full owner list is in the tsv). All 36 skill/command rows are READ; no HYPOTHESIS row remains. A READ row without tsv evidence is rejected by the gate.
 Vocabulary: ALREADY OWNED, EXTEND, CONNECT, MERGE, CONDITIONAL, UPSTREAM-ONLY, REJECT, UNVERIFIED.
 Machine-checked by `tools/test_bcap2_agsk.py` (one row per upstream name, owner path exists, vocabulary closed).
 
 | kind | upstream | disposition | cpp owner | basis | note |
 |---|---|---|---|---|---|
-| skill | using-agent-skills | ALREADY OWNED | modules/skill_router | HYPOTHESIS | one router only; never a second global router |
-| skill | idea-refine | ALREADY OWNED | modules/decision_review | HYPOTHESIS | decision/intent capability |
-| skill | interview-me | CONDITIONAL | modules/intent_verified | HYPOTHESIS | no interview when facts exist |
-| skill | spec-driven-development | ALREADY OWNED | modules/spec_gate | HYPOTHESIS | SDD OS + spec_gate |
-| skill | planning-and-task-breakdown | ALREADY OWNED | modules/gsd_x | HYPOTHESIS | GSD plan verification; no extra planner |
+| skill | using-agent-skills | ALREADY OWNED | modules/skill_router | READ | gap: none (operating behaviors are prose already carried by global CLAUDE.md Intent compiler/Ley rules; router covers discovery) [evidence: upstream-read-b/AGSK_A_rows.tsv] |
+| skill | idea-refine | CONDITIONAL | commands/ultra.md | READ | gap: GAP-1 no CPP ideation/variation-generation step before spec; GAP-2 no 'Not Doing (and Why)' deliverable (speckit-spec.md grep 'not doing/non-goals' zero hits; only 'out of scope' hits in sdd flow) [evidence: upstream-read-b/AGSK_A_rows.tsv] |
+| skill | interview-me | CONDITIONAL | modules/intent_verified | READ | gap: GAP-1 confidence-scored hypothesis; GAP-2 one-question-with-guess; GAP-3 restate+explicit-yes gate; GAP-4 terminal-turn stop rule. All absent from clarify/sdd-os. [evidence: upstream-read-b/AGSK_A_rows.tsv] |
+| skill | spec-driven-development | EXTEND | modules/spec_gate | READ | gap: GAP-1 capability map for bundled multi-capability requests; GAP-2 delta spec (SPEC-<change>.md) instead of overwriting; GAP-3 success-criteria reframing of vague asks. Tiering, PRD gate, spec-exists gate are owned. [evidence: upstream-read-b/AGSK_A_rows.tsv] |
+| skill | planning-and-task-breakdown | EXTEND | commands/speckit-tasks.md | READ | gap: GAP-1 vertical-slice rule; GAP-2 per-task acceptance+verification fields; GAP-3 phase checkpoints; GAP-4 task sizing/split rule. Dependency order and [P] exist. [evidence: upstream-read-b/AGSK_A_rows.tsv] |
 | skill | constraint-driven-development | EXTEND | modules/sqi | READ | PILOT AGSK-C: diff-scoped floor guard added beside sqi weakening census (modules/sqi/floor_guard.py) |
-| skill | context-engineering | ALREADY OWNED | modules/context_budget | HYPOTHESIS | context_budget/JIT already own it |
-| skill | source-driven-development | UNVERIFIED | modules/knowledge_acquisition | HYPOTHESIS | AGSK-D: version/provenance retrieval gap not yet measured |
-| skill | doubt-driven-development | UNVERIFIED | modules/code-review | HYPOTHESIS | AGSK-B: risk-gated in-flight review not yet scanned |
-| skill | incremental-implementation | CONNECT | modules/uqf/principles/tdd_workflow.py | HYPOTHESIS | vertical slice lives in CPP-TDD-001 |
-| skill | test-driven-development | MERGE | modules/uqf/principles/tdd_workflow.py | HYPOTHESIS | merged into CPP-TDD-001 (Phase 2); no second TDD owner |
-| skill | debugging-and-error-recovery | MERGE | modules/craif | HYPOTHESIS | merged into CPP-DBG-001 (Phase 1); no second causal engine |
-| skill | api-and-interface-design | CONDITIONAL | modules/contract_fabric | HYPOTHESIS | extend only on measured gaps |
-| skill | browser-testing-with-devtools | UNVERIFIED | modules/osa | HYPOTHESIS | AGSK-E: gap-test needs real browser; likely LAPTOP plane |
-| skill | code-review-and-quality | ALREADY OWNED | modules/code-review | HYPOTHESIS | pp-code-reviewer pipeline |
-| skill | code-simplification | CONDITIONAL | modules/code-review | HYPOTHESIS | behavior-preserving scope-bounded only |
-| skill | frontend-ui-engineering | ALREADY OWNED | modules/cdio | HYPOTHESIS | CDIO owns UI quality |
-| skill | performance-optimization | UNVERIFIED | modules/pp_eval | HYPOTHESIS | AGSK-F keep/revert ledger not yet scanned |
-| skill | observability-and-instrumentation | UNVERIFIED | modules/monitoring | HYPOTHESIS | AGSK-F not yet scanned |
-| skill | security-and-hardening | CONDITIONAL | modules/secret_firewall | HYPOTHESIS | extend on verified gaps only |
-| skill | ci-cd-and-automation | ALREADY OWNED | modules/deployment | HYPOTHESIS | deploy gates + rollback |
-| skill | deprecation-and-migration | CONDITIONAL | modules/rollback | HYPOTHESIS | AGSK-F selective |
-| skill | git-workflow-and-versioning | ALREADY OWNED | modules/repo_identity | HYPOTHESIS | worktree/concurrency governance |
-| skill | documentation-and-adrs | ALREADY OWNED | modules/decision_review | HYPOTHESIS | decision records |
-| skill | shipping-and-launch | ALREADY OWNED | modules/deployment | HYPOTHESIS | Production Reality + healthcheck |
-| skill | accessibility-engineering | ALREADY OWNED | modules/cdio | HYPOTHESIS | absent from the backlog table (26th skill); CDIO owns a11y |
-| command | a11y | ALREADY OWNED | modules/cdio | HYPOTHESIS | cdio-reviewer |
-| command | build | CONNECT | modules/gsd_x | HYPOTHESIS | GSD execute |
-| command | code-simplify | CONDITIONAL | modules/code-review | HYPOTHESIS | see code-simplification |
+| skill | context-engineering | ALREADY OWNED | modules/context_budget | READ | gap: none material: measurement + restart boundaries owned; packing/cut-order guidance is prose with no executable check (not a gap worth a module) [evidence: upstream-read-b/AGSK_A_rows.tsv] |
+| skill | source-driven-development | CONDITIONAL | modules/knowledge_acquisition | READ | gap: GAP-1 framework-version detection before coding; GAP-2 official-doc retrieval hierarchy; GAP-3 citation of doc URL in output; GAP-4 retrieved-doc-as-untrusted-data extraction rule. No CPP owner exists. [evidence: upstream-read-b/AGSK_A_rows.tsv] |
+| skill | doubt-driven-development | EXTEND | modules/code-review | READ | gap: GAP-1 claim-withholding reviewer protocol (artifact+contract only); GAP-2 risk-gated trigger for in-flight (pre-commit) review; GAP-3 read-only-sandbox cross-model invocation via stdin; GAP-4 bounded reconcile loop. Fresh-context  [evidence: upstream-read-b/AGSK_A_rows.tsv] |
+| skill | incremental-implementation | CONNECT | modules/uqf/principles/tdd_workflow.py | READ | gap: GAP-1 slicing-strategy guidance (contract-first, risk-first) has no CPP home; GAP-2 feature-flag/rollback-friendly rules for incomplete work. Scope discipline + micro-commit owned. [evidence: upstream-read-b/AGSK_A_rows.tsv] |
+| skill | test-driven-development | MERGE | modules/uqf/principles/tdd_workflow.py | READ | gap: GAP-1 test-size/pyramid guidance; GAP-2 mock-avoidance (prefer real impl) and state-over-interaction checks; GAP-3 DAMP/one-assertion style. RED evidence, AAA, Prove-It-as-evidence are owned. [evidence: upstream-read-b/AGSK_A_rows.tsv] |
+| skill | debugging-and-error-recovery | MERGE | modules/craif/diagnosis.py | READ | gap: GAP-1 stop-the-line (halt feature work on failure) as a behavior rule; GAP-2 reduce/minimal-repro step as a verifiable field; GAP-3 error-output-as-untrusted-data rule (partly via secret redaction only). Causal proof, reproduction [evidence: upstream-read-b/AGSK_A_rows.tsv] |
+| skill | api-and-interface-design | CONDITIONAL | modules/contract_fabric | READ | gap: GAP-1 API compatibility policy (Hyrum/one-version/additive-only); GAP-2 contract-first + error-semantics checklist at design time; GAP-3 idempotency-key rule is only a reviewer finding in java-reviewer, not a design rule. No CPP o [evidence: upstream-read-b/AGSK_A_rows.tsv] |
+| skill | browser-testing-with-devtools | CONDITIONAL | modules/sleepless_qa | READ | gap: GAP-1 DevTools-MCP profile-isolation rule (attach to dedicated profile, never real one); GAP-2 browser content/JS-exec-as-untrusted written rule (agents/*-reviewer mention untrusted generally, no browser one); GAP-3 clean-console  [evidence: upstream-read-b/AGSK_A_rows.tsv] |
+| skill | code-review-and-quality | EXTEND | commands/code-review.md | READ | gap: change-size thresholds; named structural-remedy vocabulary in findings; ask-first dead-code list after refactor; multi-model review pattern [evidence: upstream-read-b/AGSK_B_rows.tsv] |
+| skill | code-simplification | CONDITIONAL | agents/woz.md | READ | gap: Chesterton-fence pre-check; refactor-separate-from-feature rule; Rule of 500 automation threshold; per-step revert loop [evidence: upstream-read-b/AGSK_B_rows.tsv] |
+| skill | frontend-ui-engineering | ALREADY OWNED | modules/cdio | READ | gap: component file-structure/state-management coaching (upstream 24-118) is generic React advice, not owned (UPSTREAM-ONLY, low value); focus-management pattern guidance [evidence: upstream-read-b/AGSK_B_rows.tsv] |
+| skill | performance-optimization | EXTEND | vault/knowledge_base/cdio/CDIO-05-design-review-pipeline.md | READ | gap: keep/revert-on-noise decision rule; reverted-experiment ledger (PERF.md); numeric perf budgets + CI gate; field-vs-synthetic guard split [evidence: upstream-read-b/AGSK_B_rows.tsv] |
+| skill | observability-and-instrumentation | EXTEND | modules/monitoring/monitor.py | READ | gap: runbook-per-alert; symptom vs cause alert policy; SLO/error-rate/latency signals (monitoring is binary UP/DOWN); telemetry self-verification (fire alert once); structured-log field guidance [evidence: upstream-read-b/AGSK_B_rows.tsv] |
+| skill | security-and-hardening | EXTEND | commands/security-scan.md | READ | gap: ask-first tier for auth/PII/CORS/upload changes; SSRF + headers hardening controls outside a SaaS checklist; LLM-output-untrusted rules for agent-built products; threat-model-first step [evidence: upstream-read-b/AGSK_B_rows.tsv] |
+| skill | ci-cd-and-automation | EXTEND | modules/deployment/deploy.py | READ | gap: feature-flag/staged-rollout strategy; CI-failure-to-agent feedback loop; Build Cop ownership role [evidence: upstream-read-b/AGSK_B_rows.tsv] |
+| skill | deprecation-and-migration | CONDITIONAL | modules/liveness | READ | gap: expand/contract schema migration playbook; strangler/adapter patterns; compulsory-vs-advisory deprecation policy with migration guide [evidence: upstream-read-b/AGSK_B_rows.tsv] |
+| skill | git-workflow-and-versioning | ALREADY OWNED | governance/REPO_SECURITY_GOVERNANCE.md | READ | gap: semver/tag-as-source-of-truth release guidance; human-written changelog convention; conventional-commit message format [evidence: upstream-read-b/AGSK_B_rows.tsv] |
+| skill | documentation-and-adrs | ALREADY OWNED | commands/arch-decision.md | READ | gap: ADR lifecycle states (Superseded/Deprecated); inline-comment 'why not what' + API-doc guidance [evidence: upstream-read-b/AGSK_B_rows.tsv] |
+| skill | shipping-and-launch | EXTEND | commands/deploy.md | READ | gap: numeric advance/hold/rollback thresholds; error-budget gate; written rollback plan with trigger conditions before ship; post-launch verification window [evidence: upstream-read-b/AGSK_B_rows.tsv] |
+| skill | accessibility-engineering | EXTEND | modules/cdio | READ | gap: executable automated audit (axe-core/pa11y wrapper) against a live URL; manual keyboard/focus/screen-reader test protocol; violation severity mapping [evidence: upstream-read-b/AGSK_B_rows.tsv] |
+| command | a11y | EXTEND | agents/steve-jobs.md | READ | gap: no a11y entry point; no WCAG 2.2 scorecard; no Quick-vs-Deep mode split that labels unmeasured findings [evidence: upstream-read-b/AGSK_B_rows.tsv] |
+| command | build | CONNECT | commands/speckit-implement.md | READ | gap: GAP-1 clean-baseline check (git status --porcelain) before autonomous commits; GAP-2 single explicit-approval checkpoint with hedge-rejection; GAP-3 irreversible-task stop-and-signoff; GAP-4 plan Source-spec line match check. [evidence: upstream-read-b/AGSK_A_rows.tsv] |
+| command | code-simplify | CONDITIONAL | agents/woz.md | READ | gap: no apply-simplification command; same gaps as code-simplification [evidence: upstream-read-b/AGSK_B_rows.tsv] |
 | command | constraints | EXTEND | modules/sqi | READ | PILOT: guard subcommand maps to floor_guard; check/ratchet map to existing sqi ratchet (dormant by Owner decision 4) |
-| command | planning | ALREADY OWNED | modules/gsd_x | HYPOTHESIS | GSD plan |
-| command | review | ALREADY OWNED | commands/code-review.md | HYPOTHESIS | /code-review |
-| command | ship | ALREADY OWNED | commands/deploy.md | HYPOTHESIS | /deploy + DEPLOY HRs |
-| command | spec | ALREADY OWNED | commands/sdd-os.md | HYPOTHESIS | /sdd-os |
-| command | test | MERGE | commands/test-gaps.md | HYPOTHESIS | test-gaps/mutation owner (CPP-TDD-001) |
-| command | webperf | UNVERIFIED | modules/pp_eval | HYPOTHESIS | AGSK-F not yet scanned |
+| command | planning | EXTEND | commands/speckit-tasks.md | READ | gap: GAP-1 refuse-to-overwrite incomplete plan; others identical to planning-and-task-breakdown (vertical slice, acceptance, checkpoints). [evidence: upstream-read-b/AGSK_A_rows.tsv] |
+| command | review | ALREADY OWNED | commands/code-review.md | READ | gap: none (Optional/Nit severity labels differ from CPP's CRITICAL/HIGH/MEDIUM/LOW; not a gap) [evidence: upstream-read-b/AGSK_B_rows.tsv] |
+| command | ship | CONDITIONAL | commands/deploy.md | READ | gap: no pre-launch GO/NO-GO synthesis command; no rollback-plan output; parallel fan-out conflicts with solo-dispatch doctrine [evidence: upstream-read-b/AGSK_B_rows.tsv] |
+| command | spec | EXTEND | commands/sdd-os.md | READ | gap: GAP-1 delta-spec flow; GAP-2 capability-map prompt; confirm-before-proceed gate partially exists (clarify). [evidence: upstream-read-b/AGSK_A_rows.tsv] |
+| command | test | MERGE | commands/test-gaps.md | READ | gap: GAP-1 test-gaps is post-hoc on changed lines (Python+pytest only), not a write-the-failing-test-first driver; no command wires Prove-It for bug fixes (grep -rniE 'prove-it/prove it' -> objects.py, reachability.py, council.md, desi [evidence: upstream-read-b/AGSK_A_rows.tsv] |
+| command | webperf | EXTEND | vault/knowledge_base/cdio/CDIO-05-design-review-pipeline.md | READ | gap: no web-perf audit command; no Quick/Deep split that refuses unsourced numbers; no Lighthouse/CrUX ingestion [evidence: upstream-read-b/AGSK_B_rows.tsv] |

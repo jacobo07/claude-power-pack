@@ -20,11 +20,11 @@ HEURISTIC, REJECT, UNVERIFIED. Machine-checked by `tools/test_bcap2_synsation.py
 | UX-11 | optimistic UI is a truth contract | ALREADY OWNED | vault/knowledge_base/cdio/CDIO-07-experience-contract.md | reconciliation rule exists; `waiting_pattern` refuses optimistic for irreversible/low-success |
 | UX-12 | perceived performance subordinate to truth | ALREADY OWNED | vault/knowledge_base/cdio/CDIO-07-experience-contract.md | fake numeric progress is refused: `progress` only when `progress_measurable` |
 | UX-13 | waiting decision matrix | IMPL-EXEC | modules/cdio/ux_contracts.py | thresholds are inputs/defaults, labelled HEURISTIC; not external evidence |
-| UX-14 | compliance UX is contextual workflow | UNVERIFIED | vault/knowledge_base/cdio/CDIO-03-trust-premium-intelligence.md | partly promotional video; transfer evidence absent |
-| UX-15 | contextual requirements compiler | UNVERIFIED | vault/knowledge_base/cdio/CDIO-02-ux-intelligence-engine.md | promotion needs transfer evidence beyond compliance |
+| UX-14 | compliance UX is contextual workflow | REJECT | vault/knowledge_base/cdio/CDIO-03-trust-premium-intelligence.md | campaign B: REJECT as a universal CDIO rule. Sole source is sponsored (Vanta) video 4; the narrow transferable part is already UX-16/19/20. Reversible: re-open if a second independent source appears |
+| UX-15 | contextual requirements compiler | REJECT | vault/knowledge_base/cdio/CDIO-02-ux-intelligence-engine.md | campaign B: REJECT as universal. Audio re-inspection found it only partial in the source; no transfer evidence beyond compliance, single sponsored source. Reversible on a second source |
 | UX-16 | readiness states, not binary badge | HEURISTIC | vault/knowledge_base/cdio/CDIO-03-trust-premium-intelligence.md | status vocabulary candidate only |
 | UX-17 | evidence acquisition reduces toil | HEURISTIC | vault/knowledge_base/cdio/CDIO-03-trust-premium-intelligence.md | candidate process rule, not universal |
-| UX-18 | compliance is continuous state | UNVERIFIED | vault/knowledge_base/cdio/CDIO-03-trust-premium-intelligence.md | domain-specific state machine |
+| UX-18 | compliance is continuous state | REJECT | vault/knowledge_base/cdio/CDIO-03-trust-premium-intelligence.md | campaign B: REJECT as universal. Domain-specific compliance state machine from one sponsored source; continuous-state idea survives only as HEURISTIC UX-16. Reversible on a second source |
 | UX-19 | readiness/evidence/review/certification distinct | ALREADY OWNED | vault/knowledge_base/cdio/CDIO-03-trust-premium-intelligence.md | CDIO-03 trust-claim honesty; no legal taxonomy invented |
 | UX-20 | trust removes blockers, promises no demand | ALREADY OWNED | vault/knowledge_base/cdio/CDIO-04-conversion-intelligence-engine.md | CDIO-04 conversion honesty |
 
@@ -58,7 +58,7 @@ and screen-reader discoverability, 0:38) and 14a28c4c (Fitts's law, invisible pa
 on whole-card targets, 0:14-0:55). NEW from audio: disabled is correct "when you click a button and you're waiting
 ... prevent duplicate submissions" (fe97b0a1 0:49). `check_disabled_control` flagged that case as opaque; it now exempts
 `pending_submission` only when `pending_visible` (poles + seeded mutant in test_bcap2_synsation). Evidence grade for
-UX-14..18: one sponsored source, so it is a vendor workflow, not independent UX evidence; dispositions above unchanged.
+UX-14..18: one sponsored source, so it is a vendor workflow, not independent UX evidence; campaign B resolved the three UNVERIFIED rows (UX-14, UX-15, UX-18) to REJECT as universal rules for that reason; the transferable parts stay UX-16/17/19/20.
 
 Cross-cutting state-space ontology and negative corpus: NOT built; the executable checkers' defect vocabularies are the seed. Browser-real
 scenarios remain BLOCKED-ON-LAPTOP.
