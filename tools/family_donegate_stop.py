@@ -159,7 +159,7 @@ def main() -> int:
         payload = json.loads(raw) if raw.strip() else {}
         out = decide(payload if isinstance(payload, dict) else {})
         if out:
-            sys.stdout.write(json.dumps(out, ensure_ascii=False))
+            sys.stdout.write(json.dumps(out, ensure_ascii=True))  # cp1252 stdout: see design_donegate_stop.main
     except Exception as exc:  # noqa: BLE001 -- fail-open, but never silently
         _ledger({"decision": "error", "error": "%s: %s" % (type(exc).__name__, exc)})
     return 0

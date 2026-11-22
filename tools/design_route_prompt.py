@@ -69,7 +69,7 @@ def main() -> int:
         payload = json.loads(raw) if raw.strip() else {}
         out = run(payload if isinstance(payload, dict) else {})
         if out:
-            sys.stdout.write(json.dumps(out, ensure_ascii=False))
+            sys.stdout.write(json.dumps(out, ensure_ascii=True))  # cp1252 stdout: see design_donegate_stop.main
     except Exception as exc:  # noqa: BLE001 -- fail-open, never silently
         try:
             from modules.cdio import design_route as dr

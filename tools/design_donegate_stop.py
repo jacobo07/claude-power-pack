@@ -85,7 +85,10 @@ def main() -> int:
         payload = json.loads(raw) if raw.strip() else {}
         out = decide(payload if isinstance(payload, dict) else {})
         if out:
-            sys.stdout.write(json.dumps(out, ensure_ascii=False))
+            # ASCII JSON (\u escapes decode to the same text). With ensure_ascii=False a reason naming a non-cp1252
+            # character crashed here on Windows AFTER decide() had already counted the block, so every later Stop said
+            # "already blocked" and the page shipped with the gate never shown (errors.jsonl x2, V-DSR-STOP-ASCII).
+            sys.stdout.write(json.dumps(out, ensure_ascii=True))
     except Exception as exc:  # noqa: BLE001 -- fail-open, never silently
         try:
             from modules.cdio import design_route as dr
