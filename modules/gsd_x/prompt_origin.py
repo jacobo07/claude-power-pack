@@ -13,7 +13,8 @@ from __future__ import annotations
 import re
 
 MACHINE_PREFIXES = (
-    "another claude session sent a message",          # subagent / peer hand-back
+    "another claude session sent a message",          # subagent / peer hand-back, as the transcript renders it
+    "<agent-message",                                 # the same hand-back as the hook RECEIVES it (live, 2026-11-22)
     "this session is being continued from a previous conversation",  # compaction summary
     "<task-notification>",                            # background task completion
     "base directory for this skill",                  # a loaded skill's body

@@ -9,6 +9,8 @@
  */
 const MACHINE_PREFIXES = [
   'another claude session sent a message',
+  // the hand-back as the hook RECEIVES it (live capture 2026-11-22); the line above is transcript-only
+  '<agent-message',
   'this session is being continued from a previous conversation',
   '<task-notification>',
   'base directory for this skill',

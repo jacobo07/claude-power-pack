@@ -67,7 +67,10 @@ def run(payload: dict) -> dict | None:
         # the gate for every later page (review of a9db1d43, F1).
         st["kinds"] = kinds
         dr.save_session(sid, st)
-    dr.append_row("prompts.jsonl", {"sid": sid, "kinds": kinds})
+    # The head of the raw prompt, local state only: a misroute (ts 1795368968, a hand-back routed despite owner_text)
+    # could not be diagnosed because the row kept no trace of the bytes the hook actually received.
+    raw = str(payload.get("prompt") or payload.get("user_prompt") or "")
+    dr.append_row("prompts.jsonl", {"sid": sid, "kinds": kinds, "head": " ".join(raw[:120].split())})
     return {"hookSpecificOutput": {"hookEventName": "UserPromptSubmit",
                                    "additionalContext": block(dr.policy(kinds, routes))}}
 

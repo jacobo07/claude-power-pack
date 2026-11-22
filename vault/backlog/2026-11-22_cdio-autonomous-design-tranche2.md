@@ -90,3 +90,8 @@ UNVERIFIED: 3 resource selection, 6 accessibility beyond tap/contrast on one pag
   a real subagent hand-back at ~18:50: `~/.claude/state/design_route/prompts.jsonl` row ts 1795368968 for session
   5b59546c recorded kinds [calco, motion, dataviz, brand] from a hand-back. V-DRO's fixture shape does not match the
   live payload. Capture one real hand-back payload (first ~120 chars, local only) before changing the prefixes.
+  - DONE (session 85563ce8): live capture (prompts.jsonl now keeps a 120-char `head`; row ts 1795369643) shows the hook
+    receives `<agent-message from="...">\n[Subagent hand-back] ...`. "Another Claude session sent a message:" exists
+    only in the transcript rendering, so every fixture copied from the transcript passed while every live hand-back
+    routed. Prefix `<agent-message` added to both twins; V-DRO-LIVE-HANDBACK-KEEPS-KINDS fails on the old code
+    (['motion','brand']). The same live hand-back also armed the web_surface family baseline -- same root, same fix.

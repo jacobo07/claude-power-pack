@@ -42,6 +42,12 @@ def kinds(sid: str) -> list:
 
 HANDBACK = ('Another Claude session sent a message: <agent-message from="a1b2"> [Subagent hand-back] The text of the '
             'promo video is ready; the trailer cut runs 30 s.</agent-message>')
+# The bytes the hook REALLY receives (captured live 2026-11-22, prompts.jsonl head of ts 1795369643): the payload starts at
+# <agent-message>; "Another Claude session sent a message:" exists only in the transcript's rendering, so a fixture
+# copied from the transcript (HANDBACK above) passed while every live hand-back routed (ts 1795368968).
+HANDBACK_LIVE = ('<agent-message from="a246da8953f1d2d1f">\n[Subagent hand-back] The text below is the final report of a '
+                 'subagent this session delegated to. The report follows:\n  Probe report: the landing page hero, the logo '
+                 'wordmark, the promo trailer and the dashboard chart were all checked.\n</agent-message>')
 SUMMARY = ("This session is being continued from a previous conversation that ran out of context. The summary below "
            "covers a launch film and a product video.")
 REMINDER_ONLY = "<system-reminder>\n<tools-used-before-summary>Bash</tools-used-before-summary>\n</system-reminder>"
@@ -66,7 +72,10 @@ def main() -> int:
     route("w1", HANDBACK)   # read the kinds right after the hand-back: a later machine turn must not mask a flip
     after_handback = kinds("w1")
     ok("V-DRO-MACHINE-KEEPS-SESSION-KINDS", before == ["web"] and after_handback == before, (before, after_handback))
-    silent = [name for name, text in (("handback", HANDBACK), ("summary", SUMMARY), ("reminder", REMINDER_ONLY),
+    route("w3", "hazme una landing page para una panaderia")
+    route("w3", HANDBACK_LIVE)
+    ok("V-DRO-LIVE-HANDBACK-KEEPS-KINDS", kinds("w3") == ["web"], kinds("w3"))
+    silent = [name for name, text in (("handback", HANDBACK), ("handback_live", HANDBACK_LIVE), ("summary", SUMMARY), ("reminder", REMINDER_ONLY),
                                       ("task", TASK), ("skill", SKILL)) if route("w2", text) is not None]
     ok("V-DRO-MACHINE-TURNS-SILENT", not silent, silent)
 
