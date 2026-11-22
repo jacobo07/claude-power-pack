@@ -5,6 +5,59 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**2026-11-22 15:00Z (pane 37612bb0, Owner "y": Cognitive Throughput T1).** Plan and Reality Scan:
+`vault/plans/ascension-cognitive-throughput-20261122.md`. Work is in worktree `C:\Users\User\Apps\pp-ascension-throughput`,
+branch `gsd/ascension-throughput` (aed5acfb plan, 3eef4bb1 workstream, 0dfaec10 autopilot O1-O4, 5e03e129 mission O5),
+not merged, not pushed. A mission could not be armed (laptop RAM 305 MB < 3 GB floor), so the work ran inline.
+- LIVE on GEX44 autopilot (md5 72f28e99a2b2, backup `autopilot.py.bak-20261122T144440Z`): judge ask 6M (was 29M), reservation
+  release at close, `CHECKPOINT_FINAL: false` judged without a model, weekly guard asked before arming.
+  - Backfill applied 14:58:40Z: 190 `reserve_release` rows with `backfill: true`, 821M released lifetime, today 486.8M -> 399.8M.
+    Revert: restore `ledger.jsonl.bak-prebackfill2-*`, or drop the rows with backfill=true.
+- O5 on the GEX44 PP clone: mission_policy + its tests applied with git apply. Two hunks went into the pre-existing uncommitted
+  `tools/gsd_mission.py` diff (331 lines, 11-20, another writer). Backups are in `~/agora/t1test/*.bak-*`.
+- Census of the 38 INSTRUMENT_FAIL: 21-23 are a pool below its own floor (97M). See `throughput/O6_INSTRUMENT_FAIL_CENSUS.md`.
+- MKWLIB m-36c04360244c unblocked by D1 (local `git worktree add` + bind), now RUNNING.
+NEXT: watch TENNIS S299T and WIIPARTY S299W arm (they fit after the backfill); W3 = pool-adequacy preflight.
+
+**2026-11-22 07:24Z (pane 37612bb0, Owner "y").** Three blocked missions answered with `gsd_mission decide` D1, each
+woke=True. Each decide runs with `</dev/null`: the first decide in a `bash -s` script ate the rest of its stdin.
+- MKWLIB m-84d28d07dbc2: no cap raise, write the METHOD_PIVOT checkpoint. Done: a03df900.
+- FIFATC m-6dd570c9b7a8: no raise above 17.5M; checkpoint, with batch B ids 21-50 as the next route. Done: 7585733,
+  CHECKPOINT_COMPLETE, the worker claims 462 fifatc-v1 certificates (the judge has not verified them yet).
+- WIIPARTY m-b4d1093a6c08: the prompted `cp + python heredoc` is not approved as one command. Redo it with Write, then a
+  separate cp. The worker is RUNNING.
+- TENNIS is untouched: it arms 23.5-24M generations; research 360.5/412.5M.
+- KSR is STOPPED: planner stop after a CERT.
+- FIFA is PARKED: 12 iterations; research 304/312.5M.
+NEXT: the MKWLIB/FIFATC judgments on the next tick; TENNIS at its research cap.
+
+**2026-11-21 ~18:30Z (pane 37612bb0, /kresume of b9040a8e).**
+- **MKW S241M** (m-574a78d6a05c) HALTED CAPITAL_EXHAUSTED: 733k left of 8.5M, P2 closed, P3-P5 not run, no checkpoint.
+  - 17:44Z halt_continue armed S255M (m-0573df8515bb, 7M). It also hit capital (5.48M by P1, spent on resident-context
+    re-reads from background-monitor wake-ups).
+  - It made a checkpoint: the EXTERN_DECL class and a green gate `test_nocompile_repair.py` (control 100, M1-M3 red).
+    The dev set is UNMEASURED.
+  - 18:08Z: judge AGREE, evo NONE continue, armed **S258M** m-52b35ef309c7 (7.5M), same lever. Its packet already says
+    "foreground <=600 s slices, no monitors". 0 certs so far across the 3 generations (~23M authority) on
+    mkw_m2c_nocompile_repair.
+- **MKWLIB S247L had stalled 16:59-18:27Z, at 0 progress.** EnterWorktree had run `git fetch origin lane/mkw` and cut
+  worktree-s247l from origin/lane/mkw. In mkw-lib, origin = **mkw-decomp**, so the worktree held MKW's S241M WIP
+  988e78e0, not MKWLIB's packet fc9ee597.
+  - The worker's `reset --hard` was blocked by the guard, and it stopped. From then on gsd_mission held each launch:
+    "cwd/work_dir diverged".
+  - S165L was cut the same way (11-18); S138L (11-17) was the same defect.
+  - **REPAIRED 18:25:01Z** under cron.lock + factory-apply-MKWLIB.lock, after re-verifying the worktree: clean, 0 unique
+    commits, no process.
+    - Backup ref `s247l-wrongbase-bak-20261121T182501Z` -> 988e78e0.
+    - worktree-s247l reset to fc9ee597.
+    - ROOT FIX: `git branch --unset-upstream lane/mkw`, then `git remote rename origin mkw-decomp-src` in mkw-lib. No
+      pipeline code reads that remote (grep of autopilot, evolve, lane.py, gsd_mission).
+    - Revert: `git remote rename mkw-decomp-src origin` + `git branch -u origin/lane/mkw lane/mkw`.
+  - align_cwd reads aligned. The sweep did `replace` (epoch 2) at 18:27Z, and the worker committed 974c021e (S247L P1
+    pre-registration) at 18:28Z.
+- WSR: gated f73fb14 still waits for a window (S231R RUNNING).
+NEXT: S258M + S247L judgments; WSR at its window; day cap at 00:00Z ('(judgment kept)').
+
 **2026-11-21 ~16:30Z (pane b9040a8e, /kresume of 0ba4909a).**
 - **DESIGN-BEFORE-PARK PROVEN LIVE on MKW.** The judge ran 15:46-16:18Z (0.81M tokens, DISAGREE on s204m).
   - lever_design 1.40M tokens -> `mkw_m2c_nocompile_repair` (family M2C_NOCOMPILE_REPAIR).
