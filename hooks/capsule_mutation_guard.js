@@ -183,8 +183,13 @@ async function main() {
   try { req = JSON.parse(raw); } catch { return emit({ continue: true }); }
   const v = decide(req);
   if (v.allow) return emit({ continue: true });
+  return emit(denial(v));
+}
+
+/** The PreToolUse deny for a refused verdict. Shared with the dispatcher's in-process fallback. */
+function denial(v) {
   const m = v.marker || {};
-  return emit({
+  return {
     hookSpecificOutput: {
       hookEventName: 'PreToolUse',
       permissionDecision: 'deny',
@@ -195,8 +200,8 @@ async function main() {
         + `\`python ${m.tool || '<PP>/tools/mission_capsule.py'} resume --mission ${m.mission_id}\`, read the goal file `
         + 'and the tree, answer the exam with `... certify ...` as printed, then continue.',
     },
-  });
+  };
 }
 
 if (require.main === module) main();
-module.exports = { judgeTool, matchMarker, decide, splitSegments, stateDir };
+module.exports = { judgeTool, matchMarker, decide, denial, splitSegments, stateDir };
