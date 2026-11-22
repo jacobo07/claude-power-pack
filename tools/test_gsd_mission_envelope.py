@@ -298,6 +298,12 @@ def main() -> int:
     check("V-ENV-MCP-REFUSAL-WRITES-NOTHING", gm.load("m-mcp")["seq"] == seq)
     rc = gm._cli(["envelope", "--mission", "m-mcp", "--worker-mcp", "none"])
     check("V-ENV-MCP-CLI", rc == 0 and gm.load("m-mcp").get("worker_mcp") == "none", str(rc))
+    # 10. a host APPLY strips every mission that did not choose; an explicit "inherit" keeps its servers.
+    gm.worker_mcp_verdict = lambda now=None: "APPLY"
+    check("V-ENV-MCP-HOST-APPLY-STRIPS-UNSET", "--strict-mcp-config" in gm.worker_argv(gm.load("m-mcp-other"), "PROMPT"))
+    kept = gm.set_envelope("m-mcp", worker_mcp="inherit", now=NOW + 2)
+    check("V-ENV-MCP-INHERIT-OUTRANKS-HOST-APPLY", "--strict-mcp-config" not in gm.worker_argv(kept, "PROMPT"))
+    gm.worker_mcp_verdict = lambda now=None: "NONE"
 
     print(f"ENVELOPE_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
     return 0 if fails == 0 else 1

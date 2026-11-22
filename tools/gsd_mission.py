@@ -1042,7 +1042,10 @@ def worker_argv(rec: dict, prompt: str, session_id: str | None = None) -> list[s
     argv += ["--disallowedTools", "AskUserQuestion"]
     for tool in topo.get("disallowed_tools", []):
         argv += ["--disallowedTools", tool]
-    if capsule_v2(rec) or rec.get("worker_mcp") == "none" or worker_mcp_verdict() == "APPLY":
+    # An explicit per-mission "inherit" outranks the host verdict: a mission that needs a server (a browser
+    # QA phase) opts back in without changing the measurement every other mission on the host relies on.
+    host_strip = rec.get("worker_mcp") != "inherit" and worker_mcp_verdict() == "APPLY"
+    if capsule_v2(rec) or rec.get("worker_mcp") == "none" or host_strip:
         # Measured, not assumed: only a fresh APPLY from tools/worker_mcp_probe.sh strips MCP.
         # capsule-v2 always strips it (G9): the mutation guard sits on the Bash and Edit chains, so
         # an `mcp__*` tool would be a write path no guard sees before the successor certifies.
