@@ -5,6 +5,9 @@ knowledge_vault/** -text
 # (scripts/verify-release.cjs) on every fresh checkout. Checked by tools/vendor_provenance.py.
 vendor/genesis-suite/** -text
 vendor/context-budget/** -text
+# 2026-11-06: byte-compared against the live ~/.claude/hooks copy (LF) by
+# V-SL-VENDOR-MATCHES-LIVE; a CRLF checkout read as DRIFT on every fresh clone.
+hooks/vendor/gsd-statusline.js     text eol=lf
 
 # 2026-05-23: union merge driver for append-only ledgers.
 # Both sides legitimately appended different rows -- standard recursive
