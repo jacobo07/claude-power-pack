@@ -146,8 +146,15 @@ done until a review of the CURRENT bytes is recorded as done. So every review:
 
 1. **Render** what you judge, then look at every PNG with Read before any verdict:
    `python tools/design_review_record.py render <page.html>...` (desktop 1440x900 +
-   phone 390x844). An app surface (tsx/vue/css) cannot be rendered from the file:
-   screenshot the running app and pass it with `--screenshot` at step 3.
+   phone 390x844). An app surface (tsx/jsx/vue/svelte/css inside an app) renders
+   only through the RUNNING app: start it (dev server, preview or the deployed
+   URL) and run `python tools/design_review_record.py render-url --url
+   http://localhost:3000/<route> --files <the source files that build it>`
+   (desktop, tablet 820x1180, phone; same runtime facts plus the HTTP status,
+   bound to those files' bytes). Since 2026-11-22 a bare `--screenshot` PNG is
+   no longer proof and the recorder refuses app source without a `render-url`.
+   Scroll-driven animations are captured in their end state (the render records
+   how many it neutralised); judge what a visitor sees after scrolling.
 2. Write your verdicts to a JSON list (`criterion, dimension, status, severity,
    observed, recommendation`): at least 6, over at least 2 dimensions. The
    recorder refuses a thinner review.

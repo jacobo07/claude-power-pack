@@ -3,14 +3,18 @@
 
   render <file.html>...                      headless Chromium, desktop 1440x900 + phone 390x844, full page PNGs;
                                              one renders.jsonl row per file {file, sha, pngs}
-  record --verdicts v.json --files f... [--screenshot shot.png]
+  render-url --url http://host/route --files src...
+                                             app surfaces: renders the RUNNING route at desktop/tablet/phone with the
+                                             same runtime facts (+ HTTP status) and binds them to every listed file
+  record --verdicts v.json --files f... [--screenshot shot.png (accepted, no longer proof)]
                                              v.json = [{criterion, dimension, status, severity, observed, recommendation}]
                                              folds the Taste lint of every HTML file in, runs scorer.review_gate, and
                                              appends one reviews.jsonl row {files:{path: sha256}, verdict, score, is_done}
 
 An APPROVE is recorded as done only when the review is not empty (>= MIN_VERDICTS reviewer verdicts over >= 2
-dimensions) and every file was rendered for these bytes (HTML: a `render` row; other files: --screenshot, a PNG newer
-than the file). Otherwise the row is still written, is_done False, with the refusal named. Exit 0 = is_done.
+dimensions) and every file was rendered for these bytes (HTML: a `render` row; css/js an HTML page in the record links:
+that page's render; app source: a `render-url` row). Otherwise the row is still written, is_done False, with the
+refusal named. Exit 0 = is_done.
 """
 from __future__ import annotations
 
@@ -68,6 +72,7 @@ FACTS_JS = """() => {
           overflow_px: Math.max(0, de.scrollWidth - window.innerWidth), viewport_px: window.innerWidth};
 }""" % DUP_MIN_PX
 _IGNORED_URL = re.compile(r"/favicon\.ico(?:$|\?)", re.I)
+MAX_SCROLL_STEPS = 60
 
 
 def counts_as_failed(url: str, failure: str | None) -> bool:
@@ -88,14 +93,53 @@ def _observe(page, uri: str) -> dict:
     page.on("console", lambda m: errors.append(m.text) if m.type == "error"
             and not m.text.startswith("Failed to load resource") else None)
     page.on("pageerror", lambda exc: errors.append(str(exc)))
-    page.goto(uri, wait_until="load")
+    resp = page.goto(uri, wait_until="load")
+    # A route that answers 404/500 still "renders" (an error page has pixels); render-url must see the status.
+    doc_status = resp.status if resp is not None else None
     try:
         page.wait_for_load_state("networkidle", timeout=5000)
     except Exception:  # noqa: BLE001 -- a page that never goes idle is still observed as it stands
         pass
+    # Scroll through once before observing: a full-page screenshot never scrolls, so scroll-reveal sections stayed at
+    # opacity 0 and lazy images never loaded (first live render of bodeguita, 2026-11-22: sections 01-03 rendered
+    # nearly invisible). The review must judge what a visitor sees after scrolling, not the pre-reveal state.
+    # Capped: an infinite-scroll route grows scrollHeight on every step (review of render-url, LOW).
+    page.evaluate("""async () => {
+      const step = Math.max(200, Math.floor(window.innerHeight * 0.8));
+      for (let y = 0, i = 0; y < document.documentElement.scrollHeight && i < %d; y += step, i++) {
+        window.scrollTo(0, y);
+        await new Promise(r => setTimeout(r, 120));
+      }
+      window.scrollTo(0, 0);
+    }""" % MAX_SCROLL_STEPS)
+    page.wait_for_timeout(800)
+    # Scroll-DRIVEN animations (animation-timeline: view()/scroll()) depend on the current scroll position, so a
+    # full-page capture taken at the top shows every one of them before entry -- no scrolling can fix that (probe of
+    # bodeguita's `.reveal`: opacity 0.15 at top, 1 in view, 0.15 again back at top). Move each one to the document
+    # timeline and FINISH it, so the element shows the animation's end keyframe. `animation: none` showed the base style
+    # instead, which for the common `.reveal{opacity:0}` is invisible (review of render-url, MEDIUM). Elements still
+    # under half opacity afterwards are counted, so a reveal the capture could not finish is reported, never hidden.
+    neut = page.evaluate("""() => {
+      let n = 0;
+      const touched = new Set();
+      for (const a of document.getAnimations()) {
+        if (!a.timeline || a.timeline === document.timeline) continue;
+        const el = a.effect && a.effect.target;
+        try { a.timeline = document.timeline; a.finish(); }
+        catch (e) { if (el) el.style.setProperty('animation', 'none', 'important'); }
+        if (el) touched.add(el);
+        n++;
+      }
+      const faint = [...touched].filter(el => parseFloat(getComputedStyle(el).opacity) < 0.5).length;
+      return {n, faint};
+    }""")
     seen = page.evaluate(FACTS_JS)
+    seen["scroll_animations_neutralised"] = neut["n"]
+    seen["scroll_animations_still_faint"] = neut["faint"]
     seen["failed_requests"] = [u for u in failed if not _IGNORED_URL.search(u.split(" (")[0])][:20]
     seen["console_errors"] = errors[:20]
+    if isinstance(doc_status, int) and doc_status > 0:   # file:// navigations report no HTTP status
+        seen["document_status"] = doc_status
     return seen
 
 
@@ -134,7 +178,12 @@ def facts_verdicts(facts: dict) -> list:
           "find the element wider than the viewport (fixed widths, long words, 100vw plus a scrollbar)"),
         v("RENDER-DUPLICATE-IMAGE", "visual", "minor", union("duplicate_images"), "large image(s) shown more than once",
           "a repeated photo reads as a template; use a different asset or drop the repeat"),
-    ]
+    ] + ([v("RENDER-DOCUMENT-STATUS", "ux", "critical",
+            ["%s: HTTP %d" % (n, x["document_status"]) for n, x in vps.items()
+             if (x.get("document_status") or 0) >= 400],
+            "viewport(s) served an error page", "the route itself fails; an error page is not the surface")]
+         # emitted only by an HTTP render (render-url); a file:// render has no document status to judge
+         if any("document_status" in x for x in vps.values()) else [])
 
 
 def _facts_for(c: str, h: str) -> dict | None:
@@ -179,6 +228,60 @@ def render(files: list) -> int:
     print("Look at every PNG (Read tool) before writing verdicts: the review judges what renders, not the source.")
     print("DEFECT lines are folded into the record as verdicts; a reviewer pass cannot override them.")
     return rc
+
+
+# App surfaces (tsx/jsx/vue/svelte/css inside an app) render only through the running app. Measured 2026-11-22: most
+# of the 28 live APPROVEs were .tsx files admitted by ANY >= 300x300 PNG newer than the file -- no route, no viewport,
+# no runtime facts. render-url renders the route the files build at three widths, collects the same facts as `render`
+# and binds them to the bytes of every listed file (V-DRU-*).
+URL_VIEWPORTS = {"desktop": (1440, 900), "tablet": (820, 1180), "phone": (390, 844)}
+_URL_RX = re.compile(r"^https?://[^\s/]+", re.I)
+
+
+def render_url(url: str, files: list) -> int:
+    if not _URL_RX.match(url or ""):
+        print("REFUSED: --url must be an http(s) URL of the running app (dev server, preview or production)")
+        return 2
+    missing = [f for f in files if not os.path.isfile(f)]
+    if missing:
+        print("REFUSED: not a file: %s" % ", ".join(missing))
+        return 2
+    from playwright.sync_api import sync_playwright
+    out_dir = dr.state_dir() / "renders"
+    out_dir.mkdir(exist_ok=True)
+    bound = [(dr.canon(f), dr.sha256(f)) for f in files]   # hashed BEFORE the render: the bytes the route was built from
+    tag = __import__("hashlib").sha256(("%s|%s" % (url, "|".join(h for _, h in bound))).encode()).hexdigest()[:16]
+    pngs, facts = [], {"collected": True, "version": FACTS_VERSION, "url": url, "viewports": {}}
+    with sync_playwright() as pw:
+        browser = _launch(pw)
+        try:
+            for name, (w, hgt) in URL_VIEWPORTS.items():
+                page = browser.new_page(viewport={"width": w, "height": hgt})
+                try:
+                    facts["viewports"][name] = _observe(page, url)
+                except Exception as exc:  # noqa: BLE001 -- an unreachable route is a recorded fact, never a skip
+                    facts["viewports"][name] = {"document_status": 599, "console_errors": [
+                        "navigation failed: %s" % str(exc).splitlines()[0][:200]]}
+                    page.close()
+                    continue
+                png = out_dir / ("url-%s-%s.png" % (tag, name))
+                page.screenshot(path=str(png), full_page=True)
+                page.close()
+                pngs.append(str(png))
+        finally:
+            browser.close()
+    changed = [os.path.basename(c) for c, h in bound if dr.sha256(c) != h]
+    if changed:   # the files moved under the render: it shows neither the old bytes nor the new ones for sure
+        print("REFUSED: changed during the render, render again: %s" % ", ".join(changed))
+        return 2
+    for c, h in bound:
+        dr.append_row("renders.jsonl", {"file": c, "sha": h, "pngs": pngs, "facts": facts, "url": url})
+    print("RENDERED %s (%d viewports) for %d file(s) -> %s" % (url, len(pngs), len(bound), " ".join(pngs)))
+    for vd in facts_verdicts(facts):
+        if vd.status == "fail":
+            print("  DEFECT %s [%s] %s" % (vd.criterion, vd.severity, vd.observed))
+    print("Look at every PNG (Read tool) before writing verdicts: the review judges what renders, not the source.")
+    return 0 if len(pngs) == len(URL_VIEWPORTS) else 1
 
 
 MIN_SHOT_PX = 300
@@ -271,6 +374,8 @@ def record(verdicts_path: str, files: list, screenshot: str | None = None, exper
         if not os.path.isfile(f):
             raise SystemExit("not a file: %s" % f)
     covered = _covered_by_render([dr.canon(f) for f in files])
+    url_folded: set = set()
+    _ = screenshot   # accepted for old callers; it no longer admits anything (see the app-source branch below)
     for f in files:
         c, h = dr.canon(f), dr.sha256(f)
         hashes[c] = h
@@ -286,9 +391,21 @@ def record(verdicts_path: str, files: list, screenshot: str | None = None, exper
                     folded += facts_verdicts(facts)
         elif c in covered:
             continue
-        elif not (screenshot and _is_png(screenshot) and os.path.getmtime(screenshot) >= os.path.getmtime(c)):
-            refusals.append("%s: no --screenshot PNG newer than the file, and no rendered page in this record links "
-                            "it" % os.path.basename(c))
+        else:
+            # App source: only a render-url row for these exact bytes counts. A bare --screenshot proved a PNG existed,
+            # not that it showed this route or these bytes, and it carried no runtime facts (V-DRU-SCREENSHOT-RETIRED).
+            facts = _facts_for(c, h)
+            if facts is None or not facts.get("url"):
+                refusals.append("%s: app source never rendered for these bytes: run `render-url --url <running route> "
+                                "--files <files>` (a bare --screenshot PNG is no longer proof)" % os.path.basename(c))
+            else:
+                # One render bound to N files is ONE observation, not N deductions. The key is the observation itself,
+                # never the URL: two renders of one URL (a clean one for b.tsx, a later broken one for a.tsx) are two
+                # observations, and keying on the URL dropped the broken one (review of render-url, HIGH).
+                key = json.dumps(facts, sort_keys=True)
+                if key not in url_folded:
+                    url_folded.add(key)
+                    folded += facts_verdicts(facts)
     exp = json.loads(Path(experience).read_text(encoding="utf-8")) if experience else {}
     g = scorer.review_gate(folded, declared_experience=exp.get("declared"), observed_experience=exp.get("observed"))
     row = {"files": hashes, "verdict": g.verdict, "score": g.score, "reason": g.reason,
@@ -310,6 +427,9 @@ def main(argv=None) -> int:
     sub = ap.add_subparsers(dest="cmd", required=True)
     r = sub.add_parser("render")
     r.add_argument("files", nargs="+")
+    ru = sub.add_parser("render-url")
+    ru.add_argument("--url", required=True)
+    ru.add_argument("--files", nargs="+", required=True)
     rec = sub.add_parser("record")
     rec.add_argument("--verdicts", required=True)
     rec.add_argument("--files", nargs="+", required=True)
@@ -318,6 +438,8 @@ def main(argv=None) -> int:
     a = ap.parse_args(argv)
     if a.cmd == "render":
         return render(a.files)
+    if a.cmd == "render-url":
+        return render_url(a.url, a.files)
     row = record(a.verdicts, a.files, a.screenshot, a.experience)
     print(json.dumps(row, indent=1, ensure_ascii=False))
     return 0 if row["is_done"] else 1

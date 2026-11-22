@@ -110,8 +110,33 @@ V-DSR-STOP-NO-REBLOCK-WITHOUT-RECORD (an unreviewed page still blocks once).
 - The reviewer's verdicts are still an LLM's judgement; the recorder stops an EMPTY or UNRENDERED approval, not a
   dishonest one. The deterministic floor is the Taste lint folded into the score.
 - A rendered PNG proves the bytes were rendered, not that anyone looked at it.
-- Non-HTML surfaces (tsx/vue/css inside an app) need the app running; the recorder takes a screenshot path for them and
-  cannot render them itself.
+- App surfaces (tsx/vue/css inside an app) need the app running. `render-url` renders the route, but it cannot prove the
+  server at that URL was built from the listed files: it binds the bytes as they were during the render and refuses if
+  they changed under it. Pointing it at an unrelated URL is a dishonest review the recorder cannot detect.
+
+## App surfaces render through the running route (2026-11-22, Owner "Run S1-S3+S6 here")
+Measured: most of the 28 live APPROVEs in reviews.jsonl were .tsx files admitted by `--screenshot`, which accepted ANY
+>= 300x300 PNG newer than the file. No route, viewport or render fact was ever collected for an app.
+- `design_review_record.py render-url --url <http(s) route> --files <sources>` renders desktop/tablet/phone through
+  the same `_observe` as `render` and adds `document_status`, so an error page is `RENDER-DOCUMENT-STATUS` critical. It
+  writes one renders.jsonl row per file, bound to that file's sha. A file that changed during the render is refused.
+- `record`: app source needs a render-url row for its current bytes. A bare `--screenshot` no longer admits anything.
+  One route rendered for N files folds its facts once, so a single observation is not counted as N deductions.
+- Both renderers scroll through the page, then drop CSS scroll-driven animations (`animation-timeline: view()`) before
+  capturing. A full-page capture from the top showed every reveal before entry: the first live render of bodeguita
+  showed sections 01-03 at opacity 0.15. The count is recorded per viewport (`scroll_animations_neutralised`).
+- Live: portfolio and bodeguita both rendered with HTTP 200 at 3 widths. bodeguita: `plate.svg` shown twice (minor).
+- Gate: `tools/test_design_render_url.py` (V-DRU, 11). The recorder at HEAD fails 9 of them, and the old recorder
+  stored `is_done: True` from a solid-colour PNG.
+
+## Hook plane fixes (2026-11-22)
+- The hooks print ASCII JSON. With `ensure_ascii=False`, a cp1252 stdout crashed the Stop hook after the block was
+  already counted, so later Stops logged "already blocked" and the page passed without the gate ever being shown
+  (errors.jsonl x2). V-DSR missed it because its env forces `PYTHONIOENCODING=utf-8` and the dispatcher never sets it.
+  Gate: `tools/test_hook_stdout_ascii.py` (V-HSA).
+- The prompt hook classifies only text the Owner wrote: 53 of 106 live routes came from subagent hand-backs,
+  compaction summaries and task notifications, which included every `motion` route but one.
+  Gate: `tools/test_design_route_origin.py` (V-DRO).
 - Skills are proven LOADED, not followed.
 - Measured once, N=3 (below): the bundle helped on every task, but the effect is the WHOLE bundle (block + skills +
   reviewer + one Stop round + more tools), not separable per piece, and the judge is one model family.
