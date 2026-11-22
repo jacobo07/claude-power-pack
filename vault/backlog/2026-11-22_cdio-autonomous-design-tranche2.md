@@ -98,7 +98,9 @@ UNVERIFIED: 3 resource selection, 6 accessibility beyond tap/contrast on one pag
   `python -m modules.ccf.cli generate` writes `.ccf/images/<id>.png` from inside the process, so CCF's own
   outputs are never judged (no Write row, no token in the command). Advice text narrowed so it no longer promises it.
   Fix candidates: collect `.ccf/images/**` changed after the brand prompt, or have the CCF CLI report its outputs.
-- L1 OPEN: asset admission uses the CURRENT session kinds; a logo written under brand drops out when the next prompt
+- L1 FIXED (session 85563ce8): each write stores the session kinds it was made under (`write_kinds`); an asset is
+  admitted and routed by those, legacy writes fall back to the current kinds. V-DSR-ASSET-KINDS-AT-WRITE fails on the
+  old code on both poles (logo dropped, screenshot pulled in). Was: asset admission uses the CURRENT session kinds; a logo written under brand drops out when the next prompt
   is web, and a screenshot written earlier gets judged when brand arrives later. Store kinds with each write.
 - NEW, evidence: the machine-turn filter (efaae877 + 16b2ecd1, `modules/gsd_x/prompt_origin.owner_text`) did NOT stop
   a real subagent hand-back at ~18:50: `~/.claude/state/design_route/prompts.jsonl` row ts 1795368968 for session

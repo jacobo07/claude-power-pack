@@ -473,6 +473,23 @@ def test_brand() -> None:
     run_hook(PROMPT, {"session_id": "b3", "prompt": "diseña el logo de la marca"})
     t3 = shell_transcript("PowerShell", "python -m modules.ccf.cli generate kit", d3, now - 5)
     out = stop("b3", d3, t3)
+    # review of bb95f710, L1: an asset is judged by the kinds it was WRITTEN under, not by the latest prompt's.
+    routes = dr.load_routes()
+    d4 = tempfile.mkdtemp(dir=_TMP)
+    mark = os.path.join(d4, "mark.svg")
+    Path(mark).write_text(LOGO_SVG, encoding="utf-8")
+    run_hook(PROMPT, {"session_id": "b4", "prompt": "diseña el logo de la marca"})
+    stop("b4", d4, transcript(writes=[mark]))
+    run_hook(PROMPT, {"session_id": "b4", "prompt": "ahora la landing page"})
+    kept = dr.judge(dr.load_session("b4"), d4, routes)["files"]
+    d5 = tempfile.mkdtemp(dir=_TMP)
+    shot = os.path.join(d5, "shot.png")
+    Path(shot).write_bytes(b"\x89PNG\r\n\x1a\n" + b"\0" * 32)
+    run_hook(PROMPT, {"session_id": "b5", "prompt": "hazme una landing page para un estudio de yoga"})
+    stop("b5", d5, transcript(writes=[shot]))
+    run_hook(PROMPT, {"session_id": "b5", "prompt": "ajusta el color del logo de la marca"})
+    late = dr.judge(dr.load_session("b5"), d5, routes)["files"]
+    ok("V-DSR-ASSET-KINDS-AT-WRITE", dr.canon(mark) in kept and dr.canon(shot) not in late, (kept, late))
     ok("V-DSR-CCF-GENERATE-JUDGED", bool(out) and "c1.png" in out.get("reason", "")
        and "old.png" not in out.get("reason", ""), out)
     full = os.path.join(_TMP, "brand_full.json")

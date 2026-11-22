@@ -140,9 +140,26 @@ def load_session(sid: str) -> dict:
         st = json.loads(_sid_file(sid).read_text(encoding="utf-8"))
     except (OSError, ValueError):
         st = {}
-    for k, v in (("kinds", []), ("skills", []), ("writes", []), ("shell_writes", []), ("offset", 0), ("transcript", "")):
+    for k, v in (("kinds", []), ("skills", []), ("writes", []), ("shell_writes", []), ("offset", 0), ("transcript", ""),
+                 ("write_kinds", {})):
         st.setdefault(k, v)
     return st
+
+
+def _note_kinds(st: dict, path: str) -> None:
+    """Remember the session kinds a file was written under (a union over every write of it). Writes are scanned at the
+    Stop of the turn that made them, so the current kinds are that turn's (review of bb95f710, L1)."""
+    if path:
+        seen = st["write_kinds"].setdefault(canon(path), [])
+        seen += [k for k in st.get("kinds", []) if k not in seen]
+
+
+def asset_ext_for(path: str, st: dict, routes: dict) -> tuple:
+    """Asset extensions admitted for this file: by the kinds it was written under; a write recorded before kinds were
+    stored falls back to the current kinds. Keyed on the current kinds, a logo written under brand dropped out on the
+    next web prompt, and a screenshot written during web work was judged once brand arrived."""
+    at_write = st.get("write_kinds", {}).get(canon(path))
+    return extra_ext(st.get("kinds", []) if at_write is None else at_write, routes)
 
 
 def save_session(sid: str, st: dict) -> None:
@@ -251,6 +268,7 @@ def _scan_shell(row: dict, inp: dict, st: dict) -> None:
             seen = None
         if not any(x[0] == c and x[1] == when for x in st["shell_writes"]):
             st["shell_writes"].append([c, when, seen])
+        _note_kinds(st, c)
 
 
 def shell_written(st: dict) -> list:
@@ -294,7 +312,9 @@ def _scan_row(row: dict, st: dict) -> None:
         if c.get("name") == "Skill":
             _add(st["skills"], skill_key(str(inp.get("skill") or "")))
         elif c.get("name") in WRITE_TOOLS:
-            _add(st["writes"], str(inp.get("file_path") or inp.get("notebook_path") or ""))
+            path = str(inp.get("file_path") or inp.get("notebook_path") or "")
+            _add(st["writes"], path)
+            _note_kinds(st, path)
         elif c.get("name") in SHELL_TOOLS:
             _scan_shell(row, inp, st)
 
@@ -412,13 +432,17 @@ def judge(st: dict, cwd: str, routes: dict, na: dict | None = None) -> dict:
     """{files, kinds, problems:[{check, file, detail}], waived}. No visual file written in cwd -> no problems."""
     na = na or {}
     files = []
-    extra = extra_ext(st.get("kinds", []), routes)
+    assets = set()   # admitted only as an asset: judged by the kinds it was written under (L1)
     for w in list(st.get("writes", [])) + shell_written(st):
-        judged_ext = is_visual(w, routes) or os.path.splitext(w or "")[1].lower() in extra
-        if w and judged_ext and os.path.isfile(w) and inside(w, cwd) and canon(w) not in files:
+        visual = is_visual(w, routes)
+        asset = not visual and os.path.splitext(w or "")[1].lower() in asset_ext_for(w, st, routes)
+        if w and (visual or asset) and os.path.isfile(w) and inside(w, cwd) and canon(w) not in files:
             files.append(canon(w))
+            if asset:
+                assets.add(canon(w))
     res = {"files": [], "kinds": [], "problems": [], "waived": {}}
-    judged = [(f, kinds_for(f, st.get("kinds", []), routes)) for f in files]
+    now = st.get("kinds", [])
+    judged = [(f, kinds_for(f, st.get("write_kinds", {}).get(f, now) if f in assets else now, routes)) for f in files]
     judged = [(f, k) for f, k in judged if k is not None]
     res["files"] = [f for f, _ in judged]
     if not judged:
