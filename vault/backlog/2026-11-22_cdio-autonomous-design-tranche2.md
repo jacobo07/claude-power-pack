@@ -43,6 +43,14 @@ shipped. This file is the handoff for a fresh agent: it holds no context that is
    Same class as efaae877 (design route classifying machine turns); check whether the family gate shares the fix.
 7. **Bodeguita next step belongs to the Owner:** authorised photography of the venue and dishes.
 
+## Tranche 2 progress
+- Item 6 DONE 16b2ecd1: family baselines are chosen from `owner_text()` (shared, `modules/gsd_x/prompt_origin.py`);
+  V-FINJ-MACHINE-TURN-NO-FAMILY fails on the old code [True, True, True]. Residual: the AKOS creative-grounding
+  injector fires on machine turns too (observed 2026-11-22 on a hand-back) and was not audited.
+- Item 2 left to the session adding `render-url` (still uncommitted in tools/design_review_record.py at 18:05).
+- Paused before item 3 on budget: the campaign passed 2x the Owner's 250k planning reference (subagents alone
+  168k measured). Item 3 needs about 4 build + independent-review cycles at ~50k each: Owner budget call first.
+
 ## Mission gates: state at end of tranche 1
 PASS with evidence: 1 reality, 5 functional integrity (fixture), 8 production reality (real Stop hook on a real
 transcript), 9 adversarial (red-team 5, 6, 15, 19, 20, 24 pinned), 10 autonomous repair, 13 institutional learning.
