@@ -306,6 +306,11 @@ def test_record() -> None:
     row = rec.record(full, [page9])
     render_fail = [c for c, _, _ in row["failed"] if c.startswith("RENDER-")]
     ok("V-DSR-RECORD-CLEAN-FACTS-APPROVE", row["is_done"] and row["verdict"] == "APPROVE" and not render_fail, row)
+    # live-run finding (portfolio, 2026-11-22): a request the page cancelled is not a failed asset; a 404'd one still is
+    ok("V-DSR-RENDER-ABORTED-NOT-FAILED",
+       not rec.counts_as_failed("https://x.test/es/contact?tipo=a&_rsc=eqsir", "net::ERR_ABORTED")
+       and rec.counts_as_failed("file:///x/missing.css", "net::ERR_FILE_NOT_FOUND")
+       and not rec.counts_as_failed("https://x.test/favicon.ico", "net::ERR_FAILED"))
 
 
 # The seeded page plants a link that goes nowhere ON PURPOSE. Built from a constant because the Woz write veto is a
@@ -369,10 +374,66 @@ def test_wired() -> None:
     ok("V-DSR-WIRED-STOP", "tools/design_donegate_stop.py" in chain("Stop-chain"))
 
 
+def shell_transcript(tool: str, command: str, cwd: str, when: float) -> str:
+    """A session whose only visual write is a shell command (no Write/Edit row at all)."""
+    from datetime import datetime, timezone
+    p = os.path.join(tempfile.mkdtemp(dir=_TMP), "t.jsonl")
+    rows = [{"type": "user", "message": {"role": "user", "content": "haz la landing"}},
+            {"type": "assistant", "cwd": cwd, "timestamp": datetime.fromtimestamp(when, timezone.utc).isoformat(),
+             "message": {"content": [{"type": "tool_use", "name": tool, "input": {"command": command}}]}},
+            {"type": "assistant", "message": {"content": [{"type": "text", "text": "Listo."}]}}]
+    Path(p).write_text("".join(json.dumps(r) + "\n" for r in rows), encoding="utf-8")
+    return p
+
+
+def test_shell() -> None:
+    """A page written through Bash or PowerShell reaches the Stop gate (it used to bypass Taste and the review)."""
+    now = time.time()
+    d, page = project(CLEAN)                                   # written AFTER the command's timestamp
+    t = shell_transcript("Bash", "cat > index.html <<'EOF'\n<!doctype html>...\nEOF", d, now - 5)
+    out = stop("shell-bash", d, t)
+    ok("V-DSR-SHELL-HEREDOC-JUDGED", bool(out) and out.get("decision") == "block" and "index.html" in out["reason"]
+       and "design-review" in out["reason"], out)
+    d2, _ = project(CLEAN)
+    page2 = os.path.join(d2, "carta.html")
+    Path(page2).write_text(CLEAN, encoding="utf-8")
+    t2 = shell_transcript("PowerShell", 'Set-Content -Path "%s" -Value $html -Encoding utf8' % page2, d2, now - 5)
+    out = stop("shell-ps", d2, t2)
+    ok("V-DSR-SHELL-POWERSHELL-JUDGED", bool(out) and "carta.html" in out.get("reason", ""), out)
+    # negative control: a command that only READ a page written an hour earlier does not make it this session's work
+    d3, page3 = project(CLEAN)
+    old = now - 3600
+    os.utime(page3, (old, old))
+    t3 = shell_transcript("Bash", "cat index.html | head -20", d3, now - 5)
+    ok("V-DSR-SHELL-READ-NOT-JUDGED", stop("shell-read", d3, t3) is None)
+    # review M3: the same read-only session must stay unjudged when someone else saves the page AFTER the scan
+    os.utime(page3, (now + 30, now + 30))
+    ok("V-DSR-SHELL-FOREIGN-EDIT-NOT-JUDGED", stop("shell-read", d3, t3) is None)
+    # review M1: a heredoc carrying a 200 KB inline image must not backtrack the Stop hook past its 8 s kill
+    blob = "cat > index.html <<'EOF'\n<img src=\"data:image/png;base64," + "A" * 200_000 + "\">\nEOF"
+    t0 = time.time()
+    found = dr.shell_paths(blob)
+    took = time.time() - t0
+    ok("V-DSR-SHELL-NO-QUADRATIC", found == ["index.html"] and took < 1.0, "%.2f s %s" % (took, found))
+    # review M2: Git Bash names the page /c/Users/... ; that must reach the gate like C:\Users\...
+    if os.name == "nt":
+        d5, page5 = project(CLEAN)
+        msys = "/" + page5[0].lower() + page5[2:].replace("\\", "/")
+        t5 = shell_transcript("Bash", "cat > %s <<'EOF'\nx\nEOF" % msys, os.path.dirname(_TMP), now - 5)
+        out = stop("shell-msys", d5, t5)
+        ok("V-DSR-SHELL-MSYS-PATH-JUDGED", bool(out) and "index.html" in out.get("reason", ""), (msys, out))
+    # and a non-visual file written through the shell stays out of the design gate
+    d4, _ = project(CLEAN)
+    os.utime(os.path.join(d4, "index.html"), (old, old))
+    Path(d4, "notes.md").write_text("x", encoding="utf-8")
+    t4 = shell_transcript("Bash", "echo x > notes.md", d4, now - 5)
+    ok("V-DSR-SHELL-NONVISUAL-IGNORED", stop("shell-md", d4, t4) is None)
+
+
 def main() -> int:
     t0 = time.time()
     try:
-        for t in (test_routes, test_prompt, test_stop, test_record, test_render, test_wired):
+        for t in (test_routes, test_prompt, test_stop, test_record, test_render, test_shell, test_wired):
             try:
                 t()
             except Exception as exc:  # noqa: BLE001 -- a crashed section is a FAIL, never a skip

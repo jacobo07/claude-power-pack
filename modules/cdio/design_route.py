@@ -121,7 +121,7 @@ def load_session(sid: str) -> dict:
         st = json.loads(_sid_file(sid).read_text(encoding="utf-8"))
     except (OSError, ValueError):
         st = {}
-    for k, v in (("kinds", []), ("skills", []), ("writes", []), ("offset", 0), ("transcript", "")):
+    for k, v in (("kinds", []), ("skills", []), ("writes", []), ("shell_writes", []), ("offset", 0), ("transcript", "")):
         st.setdefault(k, v)
     return st
 
@@ -159,6 +159,83 @@ def _add(seq: list, item: str) -> None:
         seq.append(item)
 
 
+SHELL_TOOLS = ("Bash", "PowerShell")
+# A visual path named in a shell command (heredoc, Set-Content, Out-File, cp, a generator's --out). The Stop gate used
+# to collect writes only from Write/Edit, so a page written through the shell skipped Taste and the review entirely
+# (V-DSR-SHELL-*, 2026-11-22). A path is a candidate here; judge() admits it only if the file changed after the command.
+# Linear by construction: one split into tokens, then an anchored match per token. A single unbounded pattern over
+# the whole command backtracked quadratically on a long run with no dot (an inline base64 image in a heredoc):
+# measured 6.04 s at 20 KB and 18.31 s at 40 KB, against the Stop chain's 8 s kill (review of S2, M1).
+_SHELL_SPLIT_RX = re.compile(r"""[\s"'`<>|;&()=,]+""")
+_SHELL_TOKEN_RX = re.compile(r"""(.{0,1000}?\.(?:html?|css|scss|sass|tsx|jsx|vue|svelte))(?![\w.])""", re.I)
+_MSYS_DRIVE_RX = re.compile(r"^/(?:mnt/)?([A-Za-z])(?=/)")
+SHELL_TOKEN_MAX = 1024
+SHELL_MTIME_SLACK_S = 2.0
+
+
+def shell_paths(cmd: str) -> list:
+    """Visual-extension paths named in a shell command, in order. Tokens longer than SHELL_TOKEN_MAX are not paths."""
+    out = []
+    for tok in _SHELL_SPLIT_RX.split(cmd or ""):
+        if not tok or len(tok) > SHELL_TOKEN_MAX:
+            continue
+        m = _SHELL_TOKEN_RX.match(tok)
+        if m and m.group(1) not in out:
+            out.append(m.group(1))
+    return out
+
+
+def _row_epoch(row: dict) -> float | None:
+    ts = row.get("timestamp")
+    if not isinstance(ts, str) or not ts:
+        return None
+    try:
+        from datetime import datetime
+        return datetime.fromisoformat(ts.replace("Z", "+00:00")).timestamp()
+    except ValueError:
+        return None
+
+
+def _scan_shell(row: dict, inp: dict, st: dict) -> None:
+    cmd = str(inp.get("command") or "")
+    base = str(row.get("cwd") or "")
+    when = _row_epoch(row)
+    for p in shell_paths(cmd):
+        if os.name == "nt":       # Git Bash names C:\x as /c/x (or /mnt/c/x); isabs() says True, canon() makes c:\c\x
+            p = _MSYS_DRIVE_RX.sub(lambda m: m.group(1) + ":", p)
+        if not os.path.isabs(p) and base:
+            p = os.path.join(base, p)
+        c = canon(p)
+        # The mtime is read NOW (the first Stop after the command), not at every later Stop: a page this session only
+        # read must not become its work when another pane or the Owner saves it afterwards (review of S2, M3).
+        try:
+            seen = os.path.getmtime(c)
+        except OSError:
+            seen = None
+        if not any(x[0] == c and x[1] == when for x in st["shell_writes"]):
+            st["shell_writes"].append([c, when, seen])
+
+
+def shell_written(st: dict) -> list:
+    """Shell-named visual paths whose file had changed at or after the command when the command was scanned. A command
+    with no timestamp is admitted if the file existed (a gate that cannot place a write in time judges it rather than
+    letting it pass). Rows from before the snapshot existed ([path, when]) are read against the current mtime."""
+    out = []
+    for row in st.get("shell_writes", []):
+        p, when = row[0], row[1]
+        seen = row[2] if len(row) > 2 else None
+        if len(row) <= 2:
+            try:
+                seen = os.path.getmtime(p)
+            except OSError:
+                seen = None
+        if seen is None or not os.path.isfile(p):
+            continue
+        if (when is None or seen >= when - SHELL_MTIME_SLACK_S) and p not in out:
+            out.append(p)
+    return out
+
+
 def _scan_row(row: dict, st: dict) -> None:
     msg = row.get("message") if isinstance(row, dict) else None
     if not isinstance(msg, dict):
@@ -181,6 +258,8 @@ def _scan_row(row: dict, st: dict) -> None:
             _add(st["skills"], skill_key(str(inp.get("skill") or "")))
         elif c.get("name") in WRITE_TOOLS:
             _add(st["writes"], str(inp.get("file_path") or inp.get("notebook_path") or ""))
+        elif c.get("name") in SHELL_TOOLS:
+            _scan_shell(row, inp, st)
 
 
 def scan_transcript(path: str, st: dict) -> dict:
@@ -296,7 +375,7 @@ def judge(st: dict, cwd: str, routes: dict, na: dict | None = None) -> dict:
     """{files, kinds, problems:[{check, file, detail}], waived}. No visual file written in cwd -> no problems."""
     na = na or {}
     files = []
-    for w in st.get("writes", []):
+    for w in list(st.get("writes", [])) + shell_written(st):
         if w and is_visual(w, routes) and os.path.isfile(w) and inside(w, cwd) and canon(w) not in files:
             files.append(canon(w))
     res = {"files": [], "kinds": [], "problems": [], "waived": {}}

@@ -70,10 +70,19 @@ FACTS_JS = """() => {
 _IGNORED_URL = re.compile(r"/favicon\.ico(?:$|\?)", re.I)
 
 
+def counts_as_failed(url: str, failure: str | None) -> bool:
+    """A request the PAGE cancelled is not a failed asset: Next.js aborts its own route prefetches (`?_rsc=`,
+    net::ERR_ABORTED). Found on the first live run (portfolio, 2026-11-22), which a fixture could never show."""
+    if _IGNORED_URL.search(url or ""):
+        return False
+    return "ERR_ABORTED" not in (failure or "")
+
+
 def _observe(page, uri: str) -> dict:
     """Load `uri` in `page` and return what the browser saw. Listeners attach BEFORE navigation."""
     failed, errors = [], []
-    page.on("requestfailed", lambda r: failed.append("%s (%s)" % (r.url, r.failure or "failed")))
+    page.on("requestfailed", lambda r: failed.append("%s (%s)" % (r.url, r.failure or "failed"))
+            if counts_as_failed(r.url, r.failure) else None)
     page.on("response", lambda r: failed.append("%s (HTTP %d)" % (r.url, r.status)) if r.status >= 400 else None)
     # "Failed to load resource" is the console echo of a failed request, already counted above
     page.on("console", lambda m: errors.append(m.text) if m.type == "error"
