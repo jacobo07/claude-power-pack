@@ -13,14 +13,14 @@
       "review": true
     },
     "app_ui": {
-      "prompt": "\\b(dashboard|panel de (control|admin)|admin panel|componente(s)? (de )?ui|ui component|interfaz (de usuario|gr[aá]fica)|user interface|pantalla(s)? de (la )?app|app screen|onboarding (flow|screen|pantalla)|pantalla de onboarding|checkout (page|flow|screen)|p[aá]gina de pago|navbar|sidebar|signup form|formulario de (registro|contacto|alta)|settings page)\\b",
+      "prompt": "\\b(dashboard|panel de (control|admin)|admin panel|componente(s)? (de )?ui|ui component|interfaz (de usuario|gr[aá]fica)|user interface|pantalla(s)? de (la )?app|app screen|(home|first[- ]run|onboarding) screens? (for|of|in) (the|our|this|my|an?) app|screens? (for|of) (the|our|this|my) app|onboarding (flow|screen|pantalla)|pantalla de onboarding|checkout (page|flow|screen)|p[aá]gina de pago|navbar|sidebar|signup form|formulario de (registro|contacto|alta)|settings page)\\b",
       "required": ["design-md", "design-taste-frontend", "frontend-design"],
       "recommended": ["ui-ux-pro-max", "web-design-guidelines", "dataviz"],
       "taste": true,
       "review": true
     },
     "mobile": {
-      "prompt": "\\b(app (m[oó]vil|movil|mobile)|mobile app|ios app|android app|pantalla m[oó]vil|mobile (ui|screen)|tab bar|bottom sheet)\\b",
+      "prompt": "\\b(app (m[oó]vil|movil|mobile)|mobile app|ios app|android app|pantalla m[oó]vil|mobile (ui|screen)|tab bar|bottom sheet|at phone size|phone[- ]sized|a tama[ñn]o (de )?(m[oó]vil|tel[eé]fono))\\b",
       "required": ["mobile-app-ui-design", "design-md"],
       "recommended": ["ui-ux-pro-max"],
       "taste": true,

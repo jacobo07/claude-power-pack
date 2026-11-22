@@ -127,6 +127,15 @@ def test_routes() -> None:
                                "git checkout main and fix the build", "la interfaz de la API REST",
                                "the frontend calls /api/users, fix the 500", "plot the latency numbers in the log")}
     ok("V-DSR-CLASSIFY-STRAY-WORDS", all(v == [] for v in stray.values()), {k: v for k, v in stray.items() if v})
+    # cross-sector benchmark 2026-11-22 (vault/audits/cdio_cross_sector_benchmark_2026-11-22.md): a phone-app
+    # prototype request named no listed phrase, classified [], and so never armed mobile-app-ui-design / CDIO-08
+    proto = {p: c(p) for p in (
+        "Prototype the first-run onboarding and the home screen for the app in BRIEF.md, as static HTML at phone size.",
+        "Maqueta las pantallas de la app de reservas a tamaño móvil")}
+    ok("V-DSR-CLASSIFY-APP-PROTOTYPE", all("mobile" in v and "app_ui" in v for v in proto.values()), proto)
+    near = {p: c(p) for p in ("store the phone size in the products table", "the home screen widget count is wrong in the export",
+                              "write the onboarding checklist for new hires", "add a screen reader note to the API docs")}
+    ok("V-DSR-CLASSIFY-APP-PROTOTYPE-NEAR-MISS", all(v == [] for v in near.values()), {k: v for k, v in near.items() if v})
     pol = dr.policy(dr.effective_kinds([], routes), routes)
     ok("V-DSR-DEFAULT-WEB", pol["kinds"] == ["web"] and pol["review"] and pol["taste"], pol)
     pol = dr.policy(dr.effective_kinds(["dataviz"], routes), routes)
