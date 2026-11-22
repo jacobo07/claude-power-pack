@@ -5,6 +5,24 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**2026-11-22 17:36Z (pane 2e3b8dd4, /kresume of a52cc240). T2 W2 DONE, live in SHADOW.**
+- Code: worktree b20b30c3 (not merged into feature/knowledge-acquisition yet).
+  - (a) J0: the POOL_FLOOR line may end ` via python3 tools/<x>.py`. judge() re-counts each below-floor line at the
+    product HEAD (gate_rc_at, J0_TIMEOUT 300 s) and reads protected_check. All hold -> INSTRUMENT_FAIL(population),
+    else JUDGE. The judge still runs. One 0-token `j0_shadow` row per (lane, checkpoint), with judge_verdict,
+    judge_instruments, agree.
+  - (b) Pre-arm: the planner JSON may carry `precheck` {name, tool, floor} (only for a tool already committed).
+    Counted at HEAD just before arm_generation; one 0-token `prearm_shadow` row, would REPLAN/ARM/UNOBSERVED. It arms
+    either way.
+  - The worker and planner prompts are told. ENFORCE = Owner, after 3 live agreements (`j0_shadow_agreements()`).
+- GEX44 gate /tmp/apgate-2e3b-w2: 385/385, mutants 159/159. Control (live b475e361 + new test) red on
+  V-AP-POOLFLOOR-VIA-READ, then crashes.
+- DEPLOYED 17:26:34Z under cron.lock: CAS autopilot b475e361 -> 13f146f5, test baefb969 -> 037adc1d, planner
+  0963155e -> 3ee48f82. Backups `*.bak-2e3b-w2-20261122T172634Z`; ledger `code_deploy`.
+- Smoke: the 17:35:02Z tick wrote state.json with 0 tracebacks. It was a WIIPARTY budget wait (495.6M + 6M > 500M), so
+  NO shadow row exists yet. The first live j0_shadow/prearm_shadow comes after 00:00Z: READ IT.
+- NEXT: W3 (prefix sub-attribution; the slim pilot cannot arm before the 00:00Z day reset).
+
 **2026-11-22 17:00Z (pane a52cc240). Owner "y" (AskUserQuestion "Approve as written") on T2.**
 - Plan: worktree `vault/plans/ascension-atomic-fabric-T2-20261122.md` (d8ac705b).
 - Run inline: the laptop had 3.47 GB free, so a worker would eat the 0.47 GB margin above the floor.
