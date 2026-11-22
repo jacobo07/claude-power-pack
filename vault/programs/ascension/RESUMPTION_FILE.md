@@ -5,6 +5,33 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**2026-11-22 16:10Z (pane a52cc240). Owner chose "(b) Count-first P1" and "Review, then merge".**
+- Reshaped by measurement: 153 of 314 packets declare a floor, and in 149 of them P1 already freezes the pool (P1 cap
+  p50 1.5M). So the slice already existed; W3 adds the HALT. Spec: `throughput/W3_POOL_FLOOR_HALT_SPEC.md`.
+  - The worker writes `POOL_FLOOR: <name> count <N> floor <F>` at the freeze and stops below it.
+  - New planner rule.
+  - A 0-token ledger row `pool_floor_halt`, once per checkpoint. The judge still runs.
+- Review (pp-code-reviewer) of T1: APPROVE with notes, 0 CRITICAL/HIGH. Fixed:
+  - M1: a release is capped by what the ledger booked (reserve + topup + refund), not by mission authority.
+  - M3: the LAST `CHECKPOINT_FINAL` line decides.
+- Code on the worktree branch, 41fd9c13. GEX44 gate /tmp/apgate-a52c: 373/373, mutants 151/151, rc 0. The only
+  crash-kill is the old dry_writes_real. Control (live 72f28e99 + new test) is red on the new checks.
+- DEPLOYED 15:56:23Z under cron.lock.
+  - CAS: autopilot 72f28e99 -> c8adca86, planner 98eb86d6 -> 0963155e, test -> 1d08300e.
+  - Backups `*.bak-a52c-w3-20261122T155623Z`, ledger `code_deploy`.
+  - Smoke: the 16:00Z tick on the new code judged FIFATC, released 2.29M (10M booked - 7.71M spent) and armed S306C,
+    with 0 tracebacks.
+  - The deploy glob missed `$H/factory-apply-*.lock`. That is harmless here: a factory apply never touches autopilot.py.
+- TENNIS S300T closed 15:46Z (spent 16.0M of 22.5M, released 6.5M) -> S305T m-9ebfeb820558 (13.5M).
+- MERGE BLOCKED: in the main checkout (feature/knowledge-acquisition), another writer has uncommitted edits in
+  vault/knowledge_base/session_lessons.md and ukdl-universal.md. The branch adds entries to both.
+- OWNER QUESTION (review M2): the release also frees the lifetime TOTAL_CAP and the per-lane envelopes, not only the day
+  cap. The 190-row backfill gave back about 1.5B of lifetime headroom. Keep that, or count reserve_release only in the
+  day cap?
+- DEBT: L1 mission_policy.py:385 OWNER_DECISION exemption (untested). L2 reservation_overhead and backfill_releases are
+  unwired (digest or registry). The WIIPARTY tests test_mission_decision_recovery need a GEX44 run.
+NEXT: Owner on M2; merge once the two docs are committed; AC5 read of pool_floor_halt on 2026-11-25.
+
 **2026-11-22 15:25Z (pane a52cc240, /kresume of 37612bb0).**
 - ARMED after the backfill, both confirmed working:
   - TENNIS S300T m-52ce018cc209 (22.5M, EXPLOIT `tennis_intra_twin_transfer`). Planned after one policy re-plan. P1
