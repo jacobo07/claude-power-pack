@@ -5,6 +5,20 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**2026-11-23 (pane 218d8162, /kresume of 2e3b8dd4). T3 W0 DONE** on worktree gsd/ascension-throughput, not merged.
+- e778adbe: 3 false positives in governance/KNOWN_FALSE_POSITIVES.md (FP-DESIGN-ROUTE-WORD-IN-PASTED-LIST,
+  FP-AKOS-GROUNDING-NOUN-VERB-FAR-APART, FP-WOZ-STUB-WORD-AS-SUBJECT). All three fired on the 103,044-char amendment
+  paste (2e3b8dd4 L2008), on "website", "brief" and "create". The Woz entry's own first draft was vetoed as well.
+  Inserted before "How to add"; main has a newer entry at EOF, so the merge stays clean.
+- e0514459: `throughput/W0_LAPTOP_CENSUS.md` plus the script and JSON. 49,282 calls over 13 days (41,322 main, about
+  3,180 main per day). Main per-call p50 is 199,676, p95 402,830. 73.5% of main calls are over 150k and carry about
+  87% of main fed tokens. 182 sessions average over 150k. 40 skills and 32 agent types were invoked. The instrument
+  agrees EXACTLY with analyze_transcripts on 08cba76c (1,012 calls, 221,364,397).
+- W1 WARNING from the census: the median main call is already 200k, so a fixed 150k trigger fires in nearly every
+  long pane. The replay must cost the re-bootstrap calls (measure a /kresume successor's first-call floor) before
+  claiming any saving.
+- NEXT: T3 W1 in a FRESH pane (this one is near the rotation line).
+
 **2026-11-23 ~00:0xZ (pane 2e3b8dd4). Owner "APRUEBO T3". T3 Institutional Computing amendment APPROVED.**
 - Plan: worktree `vault/plans/ascension-institutional-amendment-T3-20261122.md` (0c2519c5, status APPROVED). Hard
   authority 15M, P50 10.8M, closeout reserve 1.5M, max 12 cycles / 72 h.
