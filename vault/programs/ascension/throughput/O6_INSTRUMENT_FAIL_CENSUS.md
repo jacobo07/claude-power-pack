@@ -30,3 +30,32 @@ produced INSTRUMENT_FAIL, never a certificate.
   reads 0.0M (2 rows), so class A spend is a lower bound.
 - The A/B/C split is by instrument wording, not by reading each checkpoint. Treat it as a hypothesis for W3, which
   must verify it on 5 sampled checkpoints before building the gate.
+
+## W3 step 0: the 5-checkpoint verification (2026-11-22 15:20Z, pane a52cc240, read-only on GEX44)
+
+Each sampled decision was matched to its `evo_decision` row in `ledger.jsonl` (same lane and minute). Each checkpoint
+was then read at its path in the lane repo.
+
+| lane / gen | instrument | checkpoint says | countable before arming? |
+|---|---|---|---|
+| TENNIS S31T (11-12) | H-T1a control pool n=2<22 | "the frozen control rule yields a pool of n=2 ... against the pre-registered 22". Reopen condition: "frozen pool demonstrated >= 22 **at freeze time**" | **A, yes**. A rule applied over existing certified fns |
+| WSR S103R (11-16) | H-CCVER held-out 3<6 | a cohort of literal refused-alias fns, with a sha256-pinned split | **A, yes**. A selection over existing data |
+| KSR S134K (11-17) | H-S131SA pool 4<24 | "only 4 valid certified stmw-saving units with a source (9 certified stmw units across 10959 CERTIFIED rows)" | **A, yes**. A count over the receipts |
+| WIIPARTY S147W (11-18) | H-FN-LINK n_fn 37<60 | "n_fn=37 **completed** (<60 required) ... 10 TUs LINK_FAIL" | **NO, misclassified.** n_fn counts functions that finished linking, so it is a result of the method |
+| TENNIS S277T (11-22) | H-S263TW population floor | census of 164 pool fns -> eligible 24 -> admitted after disjointness 1. `tools/s263t_census.py` reads only original DOL bytes | **A, yes**. But the generation wrote and froze the census tool itself |
+
+Findings that change the W3 design:
+1. **Class A is about 4/5 of what the wording counted.** A floor on "completed" or "linked" items is a method result,
+   not a pool size. Restated bound: about 97M x 0.8 = about 78M per two weeks, a lower-bound attribution as before.
+2. **In 4 of the 4 true A cases, the generation wrote the counting tool** (s31t_scan, the ccver cohort, the S134K
+   control census, s263t_census.py). No command exists for the autopilot to run before arming. So "the planner emits
+   `POOL_FLOOR ... via <command>`, the autopilot runs it" holds only when the command reads artifacts that already exist.
+   Two shapes are viable:
+   - (a) `POOL_FLOOR` is admitted only over existing tools and receipts. A plan whose count needs new code gets no
+     preflight. Cheap, but it would have missed all 4 samples.
+   - (b) A **count-first phase**: P1 is bounded to building the pool and freezing it, with a small authority slice
+     (for example 1.5M), and the mission halts at P1 when the count is below the declared floor. It catches all 4.
+     It is a mission-terms change, applied by the planner prompt plus a halt predicate.
+3. Neither shape touches a certification predicate. A refused generation would have produced INSTRUMENT_FAIL.
+
+Choosing (a) or (b), and deploying either to the live autopilot, is the Owner's decision. Nothing was built or deployed.
