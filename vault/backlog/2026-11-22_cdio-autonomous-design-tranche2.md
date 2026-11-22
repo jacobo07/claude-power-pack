@@ -85,6 +85,8 @@ shipped. This file is the handoff for a fresh agent: it holds no context that is
   - Owner "y": blind judge RUN (112k): final preferred over baseline in both pairs, high confidence. NEW B-8: JS-state
     screens never rendered (nurseapp home screen in no recorder render, APPROVE bound anyway). Item 4 has its third
     sector and a counterexample (data screen); scoped criterion PROPOSED, not promoted (Owner decision).
+  - Owner "go ahead": B-3 FIXED 148af85f, B-8 FIXED ffdc1e35. Still open: B-4 shell-tracker non-paths, B-5 hook
+    litter in foreign repos, B-1 file:// dead links, hero criterion promotion (needs evidence beyond one LLM judge).
 - Paused before item 3 on budget: the campaign passed 2x the Owner's 250k planning reference (subagents alone
   168k measured). Item 3 needs about 4 build + independent-review cycles at ~50k each: Owner budget call first.
 

@@ -72,7 +72,8 @@ repair-loop fixture, these 4):
 ## Findings
 - **B-2 (fixed 7b0a4c93):** a phone-app prototype request classified []. The gate still judged the page as web, but
   mobile-app-ui-design and CDIO-08 never armed. V-DSR-CLASSIFY-APP-PROTOTYPE fails on the old table.
-- **B-3 brand assets written by a script escape the brand gate (OPEN).** brandkit wrote its 10 logo SVGs with
+- **B-3 brand assets written by a script escape the brand gate (FIXED 148af85f; replay of this transcript: 0 -> 9
+  logo SVGs judged). B-8 below FIXED ffdc1e35 (nurseapp 2 -> 8 PNGs; entry JS does not run on a forced reveal).** brandkit wrote its 10 logo SVGs with
   `python build.py`. No Write row, and the shell tracker resolved bare names against the project root instead of
   `assets/`, so only `assets/favicon.svg` got its framed light/dark 32/96/320 review. The logo itself was judged
   only as it appears on the kit page. Same class as M2 (CCF writes in-process), now outside CCF. Fix candidate: admit
