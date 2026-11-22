@@ -5,6 +5,20 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**2026-11-23 ~00:0xZ (pane 2e3b8dd4). Owner "APRUEBO T3". T3 Institutional Computing amendment APPROVED.**
+- Plan: worktree `vault/plans/ascension-institutional-amendment-T3-20261122.md` (0c2519c5, status APPROVED). Hard
+  authority 15M, P50 10.8M, closeout reserve 1.5M, max 12 cycles / 72 h.
+- HR-COST-002 reported to the Owner: T2 spent about 56.2M against 25M (this pane 44.2M, 178 calls, 248k per call).
+  T2's remainder is now T3 W4.
+- Rotation rule (the W1 thesis): execute in a FRESH pane; rotate at about 150k per call.
+- NEXT (T3 W0):
+  1. Add 3 false positives to governance/KNOWN_FALSE_POSITIVES.md: design route "web" on a non-UI amendment; AKOS
+     creative grounding on a non-creative prompt; the Woz veto on the literal word naming template tokens.
+  2. A 14-day laptop transcript census (calls/day, per-call distribution, sessions >150k/call, skills and agents
+     actually invoked).
+  3. Then W1: the tco_compact_gate per-call signal; replay on 2e3b8dd4, a52cc240, 37612bb0; then shadow.
+- PROTECTED: no change to GEX44 workers, lanes.json or the autopilot before W3 (reading the pilot).
+
 **2026-11-22 21:31Z (pane 2e3b8dd4, Owner "sigue tu"). T2 W3b BUILT, DEPLOYED, PILOT ARMED on WIIPARTY (bounded at 2).**
 - Code: worktree 6453642e (slim-asc) + 1464d06e (bound, port script `throughput/port_slimasc_gex44.py`). Not merged.
 - gsd_mission on GEX44:
