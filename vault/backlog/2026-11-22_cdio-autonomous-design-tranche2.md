@@ -1,0 +1,48 @@
+# CDIO autonomous design: tranche 2 backlog (written 2026-11-22, end of tranche 1)
+
+Mission: "CDIO AUTONOMOUS DESIGN EXCELLENCE" (Owner prompt 2026-11-22). Tranche 1 approved ("y") as S1-S5 and
+shipped. This file is the handoff for a fresh agent: it holds no context that is not in the repo.
+
+## What tranche 1 established (verify, do not trust)
+- Activation by intent already existed before tranche 1: `tools/design_route_prompt.py` (UserPromptSubmit),
+  `hooks/cdio_visual_advisory.js` (PreToolUse), `tools/design_donegate_stop.py` (Stop), all in
+  `hooks/hook-dispatcher.js`. Contract: `vault/specs/design-surface-router.md`. Gate: `python tools/test_design_route.py`.
+- b1403659: render facts. `record` folds browser-observed defects in as RENDER-* verdicts a reviewer cannot override.
+- 2fcf11b1: shell-written pages reach the Stop gate (plus review fixes M1 quadratic regex, M2 MSYS paths, M3 foreign edits).
+- 93d64b17: live portfolio/Bodeguita observation (`vault/audits/cdio_portfolio_vs_bodeguita_2026-11-22.md`), UKDL
+  T-DESIGN-REVIEWER-PASS-OVER-BROKEN-RENDER-001, T-GATE-WRITE-CHANNEL-COVERAGE-001, PR-DETECTOR-LIVE-SITE-BEFORE-SEVERITY-BINDS-001.
+- 217046f5: `vault/fixtures/cdio_repair_loop/`: refuse, repair, independent BLOCK 63, repair, independent APPROVE 96,
+  real Stop gate pass. Re-run: render then record with your own reviewer verdicts.
+
+## Not found
+- `vault/backlog/2026-11-22_cdio-context-grounded-visual-intelligence-authentic-art-direction.md` (CPP-CGVI-001)
+  named by the Owner prompt does not exist in this checkout or its worktrees' backlog folders (searched 2026-11-22).
+  Do not reconstruct it. Ask the Owner where it lives.
+
+## Open, in ROI order
+1. **G3a brand-kit review gate.** `vault/config/design_routes.json` kind `brand` has review false and required [].
+   CCF owns brand assets (`modules/ccf/`); decide with the Owner whether CCF's own verdicts are the gate or the
+   design review applies to its exports. Decision first, then code.
+2. **G3b app-source screenshot binding.** For .tsx/.jsx/.css, `record --screenshot` accepts any PNG >= 300px newer
+   than the file; nothing binds it to the surface. Candidate: a `render-url` against the dev or production build. A
+   concurrent session was adding `render-url` + RENDER-DOCUMENT-STATUS to `tools/design_review_record.py` on
+   2026-11-22 (uncommitted when this was written): check `git log` before starting, never duplicate it.
+3. **Cross-sector benchmark (mission XVIII).** The denominator so far is 3 surfaces (portfolio, Bodeguita, one
+   fixture). Next: B2B dashboard, high-trust professional service, mobile app (CDIO-08), brand kit. One real or
+   fixture surface each, same render-facts + independent-review protocol, results tabled per the prompt.
+4. **Candidate criterion, not promoted:** hero protagonist below the phone fold (2/2 live sites, one author).
+   Needs a third site in another sector and a counterexample before it binds (kill switch 14).
+5. **Write-channel audit outside CDIO:** `tools/mission_binding.py:181`, `tools/mission_recovery.py:164`,
+   `tools/rollover.py:191`, `tools/root_progress.py:53` learn "what was written" from Write/Edit only. Not gates;
+   audit before relying on them (UKDL T-GATE-WRITE-CHANNEL-COVERAGE-001).
+6. **Family done-gate false activation:** the `web_surface` family baseline fired on a subagent hand-back that
+   contained the word "hero" (2026-11-22), and judges `index.html` at the repo root of a tooling repo (27 UNJUDGED).
+   Same class as efaae877 (design route classifying machine turns); check whether the family gate shares the fix.
+7. **Bodeguita next step belongs to the Owner:** authorised photography of the venue and dishes.
+
+## Mission gates: state at end of tranche 1
+PASS with evidence: 1 reality, 5 functional integrity (fixture), 8 production reality (real Stop hook on a real
+transcript), 9 adversarial (red-team 5, 6, 15, 19, 20, 24 pinned), 10 autonomous repair, 13 institutional learning.
+Partial: 2 autonomy (intent routing existed and fired; tranche 1 added shell coverage), 4 design quality (one fixture).
+UNVERIFIED: 3 resource selection, 6 accessibility beyond tap/contrast on one page, 7 performance, 11 fresh agent,
+12 cross-project transfer, 14 baseline ratchet inheritance in another repo, 15 final engineering review of the whole.
