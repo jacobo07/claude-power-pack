@@ -354,6 +354,54 @@ def run_all(ap):
           and sum(a for _, a in ap.reservation_release(raised, "m-r", "S5K", 45_000_000, 10_000_000)) == 15_000_000
           and ap.reservation_release(raised + [{"ts": d1, "kind": "arm_refund", "gen": "S5K", "tokens": -20_000_000}],
                                      "m-r", "S5K", 45_000_000, 4_000_000) == [(d1, 1_000_000)])
+    # ---- T2 W1 (Owner "y"): conservation -- a settled generation books exactly its measured spend (SPENT monotonic)
+    over_rel = [{"ts": d0, "kind": "arm_reserve", "gen": "S95C", "tokens": 9_500_000},  # live FIFATC S95C shape
+                {"ts": d0, "kind": "generation_armed", "gen": "S95C", "mission": "m-95", "lane": "FT"},
+                {"ts": d0 + 0.001, "kind": "reserve_release", "mission": "m-95", "lane": "FT", "tokens": -2_148_959},
+                {"ts": d1, "kind": "generation_closed", "mission": "m-95", "lane": "FT", "tokens": 0,
+                 "spend": 10_351_041, "measured": True}]
+    cons = ap.conservation(over_rel)
+    fixed = over_rel + [{"ts": d1 + 0.002, "kind": "spend_correction", "mission": "m-95", "lane": "FT",
+                         "tokens": ap.spend_correction(over_rel, "m-95", "S95C", 10_351_041)}]
+    check("V-AP-CONSERVATION-UNDER-CORRECTED", cons["under"] == {"m-95": -3_000_000}
+          and ap.spend_correction(over_rel, "m-95", "S95C", 10_351_041) == 3_000_000
+          and ap.conservation(fixed)["conserved"] == 1 and ap.spend_correction(fixed, "m-95", "S95C", 10_351_041) == 0)
+    grant = [{"ts": d0, "kind": "arm_reserve", "gen": "S181K", "tokens": 12_500_000},
+             {"ts": d1, "kind": "owner_grant", "mission": "m-181", "tokens": 4_000_000},
+             {"ts": d1 + 5, "kind": "generation_closed", "mission": "m-181", "tokens": 661_707, "spend": 13_161_707}]
+    check("V-AP-OWNER-ESCROW-RELEASED", ap.reservation_release(grant, "m-181", "S181K", 1, 13_161_707) == [(d1, 4_000_000)]
+          and ap.reservation_release(grant, "m-181", "S181K", 1, 17_161_707) == [])
+    _st_of = {"m-h1": "HALTED", "m-h2": "HALTED", "m-r3": "RUNNING", "m-h4": "HALTED"}.get
+    arms = [{"ts": d0 + i, "kind": "generation_armed", "mission": m, "gen": f"S{i}X", "lane": "L", "authority": 9}
+            for i, m in enumerate(("m-h1", "m-h2", "m-r3", "m-h4"))]
+    arms.append({"ts": d1, "kind": "generation_settled", "mission": "m-h4", "measured": True, "spend": 1})
+    stl = {"lanes": {"L": {"mission": "m-x", "pending_plan": {"for": "continue:m-h2"}}}}
+    check("V-AP-STRANDED-TERMINAL-NOT-LIVE-NOT-SETTLED",
+          [g["mission"] for g in ap.stranded(arms, _st_of, ap.live_missions(stl))] == ["m-h1"]
+          and ap.live_missions({"lanes": {"A": {"mission": "a", "halted_mission": "b"}}}) == {"a", "b"})
+    # the sweep end to end against an in-memory ledger: release above spend, correction below, unmeasured untouched
+    _mem = [{"ts": d0, "kind": "arm_reserve", "gen": "S1Y", "tokens": 10_000_000, "lane": "L"},
+            {"ts": d0, "kind": "generation_armed", "mission": "m-a1", "gen": "S1Y", "lane": "L", "authority": 10_000_000},
+            {"ts": d0, "kind": "arm_reserve", "gen": "S2Y", "tokens": 5_000_000, "lane": "L"},
+            {"ts": d0, "kind": "generation_armed", "mission": "m-a2", "gen": "S2Y", "lane": "L", "authority": 5_000_000},
+            {"ts": d0, "kind": "arm_reserve", "gen": "S3Y", "tokens": 7_000_000, "lane": "L"},
+            {"ts": d0, "kind": "generation_armed", "mission": "m-a3", "gen": "S3Y", "lane": "L", "authority": 7_000_000}]
+    _klr, _kla, _km, _ks = ap.ledger_rows, ap.ledger_add, ap.mission, ap.mission_spend
+    ap.ledger_rows = lambda: list(_mem)
+    ap.ledger_add = lambda **r: _mem.append(dict(r, ts=r.get("ts", now)))
+    ap.mission = lambda m: {"state": "HALTED"}
+    ap.mission_spend = {"m-a1": 4_000_000, "m-a2": 6_500_000, "m-a3": None}.get
+    dry_rep = ap.settle_stranded({"lanes": {}}, apply=False)
+    n_dry = len(_mem)
+    rep = ap.settle_stranded({"lanes": {}}, apply=True)
+    rep2 = ap.settle_stranded({"lanes": {}}, apply=True)
+    nets = {m: ap.booked_net(_mem, m, g) for m, g in (("m-a1", "S1Y"), ("m-a2", "S2Y"), ("m-a3", "S3Y"))}
+    ap.ledger_rows, ap.ledger_add, ap.mission, ap.mission_spend = _klr, _kla, _km, _ks
+    check("V-AP-SWEEP-SETTLES-CONSERVED-IDEMPOTENT",
+          n_dry == 6 and dry_rep["freed"] == 6_000_000 and dry_rep["corrected"] == 1_500_000 and dry_rep["unmeasured"] == 1
+          and rep["freed"] == 6_000_000 and rep["corrected"] == 1_500_000
+          and nets == {"m-a1": 4_000_000, "m-a2": 6_500_000, "m-a3": 7_000_000}
+          and rep2["stranded"] == 0 and rep2["freed"] == 0 and rep2["corrected"] == 0)
     # ---- W3 (Owner "(b) Count-first P1"): a checkpoint halted below its declared floor is measured, still judged
     (ckd / "pf.md").write_text("# S2\n- **POOL_FLOOR:** ctl_pool count 4 floor 24\nPOOL_FLOOR: heldout count 30 floor 24\n"
                                "CHECKPOINT_FINAL: true\n")
@@ -2170,6 +2218,11 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "budget_wait_drops_judgment": lambda m: setattr(m, "BUDGET_WAIT_KEEPS_JUDGMENT", False),
          "pool_floor_never_booked": lambda m: setattr(m, "book_pool_floor_halt", lambda lane, ck, prod: 0),
          "notfinal_first_declaration_wins": lambda m: setattr(m, "FINAL_DECL_RE", m.NOT_FINAL_RE),
+         "settle_never_corrects": lambda m: setattr(m, "spend_correction", lambda rows, mi, g, s: 0),
+         "owner_escrow_kept": lambda m: setattr(m, "ESCROW_MISSION_KINDS", ("auto_topup",)),
+         "stranded_ignores_live": lambda m: setattr(m, "stranded", (lambda real: lambda rows, sf, live: real(
+             rows, sf, set()))(m.stranded)),
+         "stranded_resettles": lambda m: setattr(m, "SETTLED_KINDS", ("generation_closed",)),
          "release_from_authority": lambda m: setattr(m, "reservation_release", (lambda real: (
              lambda rows, mission, gen, a, s: real(list(rows) + [{"ts": -1.0, "kind": "arm_reserve", "gen": gen,
                                                                   "tokens": 10 ** 12}], mission, gen, a, s)))(
