@@ -36,6 +36,74 @@ def custody_missing(fo: dict) -> list[str]:
     return [m for m in comp["missing"] if m.startswith("custody")]
 
 
+def _iso(t: float) -> str:
+    import datetime as dt
+    return dt.datetime.fromtimestamp(t, dt.timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def shell_gates(tmp: Path, home: Path, other: Path) -> None:
+    """V-CUSTODY-SHELL-*: a file written through a shell, uncommitted in another repo, is held in custody; a file the
+    command only read, or a peer changed after the command, is not (2026-11-22 write-channel audit)."""
+    import json
+    import os
+    import time
+    t0 = time.time() - 600
+    written, read_only, peer_later, untimed = (other / "gen.html", other / "spec.md", other / "notes.txt",
+                                               other / "untimed.css")
+    for p in (written, read_only, peer_later, untimed):
+        p.write_text("x\n", encoding="utf-8")
+    os.utime(written, (t0 + 3, t0 + 3))            # changed while its command ran (t0 .. t0+5)
+    os.utime(read_only, (t0 - 3600, t0 - 3600))    # named, but last changed an hour before: a read
+    os.utime(peer_later, (t0 + 400, t0 + 400))     # named, changed long after the command: a peer's edit
+    os.utime(untimed, (t0 + 3, t0 + 3))
+
+    def use(i, cmd, start, end, tool="PowerShell"):
+        u = {"type": "assistant", "cwd": str(home), "message": {"content": [
+            {"type": "tool_use", "id": "t%d" % i, "name": tool, "input": {"command": cmd}}]}}
+        r = {"type": "user", "message": {"content": [{"type": "tool_result", "tool_use_id": "t%d" % i, "content": ""}]}}
+        if start is not None:
+            u["timestamp"] = _iso(start)
+        if end is not None:
+            r["timestamp"] = _iso(end)
+        return [u, r]
+    rows = (use(1, "Set-Content -Path '%s' -Value x; Get-Content %s" % (written, read_only), t0, t0 + 5)
+            + use(2, "cat %s" % peer_later.as_posix(), t0, t0 + 5, tool="Bash")
+            + use(3, "Set-Content %s x" % untimed, None, t0 + 5))
+    tp = tmp / "shell.jsonl"
+    tp.write_text("".join(json.dumps(r) + "\n" for r in rows), encoding="utf-8")
+
+    got = {Path(p).name for p in ro.custody_writes(tp)}
+    ok("V-CUSTODY-SHELL-WRITE-HELD", "gen.html" in got, str(got))
+    ok("V-CUSTODY-SHELL-READ-NOT-HELD", "spec.md" not in got, str(got))
+    ok("V-CUSTODY-SHELL-PEER-LATER-NOT-HELD", "notes.txt" not in got, str(got))
+    ok("V-CUSTODY-SHELL-UNTIMED-NOT-HELD", "untimed.css" not in got, str(got))
+    miss = custody_missing(ro.foreign_custody(ro.custody_writes(tp), str(home)))
+    ok("V-CUSTODY-SHELL-REFUSES-SEAL", len(miss) == 1 and "gen.html" in miss[0] and "notes.txt" not in miss[0], str(miss))
+    # path shapes the tokenizer must resolve (review LOW): MSYS drive, relative to cwd, quoted with spaces,
+    # redirection target, PowerShell $env: and ~ expansion
+    spaced = other / "my dir" / "page.css"
+    spaced.parent.mkdir(exist_ok=True)
+    spaced.write_text("x\n", encoding="utf-8")
+    rel = other / "rel.txt"
+    rel.write_text("x\n", encoding="utf-8")
+    drive, rest = str(written.resolve()).split(":", 1)
+    msys = "/%s%s" % (drive.lower(), rest.replace("\\", "/"))
+    os.environ["V_CUSTODY_DIR"] = str(other)
+    shapes = {
+        "msys": (ro._shell_paths("cat %s" % msys, ""), written),
+        "relative": (ro._shell_paths("Set-Content rel.txt x", str(other)), rel),
+        "quoted-spaces": (ro._shell_paths("Set-Content -Path \"%s\" -Value x" % spaced, ""), spaced),
+        "redirect": (ro._shell_paths("echo x >%s" % rel.as_posix(), ""), rel),
+        "ps-env": (ro._shell_paths("Set-Content $env:V_CUSTODY_DIR/rel.txt x", ""), rel),
+    }
+    bad = {k: v for k, (v, want) in shapes.items()
+           if os.path.normcase(os.path.normpath(str(want))) not in {os.path.normcase(p) for p in v}}
+    ok("V-CUSTODY-SHELL-PATH-SHAPES", not bad, str(bad))
+    caller = (Path(__file__).resolve().parent / "mission_capsule.py").read_text(encoding="utf-8")
+    ok("V-CUSTODY-SHELL-WIRED", "ro.foreign_custody(ro.custody_writes(tp)" in caller
+       and "foreign_custody(custody_writes(tp)" in (Path(ro.__file__).read_text(encoding="utf-8")))
+
+
 def main() -> int:
     tmp = Path(tempfile.mkdtemp(prefix="custody-"))
     home, other, loose = repo(tmp / "home"), repo(tmp / "other"), tmp / "loose"
@@ -61,6 +129,8 @@ def main() -> int:
     ok("V-CUSTODY-UNKNOWN-REFUSES", custody_missing(ro._unknown("git status failed")) != [])
     legacy = ro.completeness({"repo": {"state": "OK", "head": "h", "branch": "b", "dirty": []}})
     ok("V-CUSTODY-LEGACY-CAPSULE-NOT-JUDGED", not [m for m in legacy["missing"] if m.startswith("custody")])
+
+    shell_gates(tmp, home, other)
     print(f"CUSTODY_PASS={PASS}/{PASS + FAIL}")
     return 0 if FAIL == 0 else 1
 

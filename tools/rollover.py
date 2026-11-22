@@ -138,8 +138,9 @@ def foreign_custody(writes: list[str], capsule_root: Optional[str]) -> dict:
     tools/rollover.py in the Power Pack repo, sealed SAFE_TO_FORGET and was cleared; the edit sat
     uncommitted for 3 days with no obligation naming it. The capsule kept the last 15 writes and
     read dirty state only for its own repo. Status is scoped to the session's own paths, so peers'
-    dirt in a shared tree is never judged. Only Write/Edit/NotebookEdit paths are seen: files
-    written through a shell are invisible here."""
+    dirt in a shared tree is never judged. Callers pass custody_writes(): edit-tool paths plus files a
+    shell command named and changed while it ran (session_shell_writes); the shell channel used to be
+    invisible here (2026-11-22 audit)."""
     by_root: dict[str, list[str]] = {}
     unchecked = 0
     roots: dict[str, Optional[str]] = {}
@@ -193,6 +194,97 @@ def session_writes(transcript: Optional[Path]) -> list[str]:
                 if p:
                     seen[str(p)] = i
     return [p for p, _ in sorted(seen.items(), key=lambda kv: kv[1])]
+
+
+# Shell write channel for custody (CDIO tranche 2 audit, 2026-11-22). foreign_custody() saw only Write/Edit paths, so a
+# file a session wrote through Bash/PowerShell (Set-Content, a heredoc, cp, a generator's --out) and left uncommitted in
+# another repo let it seal SAFE_TO_FORGET: the 2026-10-03 lost-edit class through a second channel. A path named in a
+# shell command counts ONLY if its file's mtime falls inside that command's own execution window (tool_use timestamp
+# to its tool_result timestamp, +-SHELL_WINDOW_SLACK_S): a file the command merely read, or a peer edits later, stays
+# out, so peers' dirt is still never judged (V-CUSTODY-PEER-DIRT-NOT-JUDGED). V-CUSTODY-SHELL-*.
+SHELL_TOOLS = ("Bash", "PowerShell")
+SHELL_WINDOW_SLACK_S = 2.0
+SHELL_TOKEN_CAP = 1024
+_SHELL_QUOTED = re.compile(r"""'([^'\r\n]{1,400})'|"([^"\r\n]{1,400})\"""")
+_SHELL_SPLIT = re.compile(r"""[\s"'`<>|;&()=,]+""")
+_HAS_EXT = re.compile(r"\.[A-Za-z0-9]{1,8}$")
+_MSYS_DRIVE = re.compile(r"^/(?:mnt/)?([A-Za-z])(?=/)")
+_PS_ENV = re.compile(r"\$env:(\w+)", re.I)
+# Known limits (review of this change, 2026-11-22, APPROVE with notes):
+# - the window opens at the tool_use row, which includes a permission-prompt wait: a peer edit during that wait
+#   refuses the seal (fail-safe direction);
+# - mtime is read at seal time: a file the command wrote and something touched AFTER the command leaves custody
+#   (admitting any later change would re-admit files the command only read, refusing valid seals);
+# - an in-command `cd x; ... rel` resolves rel against the row's cwd; extensionless and directory outputs are skipped.
+
+
+def _row_epoch(row: dict) -> Optional[float]:
+    ts = row.get("timestamp")
+    if not isinstance(ts, str) or not ts:
+        return None
+    try:
+        return _dt.datetime.fromisoformat(ts.replace("Z", "+00:00")).timestamp()
+    except ValueError:
+        return None
+
+
+def _shell_paths(cmd: str, cwd: str) -> list[str]:
+    """Existing files a shell command names: quoted strings and plain tokens with an extension, MSYS drives mapped,
+    relative paths resolved against the command's cwd. Linear: split, never a backtracking scan."""
+    toks = [a or b for a, b in _SHELL_QUOTED.findall(cmd or "")] + _SHELL_SPLIT.split(cmd or "")
+    out: list[str] = []
+    for t in toks[:SHELL_TOKEN_CAP]:
+        t = t.strip().rstrip(".,:")
+        if not t or len(t) > 400 or "://" in t or not _HAS_EXT.search(t):
+            continue
+        # ~, $HOME, ${VAR}, %VAR% and PowerShell $env:VAR: this host's commands name home paths that way (review LOW)
+        t = _PS_ENV.sub(lambda m: os.environ.get(m.group(1), m.group(0)), t)
+        t = os.path.expanduser(os.path.expandvars(t))
+        t = _MSYS_DRIVE.sub(lambda m: m.group(1) + ":", t)
+        p = t if os.path.isabs(t) else (os.path.join(cwd, t) if cwd else "")
+        if p and os.path.isfile(p):
+            p = os.path.normpath(p)
+            if p not in out:
+                out.append(p)
+    return out
+
+
+def session_shell_writes(transcript: Optional[Path]) -> list[str]:
+    """Files this session's shell commands named AND changed while that command ran, oldest first."""
+    pending: dict[str, tuple] = {}
+    hits: dict[str, int] = {}
+    for i, row in enumerate(_rows(transcript)):
+        msg = row.get("message")
+        content = msg.get("content") if isinstance(msg, dict) else None
+        for b in content if isinstance(content, list) else []:
+            if not isinstance(b, dict):
+                continue
+            if b.get("type") == "tool_use" and b.get("name") in SHELL_TOOLS:
+                pending[str(b.get("id"))] = (str((b.get("input") or {}).get("command") or ""),
+                                             str(row.get("cwd") or ""), _row_epoch(row), i)
+            elif b.get("type") == "tool_result" and str(b.get("tool_use_id")) in pending:
+                cmd, cwd, start, idx = pending.pop(str(b.get("tool_use_id")))
+                end = _row_epoch(row)
+                if start is None or end is None:
+                    continue   # cannot place the write in time: never guess custody onto a file
+                for p in _shell_paths(cmd, cwd):
+                    try:
+                        m = os.path.getmtime(p)
+                    except OSError:
+                        continue
+                    if start - SHELL_WINDOW_SLACK_S <= m <= end + SHELL_WINDOW_SLACK_S and p not in hits:
+                        hits[p] = idx
+    return [p for p, _ in sorted(hits.items(), key=lambda kv: kv[1])]
+
+
+def custody_writes(transcript: Optional[Path]) -> list[str]:
+    """Every path whose custody this session holds: edit tools plus the shell channel."""
+    out = session_writes(transcript)
+    seen = {os.path.normcase(os.path.abspath(p)) for p in out}
+    for p in session_shell_writes(transcript):
+        if os.path.normcase(os.path.abspath(p)) not in seen:
+            out.append(p)
+    return out
 
 
 def usage_facts(transcript: Optional[Path]) -> dict:
@@ -374,7 +466,7 @@ def compile_capsule(session_id: str, cwd: str, transcript: Optional[str], *, goa
         "host": host_identity(),
         "transcript": str(tp) if tp else None,
         "repo": repo, "goal": gp,
-        "foreign": foreign_custody(writes, repo.get("root") if repo.get("state") == "OK" else None),
+        "foreign": foreign_custody(custody_writes(tp), repo.get("root") if repo.get("state") == "OK" else None),
         "obligations": items or [], "obligations_source": source if items else None,
         "obligations_stated": stated[:10],
         "handoff": handoff, "children": child_state(session_id),

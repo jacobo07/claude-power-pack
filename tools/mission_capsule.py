@@ -168,7 +168,7 @@ def compile_mission_capsule(rec: dict, *, origin: str, note: str = "", work_dir:
     cap["children"] = children
     if tp is not None:
         root = cap["repo"].get("root") if cap["repo"].get("state") == "OK" else None
-        cap["foreign"] = ro.foreign_custody(ro.session_writes(tp), root)
+        cap["foreign"] = ro.foreign_custody(ro.custody_writes(tp), root)   # edit tools + shell channel
     elif origin == "recovery":
         # G21 only: a dead predecessor with no transcript. Stated, never an empty "OK".
         cap["custody_unchecked"] = "no transcript"
