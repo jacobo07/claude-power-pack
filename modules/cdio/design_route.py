@@ -216,11 +216,28 @@ def _row_epoch(row: dict) -> float | None:
         return None
 
 
+# `ccf.cli generate <project>` writes <project>/.ccf/images/<id>.png from inside its process (modules/ccf/cli.py
+# _keep_artifact): the command names no .png, so CCF's own outputs never reached the gate (review of bb95f710, M2).
+_CCF_GENERATE_RX = re.compile(r"""ccf[./\\]cli(?:\.py)?["']?\s+generate\s+["']?([^\s"';&|]+)""", re.I)
+
+
+def ccf_outputs(cmd: str, base: str) -> list:
+    """The images a `ccf.cli generate` command can have written: every .png in each named project's .ccf/images."""
+    out = []
+    for proj in _CCF_GENERATE_RX.findall(cmd or ""):
+        d = os.path.join(proj if os.path.isabs(proj) or not base else os.path.join(base, proj), ".ccf", "images")
+        try:
+            out += [os.path.join(d, n) for n in sorted(os.listdir(d)) if n.lower().endswith(".png")]
+        except OSError:
+            continue
+    return out
+
+
 def _scan_shell(row: dict, inp: dict, st: dict) -> None:
     cmd = str(inp.get("command") or "")
     base = str(row.get("cwd") or "")
     when = _row_epoch(row)
-    for p in shell_paths(cmd):
+    for p in shell_paths(cmd) + ccf_outputs(cmd, base):
         if os.name == "nt":       # Git Bash names C:\x as /c/x (or /mnt/c/x); isabs() says True, canon() makes c:\c\x
             p = _MSYS_DRIVE_RX.sub(lambda m: m.group(1) + ":", p)
         if not os.path.isabs(p) and base:

@@ -53,7 +53,7 @@
       "prompt": "\\b(logo|logotipo|brand kit|identidad visual|visual identity|paleta de colores|color palette|wordmark|brand mark)\\b",
       "required": [],
       "recommended": ["canvas-design"],
-      "advice": "Brand work runs through CCF: python -m modules.ccf.cli init <project> --brief <brief.txt>, then generate / select / package. CCF produces; CDIO judges: every .svg/.png asset written here with Write/Edit or named in a shell command is rendered on light and dark at small and large size (`design_review_record.py render <asset>`) and needs a recorded cdio-reviewer APPROVE of its bytes.",
+      "advice": "Brand work runs through CCF: python -m modules.ccf.cli init <project> --brief <brief.txt>, then generate / select / package. CCF produces; CDIO judges: every .svg/.png asset written here with Write/Edit or named in a shell command or produced by `ccf.cli generate` is rendered on light and dark at small and large size (`design_review_record.py render <asset>`) and needs a recorded cdio-reviewer APPROVE of its bytes.",
       "taste": false,
       "review": true,
       "extra_ext": [".svg", ".png"]

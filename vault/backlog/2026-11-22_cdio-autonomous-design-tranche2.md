@@ -86,7 +86,10 @@ UNVERIFIED: 3 resource selection, 6 accessibility beyond tap/contrast on one pag
 - M1 FIXED (next commit): brand was gating for every path; a film/copy page then needed a review and app source in a
   brand-only session was judged. Pinned by V-DSR-BRAND-SCOPED-TO-ASSETS (pre-fix behaviour taken from the reviewer's
   trace, not observed failing).
-- M2 OPEN: `python -m modules.ccf.cli generate` writes `.ccf/images/<id>.png` from inside the process, so CCF's own
+- M2 FIXED (session 85563ce8): `_scan_shell` enrols every .png in `<project>/.ccf/images` named by a `ccf.cli generate`
+  command; the existing shell_written timing admits only images changed at/after the command. Pinned by
+  V-DSR-CCF-GENERATE-JUDGED (fails on the old code: no block), with an older image as negative control. Was:
+  `python -m modules.ccf.cli generate` writes `.ccf/images/<id>.png` from inside the process, so CCF's own
   outputs are never judged (no Write row, no token in the command). Advice text narrowed so it no longer promises it.
   Fix candidates: collect `.ccf/images/**` changed after the brand prompt, or have the CCF CLI report its outputs.
 - L1 OPEN: asset admission uses the CURRENT session kinds; a logo written under brand drops out when the next prompt
