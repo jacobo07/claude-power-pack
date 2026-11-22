@@ -322,6 +322,46 @@ Despacho Sánchez-Barriga `tests/browser/sweep.js` (`95918f8`). Not valid for pa
 (see the invisible-iframe trap above). Promote to a shipped PP tool after a second web
 project runs it unchanged.
 
+### PR-RENDERED-REPETITION-MONOTONY-PROVENANCE-001 (CANDIDATE, n=1, scope WEB, warning-only)
+
+A page can pass axe, contrast, schema and build and still look flat: the same engraving
+drawn three times, a row of small isolated SVG pictograms, neighbouring media bands with one
+shape. None of it is in source; all of it is in the rendered DOM. `modules/cdio/rendered_probe.js`
+(browser) + `modules/cdio/rendered_checks.py` (pure evaluator, CLI
+`python -m modules.cdio.rendered_checks <url|dist-dir|dir::/path>`) report motif repetition,
+pictogram density, media-section monotony and art provenance as WARNINGS only (no hook, exit 0).
+Provenance is judged only when the page uses `data-art-kind`; otherwise the state is
+`not_declared`, never "clean". Transfer run 2026-11-22: Bodeguita V2 (`210f336`) 7 warnings,
+V3 0, a non-food demo 0, a dark text-led portfolio 0 after scoping. The first run flagged the
+portfolio 5 times: monotony is judged only for pairs where a section shows media, and
+text-only pairs are counted in the state. That scope was set AFTER seeing the run (n=4,
+overfit risk). Gates: `tools/test_cdio_rendered.py` 18/18, every refusal with a control.
+Promote only after a second project's run agrees.
+
+### T-CSS-OBJECT-POSITION-IS-NOT-A-CROP-001
+
+`object-fit: cover` + `object-position` cannot zoom: on a 4:5 panel a 4:3 scene shows ~60% of
+its width, so three "crops" of one scene show nearly the same picture three times, which is
+the repetition the crops were meant to avoid. Cut real crops (sharp `extract`) and record the
+region and the parent's sha256 in the provenance registry. Evidence: Bodeguita
+`scripts/v3-crops.mjs` (`4f1cce7`).
+
+### T-INLINING-A-KIT-SVG-CHANGES-WHAT-IT-MEANS-001
+
+Inlining brand-kit SVGs (to use page fonts or animate strokes) breaks two things silently:
+(1) every kit file ships the same `<defs>` ids, so two inlined copies duplicate ids and a
+`url(#id)` resolves to the other file's definition; prefix ids and their references per copy;
+(2) HTML parsing collapses whitespace inside `<text>`, so letter-spacing done with literal
+spaces («E L   P U E R T O») shrinks; set `white-space: pre` on the text. Both were found in
+the render, not by tests. Evidence: Bodeguita `src/lib/svg.ts`, Wordmark (`dd57ddd`).
+
+### T-LAZY-IMAGE-DECODE-NEVER-SETTLES-001
+
+`img.decode()` on an off-screen `loading="lazy"` image waits for a load that never starts, so
+a "wait until every image is decoded" screenshot harness hangs until its timeout once a page
+gains lazy art. Set `img.loading = 'eager'` before awaiting decode. Evidence: Bodeguita
+`tests/e2e/visual.spec.ts` (`4f1cce7`); same guard in `rendered_checks.probe_pages`.
+
 ### T-STALE-BYTECODE-ACCUSES-A-CORRECT-SUBJECT-001
 
 A mutation whose replacement is the SAME BYTE LENGTH, restored inside the same
