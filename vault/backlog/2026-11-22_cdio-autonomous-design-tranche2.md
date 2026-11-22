@@ -71,7 +71,13 @@ shipped. This file is the handoff for a fresh agent: it holds no context that is
     repo, is invisible to the SAFE_TO_FORGET seal. Its own docstring says so. That is the 2026-10-03 lost-edit class
     reached through a second write channel.
   - Fix belongs to session continuity, not CDIO: scan the session's shell commands for paths outside the capsule
-    root and admit those whose file changed after the command, like `design_route.shell_written`. Not started.
+    root and admit those whose file changed after the command, like `design_route.shell_written`.
+  - **DONE f156fe6e** (Owner chose it, 2026-11-22). `rollover.custody_writes` = edit tools plus shell paths whose
+    mtime falls inside the command's own tool_use..tool_result window. Both custody call sites use it.
+    V-CUSTODY 15/15. HEAD sealed with a shell-written uncommitted foreign file; the new code refuses.
+  - Known limits, recorded in `rollover.py`: a permission-wait window can refuse (fail-safe); a file touched after
+    its command leaves custody.
+  - Pre-existing, not ours: `test_gsd_mission_capsule_v2` 78/79 (V-MV2-L1-WITHIN-BACKOFF-HELD-SILENT), same on HEAD.
 - Paused before item 3 on budget: the campaign passed 2x the Owner's 250k planning reference (subagents alone
   168k measured). Item 3 needs about 4 build + independent-review cycles at ~50k each: Owner budget call first.
 
