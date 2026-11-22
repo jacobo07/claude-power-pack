@@ -1,0 +1,137 @@
+{
+ "schema": "bcap2-saas-live-measure/1",
+ "measured_at": "2026-11-22T12:49:21Z",
+ "plane": "laptop Windows 11, chromium 148.0.7778.96",
+ "context": "1280x800, prefers-color-scheme dark, logged out",
+ "private_copies": "screenshots and visible text kept OFF the public repo at laptop ~/.claude/private/bcap2-saas-refs/ (third-party content, same rule as the Synsation transcripts); sha256 recorded here",
+ "instrument_checks": [
+  "first pass counted a hidden role=dialog node on vercel.com as a modal (not in the screenshot); rejected. Modal detection now requires display, visibility, opacity, viewport and elementFromPoint ownership, and it re-finds Linear's modal",
+  "every capture used here was looked at"
+ ],
+ "B3_style1_rules_5_6": {
+  "linear": {
+   "url": "https://linear.app",
+   "status": 200,
+   "rule5_focus_after_one_tab": {
+    "tag": "A",
+    "text": "Navigate to home",
+    "outlineColor": "rgb(94, 105, 209)",
+    "outlineWidth": "1px",
+    "outlineStyle": "solid",
+    "outlineOffset": "2px",
+    "boxShadow": "none",
+    "focusVisible": true
+   },
+   "page_bg": "rgb(8, 9, 10)",
+   "rule6_modal": {
+    "page_bg": "rgb(8, 9, 10)",
+    "modal_bg": "rgb(15, 16, 17)",
+    "opened_with": "key:Control+k"
+   }
+  },
+  "vercel": {
+   "url": "https://vercel.com",
+   "status": 200,
+   "rule5_focus_after_one_tab": {
+    "tag": "A",
+    "text": "Vercel",
+    "outlineColor": "rgb(82, 168, 255)",
+    "outlineWidth": "2px",
+    "outlineStyle": "solid",
+    "outlineOffset": "4px",
+    "boxShadow": "none",
+    "focusVisible": true
+   },
+   "page_bg": "rgb(0, 0, 0)",
+   "rule6_modal": {
+    "url": "https://vercel.com/docs",
+    "page_bg": "rgb(0, 0, 0)",
+    "modal_bg": "rgb(10, 10, 10)",
+    "modal_label": "Global Command Menu",
+    "opened_with": "key:Control+k (headed)"
+   }
+  },
+  "raycast": {
+   "url": "https://www.raycast.com",
+   "status": 200,
+   "rule5_focus_after_one_tab": {
+    "tag": "A",
+    "text": "Store",
+    "outlineColor": "rgb(16, 16, 16)",
+    "outlineWidth": "1px",
+    "outlineStyle": "auto",
+    "outlineOffset": "1px",
+    "boxShadow": "none",
+    "focusVisible": true,
+    "note": "outline-style auto: Chromium draws its own ring, so the computed outline colour is not the painted colour"
+   },
+   "page_bg": "rgb(7, 8, 10)",
+   "rule6_modal": {
+    "status": "NOT_MEASURED",
+    "reason": "no visible dialog on the public landing after Control+k, Meta+k or a Search control"
+   }
+  }
+ },
+ "B1_style3_reference_bank": {
+  "chatgpt": {
+   "url": "https://chatgpt.com",
+   "status": 200,
+   "title": "ChatGPT: Chat, Work, Create & Code with AI",
+   "body_bg": "rgb(0, 0, 0)",
+   "body_color": "rgb(255, 255, 255)",
+   "font": "-apple-system-body, ui-sans-serif, -apple-system, \"system-ui\", \"Segoe UI\", Helvetica, \"Apple Color Emoji\", Arial, \"sans-serif\", \"Segoe UI Emoji\", \"Segoe UI Symbol\"",
+   "composer": {
+    "tag": "TEXTAREA",
+    "placeholder": "Ask ChatGPT",
+    "radius": "0px",
+    "bg": "rgba(0, 0, 0, 0)",
+    "font_size": "17px"
+   },
+   "text_chars": 609,
+   "screenshot_sha256": "452734f8a6276c2e3ee6d58f2dceaacbb40b766710c62a0a6782d3f5fdc3e829",
+   "text_sha256": "fbe2dd7ebfbf63b9c5f6a624d28ab2f47592fc1f878f8e334b62093ac86fa862",
+   "mode": "headless"
+  },
+  "perplexity": {
+   "url": "https://www.perplexity.ai",
+   "status": 200,
+   "title": "Perplexity",
+   "body_bg": "color(srgb 0.0823529 0.0901961 0.105882)",
+   "body_color": "rgb(255, 255, 255)",
+   "font": "pplxSans, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, \"Noto Sans\", sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+   "composer": {
+    "tag": "DIV",
+    "placeholder": "Pregunta lo que sea…",
+    "radius": "0px",
+    "bg": "rgba(0, 0, 0, 0)",
+    "font_size": "16px"
+   },
+   "text_chars": 1468,
+   "screenshot_sha256": "54e29704017178978d8075b8c21d8ac99d59e51307c35a5015c9dae29873dca6",
+   "text_sha256": "ffdd3ab4d28e4c6cc1d04a90f0dd5fcfb1cb6fb3045cf9061d6f7e8fba53d685",
+   "mode": "headless"
+  },
+  "claude": {
+   "mode": "headed",
+   "status": 200,
+   "title": "Iniciar sesión o crear una cuenta | Claude.ai",
+   "text_chars": 3584,
+   "body_bg": "rgb(25, 25, 25)",
+   "screenshot_sha256": "ca43b19a27a63bd3735653191d47ba6e60510f62c05b4b75990e36906c614bb5",
+   "url": "https://claude.ai",
+   "note": "logged out serves the sign-in page, not a composer; headless got a Cloudflare challenge first"
+  },
+  "mistral": {
+   "mode": "headed",
+   "status": 200,
+   "title": "Vibe Work",
+   "text_chars": 234,
+   "body_bg": "rgba(0, 0, 0, 0)",
+   "composer": "NOT_MEASURED",
+   "screenshot_sha256": "4eeedd2fff2a643162ffa4f161412aadc2eee2ec5981ccb1dd4b266a2b80e032",
+   "url": "https://chat.mistral.ai",
+   "note": "composer is behind a Terms of Service accept modal; not accepted (accepting terms is the Owner's act); headless got a Cloudflare challenge"
+  }
+ },
+ "verdict": "B3: rule 5 measured on 3/3 sites, rule 6 on 2/3 (Raycast has no public modal). B1: 4/4 surfaces captured, composer measured on 2/4. Data only; no rule status changed here."
+}

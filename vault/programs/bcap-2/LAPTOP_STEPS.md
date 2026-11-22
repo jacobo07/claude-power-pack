@@ -45,6 +45,30 @@ Evidence: `ruflo/CANARY_2026-11-20.json`, raw `ruflo/canary/{adv,retry}.out.json
 - NEW: Ruflo attempted unsolicited egress to IPFS gateways (cloudflare-ipfs.com, w3s.link); blocked by isolation.
 Nothing left the sandbox.
 
+## Campaign B laptop steps: run 2026-11-22 (Owner "do laptop steps", pane 6e2df121)
+Evidence: `saas-styles/LIVE_MEASURE_2026-11-22.json`, measured with Chromium 148, 1280x800, dark scheme, logged out. Screenshots and
+visible text stay off the public repo, at `~/.claude/private/bcap2-saas-refs/` on the laptop. Only their sha256 is committed.
+- **B1 DONE (data).** All 4 surfaces were captured. ChatGPT and Perplexity were measured headless and their composers were
+  measured. claude.ai and Mistral served a Cloudflare challenge to headless, so they were captured headed:
+  - claude.ai logged out is the sign-in page, which has no composer;
+  - Mistral's composer sits behind a Terms of Service accept modal, which was not accepted, so it is NOT_MEASURED.
+  This bank stays external corroboration for style 3, never a PASS.
+- **B2 already DONE 2026-11-20** (coordinator pane adcdff7b, `UPSTREAM_BRAND_PROBE.json` `bi16_cross_platform`). The Windows run
+  gave combined hash 84c031a31fbb, identical to GEX44's Linux run. macOS was not measured. No CCF adapter was built. Not re-run.
+- **B3 measured; rules stay PROVISIONAL until someone reviews this data.**
+  - Rule 5, focus ring after one Tab, measured on all 3 sites:
+    - Linear: 1px solid rgb(94,105,209), offset 2px;
+    - Vercel: 2px solid rgb(82,168,255), offset 4px;
+    - Raycast: outline-style `auto`, a browser-drawn ring, so its computed colour is not the painted colour.
+  - Rule 6, dark modal measured on 2 of 3 sites:
+    - Linear: page rgb(8,9,10), command menu rgb(15,16,17);
+    - Vercel docs: page rgb(0,0,0), command menu rgb(10,10,10);
+    - Raycast: no public modal was found.
+  - A first pass counted a hidden `role=dialog` node on vercel.com as a modal. That result was rejected, and the visibility
+    check that replaced it re-finds Linear's modal.
+- **B4 BLOCKED.** The laptop has no Docker or VM, so there is no clean-room plane here. Driving hgp6, rx87, jwwq and #4750 also
+  needs a networked, throwaway Ruflo, which is the Owner's call. Activation stays refused.
+
 ## BLOCKED-ON-LAPTOP (campaign B) - Phase 1 / Phase 6 inputs
 B1. SaaS style 3 reference bank (conversational AI surface): ChatGPT, Perplexity, Claude.ai and Mistral return 403 to GEX44, so
     no reference could be read here (`saas-styles/REUSE_LEDGER.md` row 2). On the laptop, in a real browser, save one screenshot
