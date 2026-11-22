@@ -5,6 +5,24 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**2026-11-22 15:25Z (pane a52cc240, /kresume of 37612bb0).**
+- ARMED after the backfill, both confirmed working:
+  - TENNIS S300T m-52ce018cc209 (22.5M, EXPLOIT `tennis_intra_twin_transfer`). Planned after one policy re-plan. P1
+    e39eb0b8 at 15:12:18Z (96 frozen targets). At 15:13:28Z the sweep read RUNNING by host witness, with one worker in
+    worktree s300t and no duplicate launch.
+  - WIIPARTY: the S299W judgment AGREE was kept, then S301W was armed instead, m-179b5868e7d1 (25M,
+    `wp_game_handsource_smallest`). Scaffold f3ad99c at 15:07:10Z, RUNNING.
+  - O1 seen live: S276W `reserve_release` returned -9.13M at close.
+- W3 step 0 DONE (worktree 10c44eab, `throughput/O6_INSTRUMENT_FAIL_CENSUS.md`):
+  - 4/5 sampled checkpoints are class A. WIIPARTY S147W n_fn counts completed links, so it is a method result.
+  - In all 4 true A cases the generation wrote its own counting tool, so "the autopilot runs the planner's command
+    before arming" would have caught none of them.
+  - OWNER QUESTION: (a) POOL_FLOOR only over existing tools, or (b) a count-first P1 slice (about 1.5M) that halts
+    below the floor.
+- T1 spend, measured from transcript 37612bb0, 11:59-15:06Z, deduplicated by message id: 44.71M processed (cache read
+  44.17M, cache creation 0.43M, output 0.12M, input 350). That is about 3x the 15M authority in processed units.
+NEXT: Owner (a)/(b) for W3; Owner merge of gsd/ascension-throughput; the O5 hunks in the GEX44 gsd_mission.py diff.
+
 **2026-11-22 15:00Z (pane 37612bb0, Owner "y": Cognitive Throughput T1).** Plan and Reality Scan:
 `vault/plans/ascension-cognitive-throughput-20261122.md`. Work is in worktree `C:\Users\User\Apps\pp-ascension-throughput`,
 branch `gsd/ascension-throughput` (aed5acfb plan, 3eef4bb1 workstream, 0dfaec10 autopilot O1-O4, 5e03e129 mission O5),
