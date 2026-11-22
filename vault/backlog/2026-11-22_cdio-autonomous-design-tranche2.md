@@ -54,6 +54,19 @@ shipped. This file is the handoff for a fresh agent: it holds no context that is
   session demands a separate review of `vault/fixtures/cdio_repair_loop/pan.svg`. Extend coverage to img-linked
   .svg/.png, failing-first test. Also: that session's brand kind came from a pre-efaae877 machine turn.
 - Item 2 left to the session adding `render-url` (still uncommitted in tools/design_review_record.py at 18:05).
+- (session c711a976) Item 2 debt closed ef8ac725: V-DRU-CHANGED-DURING-RENDER-REFUSED (mutant binds 1 row, rc 0).
+- (session c711a976) AKOS residual DONE 09bc9c1c: creative_grounding.js classifies `ownerText()` from the new
+  `hooks/prompt_origin.js`, the JS twin of `modules/gsd_x/prompt_origin.py`. Parity is pinned by
+  `tools/test_prompt_origin_parity.py` (V-POP; a one-prefix drift fails it). Dispatcher drill INCONCLUSIVE: no AKOS
+  block for the Owner prompt either, so it cannot observe the hook.
+- (session c711a976) Item 5 audited, read only:
+  - `mission_binding.py:314`: not exposed, it already reads shell commands (line 315).
+  - `mission_recovery.py:164` and `root_progress.py:53`: report or measure only; a miss under-reports.
+  - **`rollover.py:191` -> `foreign_custody()` IS exposed:** a file written through a shell, uncommitted in another
+    repo, is invisible to the SAFE_TO_FORGET seal. Its own docstring says so. That is the 2026-10-03 lost-edit class
+    reached through a second write channel.
+  - Fix belongs to session continuity, not CDIO: scan the session's shell commands for paths outside the capsule
+    root and admit those whose file changed after the command, like `design_route.shell_written`. Not started.
 - Paused before item 3 on budget: the campaign passed 2x the Owner's 250k planning reference (subagents alone
   168k measured). Item 3 needs about 4 build + independent-review cycles at ~50k each: Owner budget call first.
 
