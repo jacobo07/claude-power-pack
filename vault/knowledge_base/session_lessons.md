@@ -1360,3 +1360,11 @@ A corpus spec's candidate list is a hypothesis about gaps, not a build order. Ap
 A script that greps a mission id from an arm command's output can pick the id named in a refusal; check the exit status before acting on the id.
 
 ---
+## 2026-11-22 — Ascension Cognitive Throughput T1 (Owner y): measured 29M judge ask = next gen c
+
+**Session:** `37612bb0-f09b-40cd-960d-f62356147a84`
+
+Measure the cost distribution behind an admission number before redesigning around it: the 29M 'judge reservation' was the next generation's caps.
+
+---
+
