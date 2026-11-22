@@ -3909,7 +3909,10 @@ def recover_mission(rec: dict, sessions, now: float, *, pid_alive=lr._pid_alive,
     hold = dict(rec.get("owner_hold") or {})
     owner = rec.get("owner")
     failed_sid = (owner or {}).get("session_id") or (rec.get("previous_owner") or {}).get("session_id")
-    wd = mb.execution_root(rec)
+    # Where the work IS, as the halt and relay paths resolve it. NEVER_AGAIN 2026-11-22 (m-d3d2b709130d):
+    # execution_root alone asked the main checkout while the worker sealed phases in its worktree, so every
+    # sealed phase read "closed twice, GSD still lists it" and parked the mission at an Owner boundary.
+    wd = live_root(rec)
     try:
         st = (gsd_status or _supervise_gsd_status)(wd, workstream=rec.get("workstream"))
     except Exception as exc:  # noqa: BLE001 -- unanswered is not "work remains"

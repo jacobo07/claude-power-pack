@@ -256,6 +256,21 @@ def main() -> int:
     r4b = gm.recover_mission(gm.load("m-aaa000000005"), DONE, NOW + 60, stop_runner=stop_ok, launch=fake_launch, gsd_status=GSD_OK)
     check("V-AMR-CONTROL-AUTHORITY-RAISED-RECOVERS", r4b["action"] == "recovered", str(r4b)[:160])
 
+    # --- 4c. recovery asks GSD where the worker works (live_root), not the record's cwd (m-d3d2b709130d) -
+    wd4c = make_tree("asked-here")
+    held_mission("m-aaa00000004c", wd4c, estimate=3_100_000, tokens=6_000_000)
+    gm.set_authority("m-aaa00000004c", "20M", reason="test Owner raise")
+    elsewhere = str(make_tree("worker-tree"))
+    asked = []
+    real_live_root = gm.live_root
+    gm.live_root = lambda rec: elsewhere
+    try:
+        gm.recover_mission(gm.load("m-aaa00000004c"), DONE, NOW + 60, stop_runner=stop_ok, launch=fake_launch,
+                           gsd_status=lambda wd, workstream=None: asked.append(str(wd)) or {"outcome": "OK"})
+    finally:
+        gm.live_root = real_live_root
+    check("V-AMR-GSD-ASKED-IN-WORKER-TREE", asked[:1] == [elsewhere], f"asked={asked[:2]} expected={elsewhere}")
+
     # --- 5. Owner park, kill switch, shadow -----------------------------------------------------------
     wd5 = make_tree("ownerpark")
     held_mission("m-aaa000000006", wd5, kind=None)
