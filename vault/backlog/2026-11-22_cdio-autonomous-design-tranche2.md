@@ -78,6 +78,10 @@ shipped. This file is the handoff for a fresh agent: it holds no context that is
   - Known limits, recorded in `rollover.py`: a permission-wait window can refuse (fail-safe); a file touched after
     its command leaves custody.
   - Pre-existing, not ours: `test_gsd_mission_capsule_v2` 78/79 (V-MV2-L1-WITHIN-BACKOFF-HELD-SILENT), same on HEAD.
+- (session c711a976) Item 3 RUN on Owner budget "900K": 4 headless builds, report
+  `vault/audits/cdio_cross_sector_benchmark_2026-11-22.md`. 4/4 gated + independently reviewed, 17/17 seeded defects
+  fixed, 0 human turns. Fixed 7b0a4c93 (B-2 prompt miss). OPEN: B-3 script-written brand assets escape the framed
+  review; B-4 shell-tracker non-paths; B-5 hooks litter foreign repos. Not run (over budget): blind A/B judge, item 4.
 - Paused before item 3 on budget: the campaign passed 2x the Owner's 250k planning reference (subagents alone
   168k measured). Item 3 needs about 4 build + independent-review cycles at ~50k each: Owner budget call first.
 
