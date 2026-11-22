@@ -12,7 +12,8 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 tmp = Path(tempfile.mkdtemp(prefix="ap-test-"))
-os.environ.update(AP_HOME=str(tmp / "home"), AP_STATE_DIR=str(tmp / "state"), AP_OWNER_TS="2026-11-11T00:00:00.000Z",
+os.environ.update(AP_WEEKLY_CHECK="off",  # the gate never reads the live account; the O4 checks stub _governor
+                  AP_HOME=str(tmp / "home"), AP_STATE_DIR=str(tmp / "state"), AP_OWNER_TS="2026-11-11T00:00:00.000Z",
                   AP_PP=os.environ.get("AP_PP") or str(HERE.parents[3]))  # GEX44 install: AP_PP = the PP clone
 (tmp / "home").mkdir()
 (tmp / "state").mkdir()
@@ -294,6 +295,170 @@ def run_all(ap):
     check("V-AP-BUDGET-WALL-REFUSES", ap.budget_admits([], 1796083200.0, 1) is not None)  # 2026-12-01
     check("V-AP-UNMEASURED-CALL-BOOKS-RESERVE", ap.call_tokens(None) == (2_000_000, False)
           and ap.call_tokens(1234) == (1234, True))
+    # ---- T1 O2 (Owner "y" 2026-11-22): judging asks JUDGE_ASK, not the next generation's caps. 2026-11-22 live: 477.4M of
+    # 500M booked, 22.6M headroom; the old 29M ask kept TENNIS/WIIPARTY/FIFATC unjudged until the next UTC day
+    near = [{"ts": now, "tokens": ap.DAY_CAP - 22_600_000}]
+    check("V-AP-JUDGE-ASK-FITS-NEAR-CAP", ap.budget_admits(near, now, ap.JUDGE_ASK) is None
+          and ap.budget_admits(near, now, ap.GEN_CAP + 2 * ap.CALL_RESERVE) is not None)
+    check("V-AP-JUDGE-ASK-COVERS-MEASURED-P99", 1_150_000 + 2_210_000 <= ap.JUDGE_ASK < ap.GEN_CAP)
+    check("V-AP-JUDGE-ASK-STILL-WAITS-AT-CAP", ap.budget_admits([{"ts": now, "tokens": ap.DAY_CAP - 1_000_000}], now,
+                                                                ap.JUDGE_ASK) is not None)
+    # ---- T1 O1 (Owner Q1 "y"): a closed generation's unspent reservation is released on the day it was booked
+    d0, d1 = now - 86400, now
+    rr = [{"ts": d0, "kind": "arm_reserve", "gen": "S9K", "tokens": 25_000_000},
+          {"ts": d1, "kind": "auto_topup", "mission": "m-a", "tokens": 5_000_000},
+          {"ts": d1, "kind": "arm_reserve", "gen": "S8K", "tokens": 25_000_000}]
+    rel = ap.reservation_release(rr, "m-a", "S9K", 30_000_000, 12_000_000)
+    check("V-AP-RELEASE-NEWEST-FIRST-CAPPED", rel == [(d1, 5_000_000), (d0, 13_000_000)])
+    check("V-AP-RELEASE-UNMEASURED-IS-NOT-ZERO", ap.reservation_release(rr, "m-a", "S9K", 30_000_000, None) == [])
+    check("V-AP-RELEASE-OVERRUN-RELEASES-NOTHING", ap.reservation_release(rr, "m-a", "S9K", 30_000_000, 31_000_000) == [])
+    check("V-AP-RELEASE-OTHER-GEN-UNTOUCHED", ap.reservation_release(rr, "m-b", "S7K", 25_000_000, 1) == [])
+    booked = rr + [{"ts": t + 0.001, "kind": "reserve_release", "mission": "m-a", "tokens": -a} for t, a in rel]
+    check("V-AP-RELEASE-IDEMPOTENT", ap.reservation_release(booked, "m-a", "S9K", 30_000_000, 12_000_000) == [])
+    check("V-AP-RELEASE-FREES-THE-BOOKING-DAY", ap.spend_totals(booked, d1)[1] == 25_000_000 + 5_000_000 - 5_000_000
+          and ap.spend_totals(booked, d0)[1] == 25_000_000 - 13_000_000)
+    hist = rr + [{"ts": d1, "kind": "generation_armed", "mission": "m-a", "gen": "S9K"},
+                 {"ts": d1 + 5, "kind": "generation_closed", "mission": "m-a", "lane": "L", "measured": True,
+                  "spend": 12_000_000, "authority": 30_000_000, "tokens": 0},
+                 {"ts": d1 + 6, "kind": "generation_closed", "mission": "m-x", "lane": "L", "measured": False,
+                  "spend": None, "authority": 9_000_000, "tokens": 0}]
+    bf = ap.backfill_releases(hist)
+    check("V-AP-BACKFILL-MEASURED-ONLY", sum(-r["tokens"] for r in bf) == 18_000_000 and all(r["backfill"] for r in bf)
+          and ap.backfill_releases(hist + bf) == [])
+    ov = ap.reservation_overhead(hist + bf)
+    check("V-AP-RESERVATION-OVERHEAD", ov["reserved"] == 55_000_000 and ov["released"] == 18_000_000)
+    # ---- T1 O3: a checkpoint that declares CHECKPOINT_FINAL: false is not judged by a model
+    ckd = tmp / "ckO3"
+    ckd.mkdir(exist_ok=True)
+    (ckd / "nf.md").write_text("# S1\n\n**CHECKPOINT_FINAL:** false\nwork remains\n")
+    (ckd / "f.md").write_text("# S1\nCHECKPOINT_FINAL: true\nthis is not final in prose only\n")
+    (ckd / "prose.md").write_text("# S1\nThis checkpoint is NOT final; interim.\n")
+    check("V-AP-NOTFINAL-DECLARED", str(ap.declared_not_final("nf.md", str(ckd))).startswith("JUDGMENT_NOT_EXECUTABLE"))
+    check("V-AP-NOTFINAL-TRUE-AND-PROSE-STILL-JUDGED", ap.declared_not_final(str(ckd / "f.md"), "/x") is None
+          and ap.declared_not_final("prose.md", str(ckd)) is None and ap.declared_not_final("gone.md", str(ckd)) is None)
+    _rc_calls, _krc = [], ap.run_claude
+    ap.run_claude = lambda *a, **k: (_rc_calls.append(1), {"ok": True, "result": '{"verdict": "AGREE"}', "tokens": 9})[1]
+    vnf = ap.judge({"name": "L", "cwd": str(ckd)}, "nf.md", str(ckd))
+    check("V-AP-NOTFINAL-NO-MODEL-CALL", _rc_calls == [] and vnf["verdict"] == "INCONCLUSIVE"
+          and vnf["checkpoint_final"] is False and vnf["_tokens"] == 0)
+    # ---- review M3: the LAST CHECKPOINT_FINAL declaration wins (an interim `false` kept above a final `true`)
+    (ckd / "nf2.md").write_text("## interim\nCHECKPOINT_FINAL: false\n## final\n**CHECKPOINT_FINAL:** true\n")
+    (ckd / "nf3.md").write_text("CHECKPOINT_FINAL: true\nwork reopened\nCHECKPOINT_FINAL: false\n")
+    check("V-AP-NOTFINAL-LAST-DECLARATION-WINS", ap.declared_not_final("nf2.md", str(ckd)) is None
+          and ap.declared_not_final("nf3.md", str(ckd)) is not None)
+    # ---- review M1: a release never exceeds what the ledger booked (authority raised outside the ledger: 45M)
+    raised = [{"ts": d0, "kind": "arm_reserve", "gen": "S5K", "tokens": 20_000_000},
+              {"ts": d1, "kind": "auto_topup", "mission": "m-r", "tokens": 5_000_000}]
+    check("V-AP-RELEASE-CAPPED-BY-BOOKED-NOT-AUTHORITY",
+          ap.reservation_release(raised, "m-r", "S5K", 45_000_000, 30_000_000) == []
+          and sum(a for _, a in ap.reservation_release(raised, "m-r", "S5K", 45_000_000, 10_000_000)) == 15_000_000
+          and ap.reservation_release(raised + [{"ts": d1, "kind": "arm_refund", "gen": "S5K", "tokens": -20_000_000}],
+                                     "m-r", "S5K", 45_000_000, 4_000_000) == [(d1, 1_000_000)])
+    # ---- T2 W1 (Owner "y"): conservation -- a settled generation books exactly its measured spend (SPENT monotonic)
+    over_rel = [{"ts": d0, "kind": "arm_reserve", "gen": "S95C", "tokens": 9_500_000},  # live FIFATC S95C shape
+                {"ts": d0, "kind": "generation_armed", "gen": "S95C", "mission": "m-95", "lane": "FT"},
+                {"ts": d0 + 0.001, "kind": "reserve_release", "mission": "m-95", "lane": "FT", "tokens": -2_148_959},
+                {"ts": d1, "kind": "generation_closed", "mission": "m-95", "lane": "FT", "tokens": 0,
+                 "spend": 10_351_041, "measured": True}]
+    cons = ap.conservation(over_rel)
+    fixed = over_rel + [{"ts": d1 + 0.002, "kind": "spend_correction", "mission": "m-95", "lane": "FT",
+                         "tokens": ap.spend_correction(over_rel, "m-95", "S95C", 10_351_041)}]
+    check("V-AP-CONSERVATION-UNDER-CORRECTED", cons["under"] == {"m-95": -3_000_000}
+          and ap.spend_correction(over_rel, "m-95", "S95C", 10_351_041) == 3_000_000
+          and ap.conservation(fixed)["conserved"] == 1 and ap.spend_correction(fixed, "m-95", "S95C", 10_351_041) == 0)
+    grant = [{"ts": d0, "kind": "arm_reserve", "gen": "S181K", "tokens": 12_500_000},
+             {"ts": d1, "kind": "owner_grant", "mission": "m-181", "tokens": 4_000_000},
+             {"ts": d1 + 5, "kind": "generation_closed", "mission": "m-181", "tokens": 661_707, "spend": 13_161_707}]
+    check("V-AP-OWNER-ESCROW-RELEASED", ap.reservation_release(grant, "m-181", "S181K", 1, 13_161_707) == [(d1, 4_000_000)]
+          and ap.reservation_release(grant, "m-181", "S181K", 1, 17_161_707) == [])
+    _st_of = {"m-h1": "HALTED", "m-h2": "HALTED", "m-r3": "RUNNING", "m-h4": "HALTED"}.get
+    arms = [{"ts": d0 + i, "kind": "generation_armed", "mission": m, "gen": f"S{i}X", "lane": "L", "authority": 9}
+            for i, m in enumerate(("m-h1", "m-h2", "m-r3", "m-h4"))]
+    arms.append({"ts": d1, "kind": "generation_settled", "mission": "m-h4", "measured": True, "spend": 1})
+    stl = {"lanes": {"L": {"mission": "m-x", "pending_plan": {"for": "continue:m-h2"}}}}
+    check("V-AP-STRANDED-TERMINAL-NOT-LIVE-NOT-SETTLED",
+          [g["mission"] for g in ap.stranded(arms, _st_of, ap.live_missions(stl))] == ["m-h1"]
+          and ap.live_missions({"lanes": {"A": {"mission": "a", "halted_mission": "b"}}}) == {"a", "b"})
+    # the sweep end to end against an in-memory ledger: release above spend, correction below, unmeasured untouched
+    _mem = [{"ts": d0, "kind": "arm_reserve", "gen": "S1Y", "tokens": 10_000_000, "lane": "L"},
+            {"ts": d0, "kind": "generation_armed", "mission": "m-a1", "gen": "S1Y", "lane": "L", "authority": 10_000_000},
+            {"ts": d0, "kind": "arm_reserve", "gen": "S2Y", "tokens": 5_000_000, "lane": "L"},
+            {"ts": d0, "kind": "generation_armed", "mission": "m-a2", "gen": "S2Y", "lane": "L", "authority": 5_000_000},
+            {"ts": d0, "kind": "arm_reserve", "gen": "S3Y", "tokens": 7_000_000, "lane": "L"},
+            {"ts": d0, "kind": "generation_armed", "mission": "m-a3", "gen": "S3Y", "lane": "L", "authority": 7_000_000}]
+    _klr, _kla, _km, _ks = ap.ledger_rows, ap.ledger_add, ap.mission, ap.mission_spend
+    ap.ledger_rows = lambda: list(_mem)
+    ap.ledger_add = lambda **r: _mem.append(dict(r, ts=r.get("ts", now)))
+    ap.mission = lambda m: {"state": "HALTED"}
+    ap.mission_spend = {"m-a1": 4_000_000, "m-a2": 6_500_000, "m-a3": None}.get
+    dry_rep = ap.settle_stranded({"lanes": {}}, apply=False)
+    n_dry = len(_mem)
+    rep = ap.settle_stranded({"lanes": {}}, apply=True)
+    rep2 = ap.settle_stranded({"lanes": {}}, apply=True)
+    nets = {m: ap.booked_net(_mem, m, g) for m, g in (("m-a1", "S1Y"), ("m-a2", "S2Y"), ("m-a3", "S3Y"))}
+    ap.ledger_rows, ap.ledger_add, ap.mission, ap.mission_spend = _klr, _kla, _km, _ks
+    check("V-AP-SWEEP-SETTLES-CONSERVED-IDEMPOTENT",
+          n_dry == 6 and dry_rep["freed"] == 6_000_000 and dry_rep["corrected"] == 1_500_000 and dry_rep["unmeasured"] == 1
+          and rep["freed"] == 6_000_000 and rep["corrected"] == 1_500_000
+          and nets == {"m-a1": 4_000_000, "m-a2": 6_500_000, "m-a3": 7_000_000}
+          and rep2["stranded"] == 0 and rep2["freed"] == 0 and rep2["corrected"] == 0)
+    # ---- W3 (Owner "(b) Count-first P1"): a checkpoint halted below its declared floor is measured, still judged
+    (ckd / "pf.md").write_text("# S2\n- **POOL_FLOOR:** ctl_pool count 4 floor 24\nPOOL_FLOOR: heldout count 30 floor 24\n"
+                               "CHECKPOINT_FINAL: true\n")
+    (ckd / "pfok.md").write_text("# S3\nPOOL_FLOOR: ctl count 30 floor 24\nthe pool floor is 24 (prose)\n")
+    check("V-AP-POOLFLOOR-BELOW-READ", ap.pool_floor_below("pf.md", str(ckd)) == [
+        {"name": "ctl_pool", "count": 4, "floor": 24}])
+    check("V-AP-POOLFLOOR-AT-OR-ABOVE-AND-PROSE-NONE", ap.pool_floor_below("pfok.md", str(ckd)) == []
+          and ap.pool_floor_below("prose.md", str(ckd)) == [] and ap.pool_floor_below("gone.md", str(ckd)) == [])
+    _pf_rows = lambda: [r for r in ap.ledger_rows() if r.get("kind") == "pool_floor_halt"]  # noqa: E731
+    _n0 = len(_pf_rows())
+    _jp = Path(ap.HOME) / "judge_prompt.md"
+    _jp_made = not _jp.exists()
+    if _jp_made:
+        _jp.parent.mkdir(parents=True, exist_ok=True)
+        _jp.write_text("judge {CHECKPOINT} in {PRODUCT}\n")
+    vpf = ap.judge({"name": "L", "cwd": str(ckd)}, "pf.md", str(ckd))
+    ap.judge({"name": "L", "cwd": str(ckd)}, "pf.md", str(ckd))
+    ap.judge({"name": "L", "cwd": str(ckd)}, "pfok.md", str(ckd))
+    if _jp_made:
+        _jp.unlink()
+    got = _pf_rows()[_n0:]
+    check("V-AP-POOLFLOOR-BOOKED-ONCE-STILL-JUDGED", len(got) == 1 and got[0]["tokens"] == 0
+          and got[0]["count"] == 4 and got[0]["floor"] == 24 and got[0]["checkpoint"] == "pf.md"
+          and len(_rc_calls) == 3 and vpf["verdict"] == "AGREE")
+    check("V-AP-POOLFLOOR-WORKER-TOLD", "POOL_FLOOR: <name> count <N> floor <F>" in ap.command_text(
+        {"name": "L", "cwd": str(ckd), "product": str(ckd)}, "S9", ckd / "x-PHASES.md", "")
+          and "stop the generation there" in ap.command_text({"name": "L", "cwd": str(ckd), "product": str(ckd)}, "S9",
+                                                              ckd / "x-PHASES.md", ""))
+    ap.run_claude = _krc
+    # ---- T1 O4: the weekly guard is asked before arming and reads as a wait (11-19/20 it was a MissionError per tick)
+    _kg, _gcalls = ap._governor, []
+    os.environ["AP_WEEKLY_CHECK"] = "on"
+
+    def _gov(rc):
+        def f(*a, **k):
+            _gcalls.append(a)
+            if a[0] == "status":
+                return 0, '{"reset_at": 1795021200.0, "pct_lower_bound": 86.7}'
+            return rc, ("arm refused: weekly lower bound 86.7% >= 85% (Owner Q2)" if rc == 3 else "ALLOW")
+        return f
+    ap._governor = _gov(3)
+    ap._WEEKLY.update(at=0.0, why=None)
+    ww = ap.weekly_admits(1795333831.0)
+    check("V-AP-WEEKLY-REFUSAL-IS-A-WAIT", ww is not None and "86.7%" in ww and "2026-11-25T17:00Z" in ww
+          and not ww.startswith(ap.PARK_REASONS))
+    n0 = len(_gcalls)
+    check("V-AP-WEEKLY-ONE-READ-PER-TICK", ap.weekly_admits(1795333831.0 + 10) == ww and len(_gcalls) == n0)
+    ap._governor = _gov(0)
+    ap._WEEKLY.update(at=0.0, why=None)
+    check("V-AP-WEEKLY-ALLOW-ADMITS", ap.weekly_admits(1795333831.0) is None)
+    ap._governor = _gov(-1)
+    ap._WEEKLY.update(at=0.0, why=None)
+    check("V-AP-WEEKLY-UNREADABLE-DEFERS-TO-ARM", ap.weekly_admits(1795333831.0) is None)
+    os.environ["AP_WEEKLY_CHECK"] = "off"
+    ap._WEEKLY.update(at=0.0, why=None)
+    check("V-AP-WEEKLY-KILL-SWITCH", ap.weekly_admits(1795333831.0) is None)
+    ap._governor = _kg
     # ---- verdict parsing
     check("V-AP-LASTJSON", ap.last_json('blah {"a": {"b": 1}} more {"verdict": "AGREE", "x": [1, {"y": 2}]}')
           == {"verdict": "AGREE", "x": [1, {"y": 2}]})
@@ -1138,7 +1303,7 @@ def run_all(ap):
     st = fresh(101)
     _bw, _kb, _kp = {"judge": 0, "plan": 0, "short": True}, ap.budget_admits, ap.plan
     ap.budget_admits = lambda rows, now, ask=ap.GEN_CAP: (
-        "today 1 + 2 > 3 (waits for the next UTC day)" if _bw["short"] and ask < ap.GEN_CAP else None)
+        "today 1 + 2 > 3 (waits for the next UTC day)" if _bw["short"] and ap.JUDGE_ASK < ask < ap.GEN_CAP else None)
     ap.judge = lambda *a: (_bw.__setitem__("judge", _bw["judge"] + 1), _kj(*a))[1]
     ap.plan = lambda *a: (_bw.__setitem__("plan", _bw["plan"] + 1),
                           {"title": "t", "facts": [], "phases": GOOD, "_tokens": 5})[1]
@@ -1252,7 +1417,9 @@ def run_all(ap):
     ls, q = seq(["INFORMATION", "CAPABILITY", "INFORMATION"], 203)
     check("V-AP-INFO-AFTER-CAPABILITY-CONTINUES", ls["status"] == "RUNNING" and not q)
     st = fresh(204)
-    (tmp / "home" / "ledger.jsonl").write_text(json.dumps({"ts": now - 86400, "tokens": 70_000_000}) + "\n")
+    # T1 O2: judging asks JUDGE_ASK, so the frozen line sits that close to the unlocked ceiling (was 70M under a 29M ask)
+    (tmp / "home" / "ledger.jsonl").write_text(json.dumps({"ts": now - 86400,
+                                                           "tokens": 285_261_779 - 200_000_000 - ap.JUDGE_ASK + 1}) + "\n")
     judged = []
     ap.judge = lambda *a: judged.append(a) or dict(full, _tokens=1)
     _keep_u = ap.UNLOCKED_CAP; ap.UNLOCKED_CAP = 285_261_779  # Owner released all frozen 2026-11-12; test the mechanism
@@ -2049,6 +2216,19 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
              g, n, None))(m._superseded)),
          "superseded_not_recorded": lambda m: setattr(m, "superseded_record", lambda v, prior=None: dict(prior or {})),
          "budget_wait_drops_judgment": lambda m: setattr(m, "BUDGET_WAIT_KEEPS_JUDGMENT", False),
+         "pool_floor_never_booked": lambda m: setattr(m, "book_pool_floor_halt", lambda lane, ck, prod: 0),
+         "notfinal_first_declaration_wins": lambda m: setattr(m, "FINAL_DECL_RE", m.NOT_FINAL_RE),
+         "settle_never_corrects": lambda m: setattr(m, "spend_correction", lambda rows, mi, g, s: 0),
+         "owner_escrow_kept": lambda m: setattr(m, "ESCROW_MISSION_KINDS", ("auto_topup",)),
+         "stranded_ignores_live": lambda m: setattr(m, "stranded", (lambda real: lambda rows, sf, live: real(
+             rows, sf, set()))(m.stranded)),
+         "stranded_resettles": lambda m: setattr(m, "SETTLED_KINDS", ("generation_closed",)),
+         "release_from_authority": lambda m: setattr(m, "reservation_release", (lambda real: (
+             lambda rows, mission, gen, a, s: real(list(rows) + [{"ts": -1.0, "kind": "arm_reserve", "gen": gen,
+                                                                  "tokens": 10 ** 12}], mission, gen, a, s)))(
+             m.reservation_release)),
+         "pool_floor_rebooks": lambda m: setattr(m, "ledger_rows", (lambda real: lambda: [
+             r for r in real() if r.get("kind") != "pool_floor_halt"])(m.ledger_rows)),
          "budget_wait_resume_calls": lambda m: setattr(m, "resume_wait", lambda pend: None),
          "policy_refusal_parks_at_once": lambda m: setattr(m, "POLICY_RETRY_TICKS", 0),
          "policy_retry_forever": lambda m: setattr(m, "POLICY_RETRY_TICKS", 99),

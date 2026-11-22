@@ -362,6 +362,34 @@ HOST_GATES = re.compile(r"login required|startup approval|trust (this|the) (fold
 
 LIFECYCLE_WORDS = ("stopped", "done", "exited", "failed", "killed")
 
+# Ascension T1 O5 (Owner "y" 2026-11-22, pane 37612bb0): GEX44 MKWLIB m-36c04360244c sat ~4 h BLOCKED on the host
+# permission prompt "approve Entering worktree" (typed HOST_GATE, owner_required). The Owner's answer was derivable:
+# create the worktree with plain git from the mission cwd, which needs no prompt and no `git fetch`, and bind it.
+# That answer, delivered by decision D1, unblocked it at once. A worktree-entry prompt is now that resolvable question.
+WORKTREE_PROMPT_RX = re.compile(r"\benter(?:ing)?\s*worktree\b|\bEnterWorktree\b", re.I)
+LOCAL_WORKTREE_RESOLUTION = (
+    "Do NOT call EnterWorktree (its permission prompt is what blocked you, and it runs `git fetch origin`). Create the "
+    "worktree with plain git from the mission cwd: `git worktree add -b worktree-<name> .claude/worktrees/<name> HEAD`, "
+    "then `python3 <PP>/tools/gsd_mission.py bind --mission <this mission> --path <that absolute path>`, cd into it and "
+    "continue. No fetch, no push.")
+
+
+def worktree_prompt(waiting_for: str, needs: str, policy_values: dict | None = None) -> dict | None:
+    """A host prompt (or `needs`) that only asks to enter a worktree is QUESTION_RESOLVABLE with the local recipe,
+    unless the repo forbids worktrees (then the use_worktrees=false answer). Anything else in the text -- a deploy, a
+    credential, an Owner class -- is left to the normal classification (None)."""
+    text = " ".join(x for x in (waiting_for, needs) if x)
+    if not WORKTREE_PROMPT_RX.search(text):
+        return None
+    g = gate_question(text, policy_values)
+    if g["result"] == "OWNER_REQUIRED" and g.get("owner_class") != "OWNER_DECISION":
+        return None
+    if (policy_values or {}).get("use_worktrees") is False:
+        g = gate_question("worktree", policy_values)
+    else:
+        g = {"result": "RESOLVE_BY_POLICY", "key": "use_worktrees", "resolution": LOCAL_WORKTREE_RESOLUTION}
+    return {"class": "QUESTION_RESOLVABLE", "why": f"worktree-entry prompt: {text[:180]}", "gate": g}
+
 
 def classify_blocked(job: dict | None, policy_values: dict | None = None) -> dict:
     """Type a host-`blocked` session. {"class", "why", "gate"?}.
@@ -372,6 +400,9 @@ def classify_blocked(job: dict | None, policy_values: dict | None = None) -> dic
     if not job:
         return {"class": "UNKNOWN", "why": "no host job record"}
     needs = str(job.get("needs") or job.get("detail") or "")
+    wt = worktree_prompt(str(job.get("waitingFor") or ""), needs, policy_values)
+    if wt:
+        return wt
     if job.get("waitingFor"):
         return {"class": "PERMISSION_PROMPT", "why": f"host waiting for {job.get('waitingFor')}"}
     if not needs:

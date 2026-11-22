@@ -350,6 +350,20 @@ def main() -> int:
           == "PERMISSION_PROMPT", "permission prompt stays a human wait")
     check("V-MPOL-BLOCKED-OWNER-Q", mp.classify_blocked({"needs": "OK to deploy to production?"}, pv)["class"]
           == "QUESTION_OWNER", "Owner-class question")
+    # Ascension T1 O5 (GEX44 MKWLIB m-36c04360244c, 2026-11-22, ~4 h on "approve Entering worktree"): a worktree-entry
+    # prompt is the runtime's to answer with the local recipe; every other prompt stays a human's.
+    wtp = mp.classify_blocked({"state": "blocked", "waitingFor": "approve Entering worktree"}, {})
+    check("V-MPOL-WORKTREE-PROMPT-RESOLVABLE", wtp["class"] == "QUESTION_RESOLVABLE"
+          and wtp["gate"]["resolution"] == mp.LOCAL_WORKTREE_RESOLUTION
+          and "git worktree add" in wtp["gate"]["resolution"] and "bind" in wtp["gate"]["resolution"], str(wtp))
+    wtf = mp.classify_blocked({"state": "blocked", "needs": "approve EnterWorktree"}, {"use_worktrees": False})
+    check("V-MPOL-WORKTREE-PROMPT-POLICY-FORBIDS", wtf["class"] == "QUESTION_RESOLVABLE"
+          and "use_worktrees=false" in wtf["gate"]["resolution"], str(wtf))
+    check("V-MPOL-WORKTREE-PROMPT-OWNER-CLASS-WINS", mp.classify_blocked(
+        {"waitingFor": "approve Entering worktree to deploy to production"}, {})["class"] == "PERMISSION_PROMPT",
+        "a worktree prompt that also deploys stays a human wait")
+    check("V-MPOL-OTHER-PROMPT-STAYS-HUMAN", mp.classify_blocked({"waitingFor": "approve Write: tools/x.py"}, {})["class"]
+          == "PERMISSION_PROMPT", "only the worktree-entry prompt is judged")
     check("V-MPOL-BLOCKED-UNKNOWN", mp.classify_blocked(None, pv)["class"] == "UNKNOWN", "no job record -> UNKNOWN")
     with tempfile.TemporaryDirectory() as td:
         j = Path(td) / INCIDENT_JOB["sessionId"][:8]

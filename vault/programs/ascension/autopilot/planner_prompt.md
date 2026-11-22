@@ -27,6 +27,12 @@ blockers, the ranked structural opportunities, their discriminating experiments 
 - Never re-run a lever that a recorded negative result retired unless its written reopen condition is now satisfied (cite it).
 - Freeze cohorts in a commit before anything judged on them; pre-register every decision rule in the phase text.
 - A phase that cannot see its positive control ends INSTRUMENT_FAIL, never zero.
+- Count before you spend (W3, Owner 2026-11-22; measured: 21+ generations, 97M, failed on a population, control pool or
+  cohort below its own declared floor, found phases after the freeze). When an instrument declares a floor ("n>=22",
+  ">=24 controls", "held-out >= 60"), the EARLIEST phase that can freeze that population also counts it and says "stop
+  below floor" in its phase line. Below the floor, the generation ends there with an INSTRUMENT_FAIL (population)
+  checkpoint; it never builds the rest. Name a floor only on items that exist before the method runs (certified fns,
+  receipts, DOL bytes), not on items the method produces (completed links, matched fns).
 - Certificates only through the UNCHANGED certifier (certify.decide) of an existing profile, or of a NEW ADDITIVE profile
   that meets ALL S26C conditions (independent target oracle on original DOL bytes; frozen pilot committed before the draw;
   pre/post controls; A2 negatives; historical receipts byte-identical; separate counters) - name each condition in the phase.

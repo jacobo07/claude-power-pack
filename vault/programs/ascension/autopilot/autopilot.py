@@ -45,6 +45,11 @@ DAY_CAP = 500_000_000  # Owner 2026-11-16 'Day cap 500M and total +1B' (pane 4de
 GEN_CAP = 25_000_000
 FRESH_GEN_CAP = 1_000_000
 CALL_RESERVE = 2_000_000  # booked for a judge/planner call whose usage could not be measured (never 0)
+# Ascension throughput T1 O2 (Owner "y" 2026-11-22, pane 37612bb0): what judging a checkpoint asks of the day cap. It was
+# GEN_CAP + 2 * CALL_RESERVE = 29M, i.e. the NEXT generation's caps, so finished generations waited 16 h unjudged at 477M/500M.
+# Measured on the GEX44 ledger 2026-11-22 (315 judges, 477 plans, 49 levers, all measured): judge p99 1.15M, plan p99 2.21M,
+# lever design mean 0.9M (max about 3.5M) -> 6M. Arming keeps its own GEN_CAP ask and its kept-judgment wait.
+JUDGE_ASK = 6_000_000
 # Authority granted before the autopilot existed that the Owner counts inside TOTAL_CAP (not inside a day's cap:
 # it was not granted by the autopilot). Owner 2026-11-11 (pane fa41bae9): "S27's 200M ... it adds to that".
 PRIOR_AUTHORITY = (("m-10566700b1fe", "S27", 200_000_000),)
@@ -277,6 +282,111 @@ def budget_admits(rows: list[dict], now: float, ask: int = GEN_CAP) -> str | Non
     if today + ask > DAY_CAP:
         return f"today {today:,} + {ask:,} > {DAY_CAP:,} (waits for the next UTC day)"
     return None
+
+
+RESERVATION_KINDS = ("arm_reserve", "auto_topup")
+# T2 W1 (Owner "y" 2026-11-22, pane a52cc240): escrow a generation holds. arm_reserve is keyed by gen; the others by
+# mission. Owner top-ups and grants are escrow too: before W1 they were never released (KSR S181K kept 4M).
+ESCROW_GEN_KINDS = ("arm_reserve",)
+ESCROW_MISSION_KINDS = ("auto_topup", "owner_topup", "owner_grant")
+# rows that adjust what a generation has booked: refunds, releases, spend corrections and the close overrun
+SETTLE_MISSION_KINDS = ("reserve_release", "spend_correction", "generation_closed")
+
+
+def _gen_escrow(rows: list[dict], mission, gen) -> list[dict]:
+    return [r for r in rows if (r.get("kind") in ESCROW_GEN_KINDS and gen and r.get("gen") == gen)
+            or (r.get("kind") in ESCROW_MISSION_KINDS and mission and r.get("mission") == mission)]
+
+
+def booked_net(rows: list[dict], mission, gen) -> int:
+    """What the ledger books for one generation: its escrow, plus refunds, releases, spend corrections and the close
+    overrun. Conservation (T2 W1): once a generation is settled, booked_net == its measured spend. That keeps SPENT
+    monotonic: a release can only return booking above the measured spend, never the spend itself."""
+    adj = [r for r in rows if (r.get("kind") == "arm_refund" and gen and r.get("gen") == gen)
+           or (r.get("kind") in SETTLE_MISSION_KINDS and mission and r.get("mission") == mission)]
+    return sum(int(r.get("tokens") or 0) for r in _gen_escrow(rows, mission, gen) + adj)
+
+
+def reservation_release(rows: list[dict], mission: str | None, gen: str | None, authority, spent) -> list[tuple[float, int]]:
+    """T1 O1 (Owner "y" 2026-11-22, Q1: the day cap counts measured spend + open reservations): at close, the part of a
+    generation's reservations it never spent is released, each piece on the DAY its reservation was booked (ts of that
+    row), newest first and never more than that row still holds. Unmeasured spend or no authority (a pre-autopilot
+    generation) releases nothing: an unknown is never 0.
+    T2 W1: the amount is booked_net - spent, the conservation residual. It is idempotent by construction (a settled
+    generation has a residual of 0), and it never exceeds what was booked (review M1: FIFATC S95C had authority 12.5M,
+    booked 9.5M, and the authority-based release erased 3M of measured spend)."""
+    if spent is None or not authority or not isinstance(spent, int) or spent < 0:
+        return []
+    unused = booked_net(rows, mission, gen) - spent
+    if unused <= 0:
+        return []
+    rel = [r for r in rows if r.get("kind") == "reserve_release" and mission and r.get("mission") == mission]
+    out = []
+    for r in sorted(_gen_escrow(rows, mission, gen), key=lambda x: -float(x["ts"])):
+        t = float(r["ts"])
+        held = int(r.get("tokens") or 0) + sum(int(x.get("tokens") or 0) for x in rel
+                                               if abs(float(x.get("ts") or 0) - (t + 0.001)) < 1e-6)
+        amt = min(unused, held)
+        if amt > 0:
+            out.append((t, amt))
+            unused -= amt
+        if unused <= 0:
+            break
+    return out
+
+
+def spend_correction(rows: list[dict], mission, gen, spent) -> int:
+    """Tokens a settled generation must still book so that booked_net == measured spend (0 = conserved). Positive only
+    when the ledger holds less than was measured (an over-release, or a terminal overrun that never got a close row)."""
+    if not mission or spent is None or not isinstance(spent, int) or spent < 0:
+        return 0
+    return max(0, spent - booked_net(rows, mission, gen))
+
+
+def settle(ln: str, mission, gen, authority, spent, at: float | None = None, why: str = "close") -> dict:
+    """Books one generation's settlement: releases above the measured spend (back-dated to each reservation's day), or a
+    spend_correction below it, dated `at` (the close, else now). Idempotent: a second call books nothing."""
+    freed = release_reservations(ln, mission, gen, authority, spent)
+    fix = spend_correction(ledger_rows(), mission, gen, spent) if authority else 0
+    if fix:
+        ledger_add(lane=ln, kind="spend_correction", gen=gen, mission=mission, tokens=fix, spend=spent,
+                   ts=(at + 0.002) if at else _now(), why=why)
+    return {"freed": freed, "corrected": fix}
+
+
+def release_reservations(ln: str, mission: str | None, gen: str | None, authority, spent) -> int:
+    """Books the reserve_release rows (negative tokens, back-dated to the reservation's day). Returns tokens released."""
+    total = 0
+    for ts, amt in reservation_release(ledger_rows(), mission, gen, authority, spent):
+        ledger_add(lane=ln, kind="reserve_release", gen=gen, mission=mission, tokens=-amt, ts=ts + 0.001,
+                   released_ts=_now(), spend=spent, authority=authority)
+        total += amt
+    return total
+
+
+def backfill_releases(rows: list[dict]) -> list[dict]:
+    """One-off: the release rows closed generations would have booked under O1 (generation_closed carries mission,
+    spend, authority; the gen name comes from its generation_armed row). Idempotent through reservation_release."""
+    gen_of = {r.get("mission"): r.get("gen") for r in rows if r.get("kind") == "generation_armed"}
+    out, seen = [], list(rows)
+    for r in rows:
+        if r.get("kind") != "generation_closed" or not r.get("measured"):
+            continue
+        m = r.get("mission")
+        for ts, amt in reservation_release(seen, m, gen_of.get(m), r.get("authority"), r.get("spend")):
+            row = {"lane": r.get("lane"), "kind": "reserve_release", "gen": gen_of.get(m), "mission": m,
+                   "tokens": -amt, "ts": ts + 0.001, "released_ts": float(r["ts"]), "spend": r.get("spend"),
+                   "authority": r.get("authority"), "backfill": True}
+            out.append(row)
+            seen.append(row)
+    return out
+
+
+def reservation_overhead(rows: list[dict]) -> dict:
+    """Reserved vs released, lifetime: the share of booked reservations that closed generations never spent."""
+    reserved = sum(int(r.get("tokens") or 0) for r in rows if r.get("kind") in RESERVATION_KINDS)
+    released = -sum(int(r.get("tokens") or 0) for r in rows if r.get("kind") == "reserve_release")
+    return {"reserved": reserved, "released": released, "ratio": round(released / reserved, 3) if reserved else None}
 
 
 def call_tokens(measured) -> tuple[int, bool]:
@@ -1122,7 +1232,75 @@ def apply_standing_exclusion(v: dict, ls: dict) -> list[str]:
     return moved
 
 
+NOT_FINAL_RE = re.compile(r"^[ \t>*_-]*CHECKPOINT_FINAL[*_]*\s*[:=]\s*[*_`]*\s*(false|no)\b", re.I | re.M)
+# Review M3 (2026-11-22, pane a52cc240): a checkpoint that kept an interim `CHECKPOINT_FINAL: false` and later says
+# `true` is final. Only the LAST declaration counts.
+FINAL_DECL_RE = re.compile(r"^[ \t>*_-]*CHECKPOINT_FINAL[*_]*\s*[:=]\s*[*_`]*\s*(true|yes|false|no)\b", re.I | re.M)
+
+
+def declared_not_final(checkpoint: str, product: str) -> str | None:
+    """T1 O3 (judgment executability): a checkpoint that DECLARES itself not final, in the machine line
+    `CHECKPOINT_FINAL: false`, is not judged by a model (the FIFATC S261C judge spent 183,084 tokens to read that). None =
+    no declaration or unreadable: the judge runs as before (prose saying "interim" is still the judge's to read)."""
+    p = Path(checkpoint)
+    p = p if p.is_absolute() else Path(product) / p
+    try:
+        text = p.read_text(errors="replace")
+    except OSError:
+        return None
+    decls = list(FINAL_DECL_RE.finditer(text))
+    m = decls[-1] if decls else None
+    if not m or not NOT_FINAL_RE.match(m.group(0)):
+        return None  # no declaration, or the last one says final: the judge runs
+    return (f"JUDGMENT_NOT_EXECUTABLE: {p.name} declares '{m.group(0).strip()}' "
+            "(deterministic, no judge call)")
+
+
+POOL_FLOOR_RE = re.compile(r"^[ \t>*_`-]*POOL_FLOOR[*_`]*\s*:\s*[*_`]*\s*([\w.\-/]+)\s+count\s+(\d+)\s+floor\s+(\d+)",
+                           re.I | re.M)
+
+
+def pool_floor_below(checkpoint: str, product: str) -> list[dict]:
+    """W3 (Owner 2026-11-22 '(b) Count-first P1', pane a52cc240): the machine lines `POOL_FLOOR: <name> count <N> floor
+    <F>` of a checkpoint whose count is below its floor. [] = no such line, or the file is unreadable. Measurement only: the
+    judge still runs (skipping it would bypass its protected-identity and gate checks for ~0.4M)."""
+    p = Path(checkpoint)
+    p = p if p.is_absolute() else Path(product) / p
+    try:
+        text = p.read_text(errors="replace")
+    except OSError:
+        return []
+    return [{"name": m.group(1), "count": int(m.group(2)), "floor": int(m.group(3))}
+            for m in POOL_FLOOR_RE.finditer(text) if int(m.group(2)) < int(m.group(3))]
+
+
+def book_pool_floor_halt(lane: dict, checkpoint: str, product: str) -> int:
+    """One ledger row `pool_floor_halt` (0 tokens) per below-floor line of a checkpoint, once per (lane, checkpoint):
+    a re-judgment of the same checkpoint books nothing. Returns the rows booked."""
+    below = pool_floor_below(checkpoint, product)
+    if not below:
+        return 0
+    name = lane.get("name")
+    if any(r.get("kind") == "pool_floor_halt" and r.get("lane") == name and r.get("checkpoint") == checkpoint
+           for r in ledger_rows()):
+        return 0
+    for b in below:
+        ledger_add(lane=name, kind="pool_floor_halt", tokens=0, checkpoint=checkpoint, **b)
+    log(f"{name}: {checkpoint} halted below its declared floor: "
+        + ", ".join(f"{b['name']} {b['count']} < {b['floor']}" for b in below))
+    return len(below)
+
+
 def judge(lane: dict, checkpoint: str, product: str, ruling: str = "") -> dict:
+    try:
+        book_pool_floor_halt(lane, checkpoint, product)
+    except Exception as e:  # noqa: BLE001 -- a measurement never blocks a judgment
+        log(f"{lane.get('name')}: pool_floor_halt not booked: {e!r}")
+    nf = declared_not_final(checkpoint, product)
+    if nf:
+        log(f"{lane.get('name')}: {nf}")
+        return {"verdict": "INCONCLUSIVE", "checkpoint_final": False, "notes": nf, "_tokens": 0, "_session": None,
+                "_not_executable": True}
     prompt = (HOME / "judge_prompt.md").read_text().replace("{CHECKPOINT}", checkpoint).replace("{PRODUCT}", product)
     prompt += ruling
     # 2026-11-19 (pane 08cba76c): the judge's bare gate runs rewrote tracked evidence (MKW s184m/seq_gate_run.json,
@@ -1270,10 +1448,14 @@ def command_text(lane: dict, name: str, packet: Path, notes: str) -> str:
             "never stage pre-existing dirty residue; keep a budget.md with measured spend per phase (gsd_mission.py topology "
             "--mission <this mission>); stop a phase at its cap; no push, no paid API. Each tool call costs ~120k processed "
             "tokens (the resident context is re-read): commit evidence as you go, never leave results uncommitted, and "
-            "commit the checkpoint (or a pivot residual) before 75% of the authority is processed. At the end: "
+            "commit the checkpoint (or a pivot residual) before 75% of the authority is processed. Count before you spend: "
+            "the phase that freezes a population with a declared floor writes the machine line `POOL_FLOOR: <name> count "
+            "<N> floor <F>` into its evidence; when N < F, stop the generation there (no further phase) and commit an "
+            "INSTRUMENT_FAIL (population) checkpoint carrying that line and `CHECKPOINT_FINAL: true`. At the end: "
             "gsd_mission.py checkpoint "
             f"CHECKPOINT_COMPLETE with an evidence checkpoint file for {name} that states new canonical certificates (per "
-            "profile, by function identity) and validated capabilities.")
+            "profile, by function identity) and validated capabilities. The checkpoint carries one machine line, "
+            "`CHECKPOINT_FINAL: true` or `CHECKPOINT_FINAL: false` (false = work remains: it is continued, not judged).")
 
 
 def envelope_admits(lane: dict, rows: list[dict], caps: int) -> str | None:
@@ -1605,12 +1787,55 @@ def checkpoint_from_branch(product: str, base, head) -> str:
 BUDGET_WAIT_KEEPS_JUDGMENT = True
 
 
+def _governor(*args, timeout=120) -> tuple[int, str]:
+    """tools/account_governor.py, the account-level weekly guard that gsd_mission arm enforces (Owner Q2, 85%)."""
+    try:
+        r = subprocess.run([sys.executable, str(PP / "tools" / "account_governor.py"), *args], capture_output=True,
+                           text=True, timeout=timeout)
+        return r.returncode, (r.stdout or "") + (r.stderr or "")
+    except Exception as exc:  # noqa: BLE001 -- unreadable: the arm's own governor check stays authoritative
+        return -1, f"{type(exc).__name__}: {exc}"
+
+
+_WEEKLY = {"at": 0.0, "why": None}
+WEEKLY_TTL_S = 240  # one governor read per tick for every lane, not one per lane
+
+
+def weekly_admits(now: float | None = None) -> str | None:
+    """T1 O4 (Owner "y" 2026-11-22): the arm-time weekly guard, asked BEFORE arming instead of discovered as a
+    MissionError inside `gsd_mission arm` (11-19/20: tracebacks, arm_refund, a parked lane). None = admitted or not
+    measurable (the arm's own check still refuses then); else a day-cap-like wait reason, so the judgment is kept.
+    Kill switch AP_WEEKLY_CHECK=off."""
+    if os.environ.get("AP_WEEKLY_CHECK", "").strip().lower() == "off":
+        return None
+    now = _now() if now is None else now
+    if now - _WEEKLY["at"] < WEEKLY_TTL_S:
+        return _WEEKLY["why"]
+    rc, out = _governor("check", "--action", "arm")
+    why = None
+    if rc == 3:
+        line = next((l.strip() for l in reversed(out.splitlines()) if "refused" in l), out.strip()[-200:])
+        nxt = ""
+        src, sout = _governor("status", "--json")
+        try:
+            ra = float(json.loads(sout[sout.index("{"):]).get("reset_at") or 0)
+            while ra and ra <= now:
+                ra += 7 * 86400
+            if ra:
+                nxt = "; next weekly reset " + dt.datetime.fromtimestamp(ra, dt.timezone.utc).strftime("%FT%H:%MZ")
+        except (ValueError, TypeError, json.JSONDecodeError):
+            nxt = "; next weekly reset unreadable"
+        why = f"weekly guard: {line[:200]}{nxt} (waits for the reset or a lower bound under the guard)"
+    _WEEKLY.update(at=now, why=why)
+    return why
+
+
 def resume_wait(pend: dict) -> str | None:
-    """The budget reason a kept budget-wait plan still waits for (a day-cap wait only), else None."""
+    """The budget reason a kept budget-wait plan still waits for (a day-cap or weekly wait), else None."""
     caps = pend.get("wait_caps")
     if type(caps) is not int or caps <= 0:
         return None
-    why = budget_admits(ledger_rows(), _now(), caps)
+    why = budget_admits(ledger_rows(), _now(), caps) or weekly_admits()
     return why if why and not why.startswith(PARK_REASONS) else None
 
 
@@ -1728,7 +1953,9 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
         checkpoint = str(hits[-1])
         ls["judged_for"] = key = "bootstrap"
     save_state(st)
-    why = budget_admits(ledger_rows(), _now(), GEN_CAP + 2 * CALL_RESERVE)
+    # T1 O2: judging asks only what a judge + planner (+ lever) call costs; the next generation's caps are asked at arming,
+    # whose day-cap wait keeps the judgment (BUDGET_WAIT_KEEPS_JUDGMENT), so no finished generation waits a day unjudged.
+    why = budget_admits(ledger_rows(), _now(), JUDGE_ASK)
     if why:
         ls["judged_for"] = None
         if why.startswith(PARK_REASONS):  # only the day cap is a wait; frozen/total/wall need the Owner
@@ -2015,7 +2242,7 @@ def plan_and_arm(st: dict, lane: dict, ls: dict, key: str, checkpoint: str, prod
         ls.update(snap)  # judged again after the Owner's look: its class must not be counted twice
         return _park(st, ls, lane["name"], f"lane envelope before arming {name}: {ew}",
                      f"PARKED at the lane envelope before arming {name}: {ew}", kind="envelope")
-    why = budget_admits(ledger_rows(), _now(), caps)
+    why = budget_admits(ledger_rows(), _now(), caps) or weekly_admits()  # T1 O4: daily and weekly, jointly
     if why and BUDGET_WAIT_KEEPS_JUDGMENT and not why.startswith(PARK_REASONS):
         # a day-cap wait: keep the judgment, the design and the directive (counted once, like a RETRY)
         ls["judged_for"] = None
@@ -2140,6 +2367,20 @@ def arm_generation(st, lane, ls, name, text, notes, phases, caps, dry) -> str:
             return "RETRY"
         ledger_add(lane=ln, kind="generation_closed", mission=old, tokens=over, spend=spent, authority=prior_auth,
                    measured=spent is not None)
+        freed = 0 if dry else settle(ln, old, ls.get("gen"), prior_auth, spent)["freed"]
+        if freed:
+            log(f"{ln}: released {freed:,} unspent reservation of {ls.get('gen')} ({old}): spent {spent:,} of {prior_auth:,}")
+    elif old and not dry and ls.get("authority"):
+        # the mission ended on its own (terminal): nothing to close, but it is settled: its unspent reservation is
+        # released, a spend above its booking is corrected (T2 W1: before, a terminal overrun was never booked), and
+        # a generation_settled row marks it so the stranded sweep never settles it twice.
+        spent = mission_spend(old)
+        s = settle(ln, old, ls.get("gen"), ls.get("authority"), spent, why="terminal")
+        ledger_add(lane=ln, kind="generation_settled", mission=old, gen=ls.get("gen"), tokens=0, spend=spent,
+                   measured=spent is not None, why="terminal")
+        if s["freed"] or s["corrected"]:
+            log(f"{ln}: settled {ls.get('gen')} ({old}, terminal): spent {spent:,}; released {s['freed']:,}, "
+                f"corrected {s['corrected']:,}")
     step("arm")
     ledger_add(lane=ln, kind="arm_reserve", gen=name, tokens=caps)
     hours = min(16.0, max(1.0, (WALL - dt.datetime.now(dt.timezone.utc)).total_seconds() / 3600))
@@ -2219,9 +2460,97 @@ def factory_applying(name: str) -> bool:
     return False
 
 
+SETTLED_KINDS = ("generation_closed", "generation_settled")
+
+
+def stranded(rows: list[dict], state_of, live: set) -> list[dict]:
+    """T2 W1: armed generations with no close/settle row whose mission is terminal and is no lane's live mission
+    (current, halted-but-resumable, or a pending continuation). Measured 2026-11-22: 71 HALTED held 705.7M of escrow."""
+    done = {r.get("mission") for r in rows if r.get("kind") in SETTLED_KINDS}
+    out = {}
+    for r in rows:
+        m = r.get("mission")
+        if r.get("kind") != "generation_armed" or not m or m in done or m in live or m in out:
+            continue
+        if state_of(m) in TERMINAL:
+            out[m] = {"lane": r.get("lane"), "mission": m, "gen": r.get("gen"),
+                      "authority": r.get("authority"), "ts": float(r["ts"])}
+    return list(out.values())
+
+
+def live_missions(st: dict) -> set:
+    live = set()
+    for ls in (st.get("lanes") or {}).values():
+        for k in ("mission", "halted_mission", "continued_from"):
+            if ls.get(k):
+                live.add(ls[k])
+        f = str((ls.get("pending_plan") or {}).get("for") or "")
+        if f.startswith("continue:"):
+            live.add(f.split(":", 1)[1])
+    return live
+
+
+def conservation(rows: list[dict]) -> dict:
+    """Per settled generation: booked_net - measured spend. 0 = conserved; < 0 = spend the ledger does not count."""
+    gen_of = {r.get("mission"): r.get("gen") for r in rows if r.get("kind") == "generation_armed"}
+    res = {}
+    for r in rows:
+        if r.get("kind") in SETTLED_KINDS and r.get("measured") and isinstance(r.get("spend"), int):
+            m = r.get("mission")
+            if m in gen_of:
+                res[m] = booked_net(rows, m, gen_of[m]) - r["spend"]
+    bad = {m: d for m, d in res.items() if d}
+    return {"settled": len(res), "conserved": len(res) - len(bad), "under": {m: d for m, d in bad.items() if d < 0},
+            "over": {m: d for m, d in bad.items() if d > 0}}
+
+
+def settle_stranded(st: dict, apply: bool) -> dict:
+    """The sweep: each stranded generation is settled at its measured spend (unmeasured releases nothing and is
+    marked). Dry unless `apply`. A spend correction is dated on the generation's arm day."""
+    rows = ledger_rows()
+    todo = stranded(rows, lambda m: (mission(m) or {}).get("state"), live_missions(st))
+    rep = {"stranded": len(todo), "measured": 0, "unmeasured": 0, "freed": 0, "corrected": 0}
+    for g in todo:
+        spent = mission_spend(g["mission"])
+        if spent is None:
+            rep["unmeasured"] += 1
+        else:
+            rep["measured"] += 1
+        if not apply:
+            if spent is not None:
+                rep["freed"] += max(0, booked_net(rows, g["mission"], g["gen"]) - spent)
+                rep["corrected"] += spend_correction(rows, g["mission"], g["gen"], spent)
+            continue
+        auth = g["authority"] or 1  # an autopilot-armed generation: its arm row is the authority evidence
+        s = settle(g["lane"], g["mission"], g["gen"], auth, spent, at=g["ts"], why="stranded_sweep") if spent is not None \
+            else {"freed": 0, "corrected": 0}
+        ledger_add(lane=g["lane"], kind="generation_settled", mission=g["mission"], gen=g["gen"], tokens=0,
+                   spend=spent, measured=spent is not None, why="stranded_sweep")
+        rep["freed"] += s["freed"]
+        rep["corrected"] += s["corrected"]
+    # already-settled generations whose books do not balance (FIFATC S95C -3M, KSR S53K/S181K owner escrow kept)
+    rows = ledger_rows()
+    close = {r.get("mission"): r for r in rows if r.get("kind") in SETTLED_KINDS and r.get("measured")}
+    gen_of = {r.get("mission"): r.get("gen") for r in rows if r.get("kind") == "generation_armed"}
+    cons = conservation(rows)
+    rep["reconciled"] = {**cons["under"], **cons["over"]}
+    for m, d in rep["reconciled"].items():
+        c = close[m]
+        if apply:
+            settle(c.get("lane"), m, gen_of[m], 1, c["spend"], at=float(c["ts"]), why="reconcile")
+        elif d > 0:
+            rep["freed"] += d
+        else:
+            rep["corrected"] += -d
+    return rep
+
+
 def main(argv: list[str]) -> int:
     global OUT
     cmd = argv[1] if len(argv) > 1 else "status"
+    if cmd == "conservation":
+        print(json.dumps(conservation(ledger_rows()), indent=1))
+        return 0
     if cmd == "status":
         print(json.dumps(load_state(), indent=1))
         rows = ledger_rows()
@@ -2237,6 +2566,9 @@ def main(argv: list[str]) -> int:
     lock = _lock()
     if lock is None:
         print("another tick holds the lock; nothing done")
+        return 0
+    if cmd == "settle-stranded":  # T2 W1: under the tick lock; dry unless --apply
+        print(json.dumps(settle_stranded(load_state(), "--apply" in argv), indent=1, default=str))
         return 0
     dry = cmd == "dry-tick"
     if dry:
