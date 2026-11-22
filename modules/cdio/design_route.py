@@ -250,11 +250,48 @@ def ccf_outputs(cmd: str, base: str) -> list:
     return out
 
 
+# A script the session runs writes its outputs from inside its own process: in the cross-sector benchmark
+# (2026-11-22, B-3) `python build.py` wrote a brand kit's ten logo SVGs, the command named none of them, and only the
+# favicon (named by another command) got its framed light/dark review. In a session whose kinds judge extra assets
+# (brand), every such asset under the command's cwd that changed after the command is a candidate; shell_written's
+# mtime rule admits it. The walk is bounded for the Stop chain's 8 s budget; an untimed command enrols nothing (it
+# would pull every logo in the tree into the review).
+_SCRIPT_RUN_RX = re.compile(
+    r"""(?:^|[\s;&|(])(?:py(?:thon[\d.]*)?(?:\.exe)?|node|deno|bun|ruby|pwsh|powershell|bash|sh)\b[^;&|\n]*?"""
+    r"""(?:\s-m\s+[\w.]+|\.(?:py|m?js|ts|rb|ps1|sh)\b)""", re.I)
+_SCRIPT_SKIP_DIRS = {".git", "node_modules", ".claude", "__pycache__", ".venv", "venv"}
+SCRIPT_SCAN_MAX_FILES = 5000
+
+
+def script_outputs(cmd: str, base: str, exts: tuple, since: float | None) -> list:
+    """Assets with one of `exts` under `base` changed at/after `since`, when `cmd` runs a script. [] otherwise."""
+    if not exts or not base or since is None or not _SCRIPT_RUN_RX.search(cmd or "") or not os.path.isdir(base):
+        return []
+    out, seen = [], 0
+    for root, dirs, files in os.walk(base):
+        dirs[:] = [x for x in dirs if x not in _SCRIPT_SKIP_DIRS]
+        for f in files:
+            seen += 1
+            if seen > SCRIPT_SCAN_MAX_FILES:
+                return out
+            if os.path.splitext(f)[1].lower() in exts:
+                p = os.path.join(root, f)
+                try:
+                    if os.path.getmtime(p) >= since - SHELL_MTIME_SLACK_S:
+                        out.append(p)
+                except OSError:
+                    continue
+    return out
+
+
 def _scan_shell(row: dict, inp: dict, st: dict) -> None:
     cmd = str(inp.get("command") or "")
     base = str(row.get("cwd") or "")
     when = _row_epoch(row)
-    for p in shell_paths(cmd) + ccf_outputs(cmd, base):
+    made = []
+    if _SCRIPT_RUN_RX.search(cmd) and when is not None:
+        made = script_outputs(cmd, base, extra_ext(st.get("kinds", []), load_routes()), when)
+    for p in shell_paths(cmd) + ccf_outputs(cmd, base) + made:
         if os.name == "nt":       # Git Bash names C:\x as /c/x (or /mnt/c/x); isabs() says True, canon() makes c:\c\x
             p = _MSYS_DRIVE_RX.sub(lambda m: m.group(1) + ":", p)
         if not os.path.isabs(p) and base:

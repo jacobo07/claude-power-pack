@@ -501,6 +501,29 @@ def test_brand() -> None:
     ok("V-DSR-ASSET-KINDS-AT-WRITE", dr.canon(mark) in kept and dr.canon(shot) not in late, (kept, late))
     ok("V-DSR-CCF-GENERATE-JUDGED", bool(out) and "c1.png" in out.get("reason", "")
        and "old.png" not in out.get("reason", ""), out)
+    # benchmark 2026-11-22, B-3: `python build.py` wrote the kit's logo SVGs from inside its process; the command named
+    # none, so only the favicon (named elsewhere) got its framed review. Negative controls: an SVG from before the
+    # command, an SVG under node_modules, and the same script run in a web session.
+    d6 = tempfile.mkdtemp(dir=_TMP)
+    os.makedirs(os.path.join(d6, "assets"))
+    os.makedirs(os.path.join(d6, "node_modules", "pkg"))
+    for rel in ("assets/mark.svg", "assets/wordmark.svg", "assets/old.svg", "node_modules/pkg/icon.svg"):
+        Path(d6, rel).write_text(LOGO_SVG, encoding="utf-8")
+    os.utime(os.path.join(d6, "assets", "old.svg"), (now - 3600, now - 3600))
+    run_hook(PROMPT, {"session_id": "b6", "prompt": "diseña el logo de la marca"})
+    out6 = stop("b6", d6, shell_transcript("PowerShell", "python build.py", d6, now - 5))
+    r6 = (out6 or {}).get("reason", "")
+    ok("V-DSR-SCRIPT-OUTPUT-JUDGED", "mark.svg" in r6 and "wordmark.svg" in r6 and "old.svg" not in r6
+       and "icon.svg" not in r6, out6)
+    run_hook(PROMPT, {"session_id": "b7", "prompt": "hazme una landing page para un estudio de yoga"})
+    d7 = tempfile.mkdtemp(dir=_TMP)
+    Path(d7, "logo.svg").write_text(LOGO_SVG, encoding="utf-8")
+    ok("V-DSR-SCRIPT-OUTPUT-WEB-SESSION-NOT-JUDGED",
+       stop("b7", d7, shell_transcript("PowerShell", "python build.py", d7, now - 5)) is None)
+    ok("V-DSR-SCRIPT-RUN-SHAPES", all(dr._SCRIPT_RUN_RX.search(c) for c in (
+        "python build.py", "py -3 tools\\gen.py --out assets", "node scripts/icons.mjs", "python -m kit.build",
+        "cd kit; python3 build.py")) and not any(dr._SCRIPT_RUN_RX.search(c) for c in (
+        "cat build.py", "Get-Content build.py", "git add build.py", "python --version")))
     full = os.path.join(_TMP, "brand_full.json")
     Path(full).write_text(json.dumps(GOOD_VERDICTS), encoding="utf-8")
     unrendered = rec.record(full, [logo])
