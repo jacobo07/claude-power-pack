@@ -56,7 +56,11 @@ def kinds_for(path: str, session_kinds: list, routes: dict) -> list | None:
     surface: a logic fix in a component is not a design task (F2).
     """
     s = routes["surfaces"]
-    kinds = [k for k in session_kinds if k in s]
+    ext = os.path.splitext(path or "")[1].lower()
+    # A kind that declares extra_ext (brand) judges ONLY those extensions: as a gating kind for every path it made a
+    # motion/calco page need a review and made app source judged in a brand-only session (review of bb95f710, M1).
+    kinds = [k for k in session_kinds if k in s
+             and (not s[k].get("extra_ext") or ext in [e.lower() for e in s[k]["extra_ext"]])]
     gating = [k for k in kinds if s[k].get("review")]
     overriding = any(s[k].get("overrides") for k in kinds)
     if (path or "").lower().endswith(HTML_EXT):

@@ -136,6 +136,12 @@ def test_routes() -> None:
     # brand gates its assets since 2026-11-22; a page in a brand session must still be judged as web (Taste on)
     pol = dr.policy(dr.effective_kinds(["brand"], routes), routes)
     ok("V-DSR-BRAND-PAGE-KEEPS-WEB", "web" in pol["kinds"] and pol["taste"] and pol["review"], pol)
+    # review of bb95f710, M1: brand judges its assets only; a film/copy page and app source keep their old rules
+    ok("V-DSR-BRAND-SCOPED-TO-ASSETS", dr.kinds_for("film.html", ["motion", "brand"], routes) == ["motion"]
+       and dr.kinds_for("copy.html", ["calco", "brand"], routes) == ["calco"]
+       and dr.kinds_for("Header.tsx", ["brand"], routes) is None
+       and dr.kinds_for("logo.svg", ["brand"], routes) == ["brand"],
+       (dr.kinds_for("film.html", ["motion", "brand"], routes), dr.kinds_for("Header.tsx", ["brand"], routes)))
     ok("V-DSR-BRAND-ASSET-EXT-SCOPED", dr.extra_ext(["brand"], routes) == (".svg", ".png")
        and dr.extra_ext(["web"], routes) == (), (dr.extra_ext(["brand"], routes), dr.extra_ext(["web"], routes)))
 
