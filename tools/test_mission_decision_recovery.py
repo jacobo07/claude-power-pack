@@ -217,6 +217,12 @@ def main() -> int:
     r = blocked_mission("m-bbb000000009", wd, needs="Allow Bash(npm test)?")
     p = gm.plan_next(r, NOW, host_rows("m-bbb000000009", waiting_for="Bash"), pid_alive=lambda p: False)
     check("V-AMRX-CTRL-HOST-WAITINGFOR", p["action"] == "surface_blocked", p["reason"][:100])
+    # Ascension T1 O5 (GEX44 MKWLIB m-36c04360244c, 2026-11-22): a live worktree-entry prompt IS recovered.
+    r = blocked_mission("m-ddd00000000a", wd, needs="approve Entering worktree", waiting_for="approve Entering worktree")
+    p = gm.plan_next(r, NOW, host_rows("m-ddd00000000a", waiting_for="approve Entering worktree"),
+                     pid_alive=lambda p: False)
+    check("V-AMRX-WORKTREE-PROMPT-RECOVERED", p["action"] == "replace" and "decision recovery" in p["reason"],
+          p["reason"][:120])
 
     # Review F2: the launch fails after the answer was decided; the retry still carries it; adoption clears it.
     r10 = blocked_mission("m-bbb00000000a", wd)

@@ -738,8 +738,12 @@ def plan_next(rec: dict, now: float, sessions: list[dict] | None,
         # Only a BARE blocked is judged: a host row carrying `waitingFor` is a live permission prompt, whatever the
         # job file says (review F3).
         hrow = _host_row((rec.get("owner") or {}).get("session_id"), sessions)
+        # Ascension T1 O5 (Owner "y" 2026-11-22): the one live prompt that IS judged is a worktree-entry prompt -- the
+        # host raises it although EnterWorktree is pre-approved (m-3e3a400b52d4, m-2b4b7a36b2c8, m-2be47a186897, GEX44
+        # MKWLIB m-36c04360244c ~4 h), and its answer (plain `git worktree add` + bind) is the runtime's, not a human's.
         b = ((blocked_probe or blocked_recovery)(rec)
-             if state in (RUNNING, BLOCKED) and hrow is not None and not hrow.get("waitingFor") else None)
+             if state in (RUNNING, BLOCKED) and hrow is not None
+             and (not hrow.get("waitingFor") or _worktree_prompt_wait(hrow.get("waitingFor"))) else None)
         cls = (b or {}).get("class")
         if cls == "QUESTION_RESOLVABLE":
             if (int(rec.get("decision_recoveries") or 0) >= MAX_DECISION_RECOVERIES
@@ -1012,6 +1016,15 @@ def owner_question_continuation(rec: dict, b: dict) -> dict | None:
         return None
     return {"owner_class": (b.get("gate") or {}).get("owner_class"), "question": str(b.get("why") or "")[:400],
             "independent_reason": str(blk.get("independent_reason") or ""), "blocker_class": blk.get("class")}
+
+
+def _worktree_prompt_wait(waiting_for) -> bool:
+    """True when a host `waitingFor` only asks to enter a worktree (tools/mission_policy.WORKTREE_PROMPT_RX)."""
+    try:
+        import mission_policy as mpol
+        return bool(mpol.WORKTREE_PROMPT_RX.search(str(waiting_for or "")))
+    except Exception:  # noqa: BLE001 -- unreadable policy: the prompt stays a human's, as before
+        return False
 
 
 def _decision_recovery_off() -> bool:
