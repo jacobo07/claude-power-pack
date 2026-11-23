@@ -5,6 +5,12 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**2026-11-23 ~14:55Z (pane 02c33ead). Owner "raise budget": T3-CT hard authority 24M -> 39M**, recorded in the plan
+(worktree). CORRECTION to the entry below: W0's 8.18M belongs to the old T3 15M, so the 24M was never crossed by
+W0+W1. Against the 24M, ~18.4M is spent (plan 0.7M + W1 17.7M). The remaining waves at P80 = 20.4M, giving
+18.4 + 20.4 = ~39M. The per-wave stop at 2x P50 stays.
+- NEXT: W2 in a FRESH pane (attribution + Pareto + 648k forensic via context_floor_census; P50 2.8M, stop 5.6M).
+
 **2026-11-23 ~14:45Z (pane 02c33ead, /kresume of 0240c4ec). T3-CT W1(c) DONE, W1 CLOSED. STOP: T3-CT hard
 authority 24M is exceeded (HR-COST-002). Owner decision needed before W2.**
 - Worktree 0cc2d499: `tco_compact_gate` now carries a `rotation_shadow` row. It shows the economic rule at the live
