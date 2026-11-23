@@ -12,6 +12,10 @@ investigacion). Solapamiento verificado contra `CDIO-06-aesthetic-families.md`
 una superficie (evaluativo); esta carpeta documenta COMO implementar un
 efecto concreto (patron). No son redundantes.
 
+## Cross-sector visual-kit references — discovery-only intake (2026-11-23)
+
+The Owner added a [46-entry cross-sector visual-kit seed](datasets/CDIO_CROSS_SECTOR_VISUAL_KITS_SEED_2026-11-23.jsonl): 31 published case-study links and 15 discovery platforms. They are *REFERENCE_ONLY*, with no licensed redistributable image, inferred implementation, approved design system or deployable kit. The [canonical implementation and autonomous absorption backlog](../../backlog/2026-11-23_cdio-cross-sector-visual-kit-library.md) requires current rights/access verification, source-to-mechanism distillation with explicit "Cuando NO usar", reuse of existing design-index/CDIO/CCF/CDICF, real downstream automatic invocation, rendered original output and Production Reality/Constitutive Baseline Ratchet evidence. Do not count seed rows as verified VP-* patterns or claim this index auto-loads them today. Source coverage, UX and visual quality are not established by a link list.
+
 ## Hard Rules (dominio: visual-patterns)
 
 ### HR-VP-01 — Toda entrada tiene "Cuando NO usar"
