@@ -5,6 +5,19 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**2026-11-23 (pane d524648e, /kresume of 02c33ead). T3-CT W2 DONE** (worktree 7d17a844, `throughput/W2_ATTRIBUTION_PARETO.md`).
+- Pareto (MEASURED, 1,892 main sessions, 9,352M): top 5% = 74.9%, top 10% = 95.6%. Floor rent 43.2%, growth 52.1%,
+  UNKNOWN 4.6%. Long-pane floor 90-120k; p50 floor 9k.
+- 648,143 = call 295/295 of 6e9d6973 (Jacobo, 0 resets, 108.6M). High-rent classes: repeated Design done-gate Stop
+  feedback (19x, also as 22 hook_blocking_error attachments; double delivery UNVERIFIED), resident skill bodies,
+  tool output (20.7M rent).
+- context_floor_census.py now has `rent_by_producer` (gate 20/20, reset-ignoring mutant killed).
+- Estate rent/day (LOW bound, chars/3.6): UPS hook context >=9.8M, skill bodies >=5.0M, Stop feedback both copies ~1.1M.
+- NPV rank: (1) capability-listing floor ~60M/day est -> W4; (2) UPS hook context; (3) skill bodies; (4) tool-output
+  projection UNKNOWN estate-wide; (5) repeat-gate dedupe.
+- W2 spend: ~3M (under the 5.6M stop).
+- NEXT: W3 (FP-A/B/C routing immunity) in a FRESH pane.
+
 **2026-11-23 ~14:55Z (pane 02c33ead). Owner "raise budget": T3-CT hard authority 24M -> 39M**, recorded in the plan
 (worktree). CORRECTION to the entry below: W0's 8.18M belongs to the old T3 15M, so the 24M was never crossed by
 W0+W1. Against the 24M, ~18.4M is spent (plan 0.7M + W1 17.7M). The remaining waves at P80 = 20.4M, giving
