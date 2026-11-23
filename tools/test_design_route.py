@@ -461,6 +461,10 @@ def test_shell() -> None:
     found = dr.shell_paths(blob)
     took = time.time() - t0
     ok("V-DSR-SHELL-NO-QUADRATIC", found == ["index.html"] and took < 1.0, "%.2f s %s" % (took, found))
+    # B-4 (benchmark 2026-11-22): unexpanded variables, globs and placeholders are not paths; a Next.js [slug] route is
+    nonpaths = dr.shell_paths(r'Copy-Item $out\p1.png x; ls assets\*.svg; cp %TEMP%\a.html b; "$env:temp\c.css"; '
+                              r'f"{out}/p{i}.png"; echo shot?.png; cat app/[slug]/page.tsx docs/real.html')
+    ok("V-DSR-SHELL-NON-PATHS-DROPPED", nonpaths == ["app/[slug]/page.tsx", "docs/real.html"], nonpaths)
     # review M2: Git Bash names the page /c/Users/... ; that must reach the gate like C:\Users\...
     if os.name == "nt":
         d5, page5 = project(CLEAN)

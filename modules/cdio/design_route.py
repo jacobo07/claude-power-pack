@@ -208,15 +208,22 @@ _SHELL_TOKEN_RX = re.compile(r"""(.{0,1000}?\.(?:html?|css|scss|sass|tsx|jsx|vue
 _MSYS_DRIVE_RX = re.compile(r"^/(?:mnt/)?([A-Za-z])(?=/)")
 SHELL_TOKEN_MAX = 1024
 SHELL_MTIME_SLACK_S = 2.0
+# B-4 (benchmark 2026-11-22): `$out\p1.png`, `assets\*.svg`, `%TEMP%\a.html`, `{out}/p{i}.png` were recorded and
+# resolved under the project root. A token still carrying a variable, a glob or a template field is not a literal
+# path; the file it becomes is reached by script_outputs (mtime) instead. `[` stays allowed: app/[slug]/page.tsx is real.
+_SHELL_NONLITERAL_RX = re.compile(r"[$*?{}%]")
 
 
 def shell_paths(cmd: str) -> list:
-    """Visual-extension paths named in a shell command, in order. Tokens longer than SHELL_TOKEN_MAX are not paths."""
+    """Literal visual-extension paths named in a shell command, in order. Tokens longer than SHELL_TOKEN_MAX, and
+    tokens still carrying a variable, glob or template field, are not paths."""
     out = []
     for tok in _SHELL_SPLIT_RX.split(cmd or ""):
         if not tok or len(tok) > SHELL_TOKEN_MAX:
             continue
         m = _SHELL_TOKEN_RX.match(tok)
+        if m and _SHELL_NONLITERAL_RX.search(m.group(1)):
+            continue
         if m and m.group(1) not in out:
             out.append(m.group(1))
     return out
