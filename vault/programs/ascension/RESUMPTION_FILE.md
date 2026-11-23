@@ -5,6 +5,18 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**2026-11-23 (pane 218d8162). Owner "APRUEBO T3-CT": T3 Cognitive Traffic amendment APPROVED.**
+- Plan: worktree `vault/plans/ascension-T3-cognitive-traffic-amendment-20261123.md` (a59a6c19). Hard authority 24M
+  (replaces T3's remaining 6.8M), P50 18M, closeout reserve 1.5M, max 14 cycles / 96 h. Stop and report at 2x a
+  wave's P50. Each wave runs in a FRESH pane.
+- HR-COST-002 reported: W0 8.18M vs P95 1.5M (55 calls x 149k mean; floor 97,750 = 66% of re-read).
+- Waves: W1 economic rotation replay (rebootstrap R from the ~113 /kresume successors; 3 named + top 10 sessions;
+  never / 150k / economic) -> W2 attribution + Pareto + 648k forensic -> W3 FP-A/B/C fixes at their owners -> W4
+  top-NPV lever from W2 -> pilot read + T2 remainder + merge -> closeout. W5-W9 are NOT authorized.
+- Owners to EXTEND (no new system): tools/ccr_pgo.py, tools/session_autopsy.py, tools/context_floor_census.py,
+  tools/tco_compact_gate.py, tools/rollover.py.
+- NEXT: W1 step (a) in a fresh pane: re-bootstrap cost census of the /kresume successors.
+
 **2026-11-23 (pane 218d8162, /kresume of 2e3b8dd4). T3 W0 DONE** on worktree gsd/ascension-throughput, not merged.
 - e778adbe: 3 false positives in governance/KNOWN_FALSE_POSITIVES.md (FP-DESIGN-ROUTE-WORD-IN-PASTED-LIST,
   FP-AKOS-GROUNDING-NOUN-VERB-FAR-APART, FP-WOZ-STUB-WORD-AS-SUBJECT). All three fired on the 103,044-char amendment
