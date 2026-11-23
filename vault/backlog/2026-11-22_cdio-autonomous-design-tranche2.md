@@ -87,6 +87,9 @@ shipped. This file is the handoff for a fresh agent: it holds no context that is
     sector and a counterexample (data screen); scoped criterion PROPOSED, not promoted (Owner decision).
   - Owner "go ahead": B-3 FIXED 148af85f, B-8 FIXED ffdc1e35. Still open: B-4 shell-tracker non-paths, B-5 hook
     litter in foreign repos, B-1 file:// dead links, hero criterion promotion (needs evidence beyond one LLM judge).
+  - Owner "go ahead" + "opt-in by folder" (2026-11-23): B-5 FIXED (verifier needs vault/, ADS needs docs/<type>/,
+    session-delta needs .claude/cache/learnings/; worktrees inherit the main checkout's). V-FRW 6/6, ADS 20/20.
+    Still open: B-4, B-1, hero criterion.
 - (session 85563ce8) Item 3, second run, with a hand-built protocol (`vault/fixtures/cdio_benchmark/BRIEF.md`) and a
   "very clean always" bar. It runs alongside c711a976's headless run in the same folder, with different files.
   - First independent review: b2b 94, pro_service 90, mobile_app 98, brand_kit 88. All APPROVE, 0 critical, 0 major.

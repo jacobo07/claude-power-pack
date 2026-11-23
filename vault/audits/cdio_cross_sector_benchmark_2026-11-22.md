@@ -82,7 +82,13 @@ repair-loop fixture, these 4):
 - **B-4 the shell tracker records non-paths (OPEN, minor):** `$out\p{i}.png`, `assets\*.svg`, `$env:temp\...`
   resolved under the project root. Harmless today (files that do not exist are not judged) but it is noise in the
   state the gate reads.
-- **B-5 hooks write into foreign projects (OPEN):** every case repo gained `.claude/cache/learnings/`,
+- **B-5 hooks write into foreign projects (FIXED 2026-11-23, Owner "opt-in by folder"):** the background verifier
+  writes only where `vault/` exists, ADS only where a `docs/{arch,prd,constitution,changelog}/` folder exists, and
+  session-delta only where `.claude/cache/learnings/` exists. A linked worktree inherits its main checkout's folders
+  (TUA-X-qa has no docs/arch, TUA-X has). Overrides: `CPP_VERIFIER_ANY_REPO`, `CPP_ADS_ANY_REPO`,
+  `CPP_SESSION_DELTA_ANY_REPO`. Gates `tools/test_foreign_repo_writes.py` (V-FRW, 6) and V-ADS-FOREIGN-NOT-ADOPTED,
+  each red on the old writers. Built and red-proved on GEX44 while this host was starved (secret scan of the diff:
+  0 hits), then re-run green here. Original finding: every case repo gained `.claude/cache/learnings/`,
   `vault/handoffs/`, and two gained `docs/{arch,changelog,constitution,prd}/*.md` from Power Pack hooks. A client
   repo would get these on its first session. The dashboard builder also left `e.json` (its reviewer input) behind.
 - **B-6 the gate's NO APLICA exit was used once, legitimately:** nurseapp declared `tests/selftest.html` (its test

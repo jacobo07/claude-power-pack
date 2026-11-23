@@ -9,7 +9,9 @@ module change. It NEVER stages or commits (audit gap #8) and ALWAYS exits
 (fail-open, audit gap #2 partner). MINOR/DELETED changes are silent.
 
 Kill switch (audit gap #1): a `docs/.ads-disabled` file in the repo turns
-ADS off for that repo. Default is ON (Owner Q5).
+ADS off for that repo. Default was ON in every repo (Owner Q5); since
+2026-11-23 (Owner, B-5) only a repo with a docs/{arch,prd,constitution,changelog}/
+folder is synced, so a client repo is never littered.
 
 stdlib-only. Standalone: also runnable as `python ads_sync.py --repo <p>`.
 """
@@ -62,6 +64,30 @@ def _read_cwd_from_stdin() -> str | None:
     return cwd if isinstance(cwd, str) else None
 
 
+def main_worktree(repo: Path) -> Path | None:
+    """The main checkout of a linked worktree, read from its `.git` FILE
+    (`gitdir: <main>/.git/worktrees/<name>`); None for a main checkout or a
+    non-repo. Plain file reads: no git process on the Stop path."""
+    dotgit = Path(repo) / ".git"
+    if not dotgit.is_file():
+        return None
+    try:
+        line = dotgit.read_text(encoding="utf-8").strip()
+    except OSError:
+        return None
+    if not line.startswith("gitdir:"):
+        return None
+    gd = Path(line[len("gitdir:"):].strip())
+    if not gd.is_absolute():
+        gd = (Path(repo) / gd).resolve()
+    # <main>/.git/worktrees/<name> only: a bare or --separate-git-dir repo, or a
+    # worktree of a submodule (.git/modules/x/worktrees/wt), has no checkout at
+    # gd/../../.. -- those answer None, the safe direction.
+    if gd.parent.name != "worktrees" or gd.parent.parent.name != ".git":
+        return None
+    return gd.parent.parent.parent
+
+
 def sync(repo: str | Path) -> dict:
     """Run detection + generation for one repo. Returns a summary dict."""
     from modules.ads.detector import ChangeType, detect_changes, repo_root
@@ -89,6 +115,20 @@ def sync(repo: str | Path) -> dict:
 
     if (repo / KILL_SWITCH).exists():
         summary["disabled"] = True
+        return summary
+
+    # Opt-in by folder (Owner 2026-11-23, CDIO benchmark B-5; replaces Q5's
+    # default-ON for repos that never used ADS). A client repo or a fresh project
+    # with none of the four doc folders gets nothing. Create docs/arch/ (or run
+    # tools/ads_backfill.py) to adopt; CPP_ADS_ANY_REPO=1 restores the old reach.
+    # A linked worktree inherits its main checkout's adoption: TUA-X's docs/arch is
+    # tracked, but a worktree on an older branch has no such folder yet.
+    adopted = any((base / "docs" / t).is_dir()
+                  for base in (repo, main_worktree(repo)) if base is not None
+                  for t in ("arch", "prd", "constitution", "changelog"))
+    if not adopted and \
+            os.environ.get("CPP_ADS_ANY_REPO", "").lower() not in ("1", "on", "true"):
+        summary["not_adopted"] = True
         return summary
 
     now = _now()

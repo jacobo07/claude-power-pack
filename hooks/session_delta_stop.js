@@ -27,10 +27,10 @@ const path = require('path');
 const { spawn } = require('child_process');
 
 const PP_PATH = path.resolve(__dirname, '..');
-const PYTHON_EXE =
+const PYTHON_EXE = process.env.CPP_PYTHON_EXE ||
   'C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe';
 const MODULE = path.join(PP_PATH, 'modules', 'session_delta', 'delta.py');
-const LOG = path.join(os.tmpdir(), 'pp-stop-hooks.log');
+const LOG = process.env.CPP_STOP_HOOK_LOG || path.join(os.tmpdir(), 'pp-stop-hooks.log');
 const STDIN_TIMEOUT_MS = 3000;
 
 function logLine(msg) {
@@ -38,6 +38,27 @@ function logLine(msg) {
     fs.appendFileSync(LOG, new Date().toISOString() + ' session-delta ' + msg + '\n');
   } catch (writeErr) {
     void writeErr;
+  }
+}
+
+// The main checkout of a linked worktree, from its `.git` FILE
+// (`gitdir: <main>/.git/worktrees/<name>`); null otherwise. No git process.
+function mainWorktree(dir) {
+  try {
+    const dotgit = path.join(dir, '.git');
+    if (!fs.statSync(dotgit).isFile()) return null;
+    const line = fs.readFileSync(dotgit, 'utf8').trim();
+    if (!line.startsWith('gitdir:')) return null;
+    let gd = line.slice('gitdir:'.length).trim();
+    if (!path.isAbsolute(gd)) gd = path.resolve(dir, gd);
+    // <main>/.git/worktrees/<name> only (bare, --separate-git-dir and submodule
+    // worktrees answer null, the safe direction; same rule as ads_sync.py).
+    if (path.basename(path.dirname(gd)) !== 'worktrees' ||
+        path.basename(path.dirname(path.dirname(gd))) !== '.git') return null;
+    return path.dirname(path.dirname(path.dirname(gd)));
+  } catch (e) {
+    void e;
+    return null;
   }
 }
 
@@ -50,6 +71,20 @@ function dispatch(data) {
   }
   if (!fs.existsSync(cwd)) {
     logLine('SKIP (cwd does not exist: ' + cwd + ')');
+    return;
+  }
+  // Opt-in by folder (Owner 2026-11-23, CDIO benchmark B-5): a repo without
+  // .claude/cache/learnings/ has not adopted compound learnings, so creating it
+  // there is litter in someone else's project. mkdir it to adopt;
+  // CPP_SESSION_DELTA_ANY_REPO=1 restores the old reach.
+  const anyRepo = /^(1|on|true)$/i.test(process.env.CPP_SESSION_DELTA_ANY_REPO || '');
+  const rel = path.join('.claude', 'cache', 'learnings');
+  // A linked worktree inherits its main checkout's adoption (same rule as ADS).
+  const main = mainWorktree(cwd);
+  const adopted = fs.existsSync(path.join(cwd, rel)) ||
+    (main !== null && fs.existsSync(path.join(main, rel)));
+  if (!anyRepo && !adopted) {
+    logLine('SKIP (not adopted: no .claude/cache/learnings in ' + cwd + ')');
     return;
   }
   const child = spawn(PYTHON_EXE, [MODULE, '--repo', cwd, '--sid', sid], {

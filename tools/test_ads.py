@@ -170,12 +170,27 @@ def main() -> int:
 
         # --- BLOCK 4: Stop-chain runner (D4) ---
         print("\n[BLOCK 4] Stop-chain runner (D4)")
+        env = dict(os.environ, CLAUDE_ADS_NOW=FIXED_NOW)
+        env.pop("CPP_ADS_ANY_REPO", None)
+        # B-5 (2026-11-23): a repo with no docs/<type>/ folder has not adopted
+        # ADS. Same module shape as repo2 below; the only difference is the folder.
+        foreign = td / "foreign"; foreign.mkdir(); _init(foreign)
+        _git(foreign, "commit", "--allow-empty", "-m", "root")
+        fa = foreign / "auth"; fa.mkdir()
+        (fa / "__init__.py").write_text("from .login import go\n", encoding="utf-8")
+        (fa / "login.py").write_text(_big_func("go", 90), encoding="utf-8")
+        rf = subprocess.run([PY, SYNC], input=json.dumps({"cwd": str(foreign)}),
+                            capture_output=True, text=True, timeout=30, env=env)
+        gate("V-ADS-FOREIGN-NOT-ADOPTED",
+             rf.returncode == 0 and not (foreign / "docs").exists(),
+             f"no docs/<type>/ -> nothing written (rc={rf.returncode})")
+
         repo2 = td / "repo2"; repo2.mkdir(); _init(repo2)
+        (repo2 / "docs" / "arch").mkdir(parents=True)   # adopted
         _git(repo2, "commit", "--allow-empty", "-m", "root")
         auth = repo2 / "auth"; auth.mkdir()
         (auth / "__init__.py").write_text("from .login import go\n", encoding="utf-8")
         (auth / "login.py").write_text(_big_func("go", 90), encoding="utf-8")
-        env = dict(os.environ, CLAUDE_ADS_NOW=FIXED_NOW)
         r = subprocess.run([PY, SYNC],
                            input=json.dumps({"hook_event_name": "Stop", "cwd": str(repo2)}),
                            capture_output=True, text=True, timeout=30, env=env)

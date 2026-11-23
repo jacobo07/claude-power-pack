@@ -375,6 +375,15 @@ def main() -> int:
         log(f"cwd not a directory: {cwd}")
         return 0
 
+    # Every handoff lands in <cwd>/vault/handoffs. A repo with no vault/ is not a
+    # Power Pack project (a client repo, a benchmark case): creating vault/ there
+    # was litter, and the mirror-drift finding is about two global files anyway,
+    # so a PP session still raises it. CDIO benchmark B-5, 2026-11-23.
+    if not (cwd / "vault").is_dir() and \
+            os.environ.get("CPP_VERIFIER_ANY_REPO", "").lower() not in ("1", "on", "true"):
+        log(f"skip: no vault/ in {cwd} (not a Power Pack project)")
+        return 0
+
     log(f"start cwd={cwd} session={args.session}")
     check_mirror_parity(cwd)
     check_ovo_staleness(cwd)
