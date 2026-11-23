@@ -177,18 +177,28 @@ const STATE_FILE = path.join(os.homedir(), '.claude', 'state', 'mark-live-sessio
 const SWEEP_BUDGET_MS = Number(process.env.PP_MLS_SWEEP_BUDGET_MS) || 3000;
 const MTIME_SLACK_MS = 5000;   // clock / mtime granularity margin
 
+// v2: resume key proj + '\u0000' + f. A state saved before v2 (cursor key proj + '/' + f) may
+// have SEALED a pass that skipped whole folders (`P-wt` after a cut inside `P`), and those files
+// are below `since` and not in `marked`, so no incremental pass would revisit them. Any state
+// without v2 therefore starts one fresh full pass (resumable, so bounded); `marked` is kept.
+// Pre-push review of 8f4e20c6 and of its fix; V-MLS-05/06.
+const SWEEP_STATE_V = 2;
+
 function loadSweepState() {
   try {
     const s = JSON.parse(fs.readFileSync(STATE_FILE, 'utf-8'));
     if (s && typeof s === 'object') {
+      const current = s.v === SWEEP_STATE_V;
       return {
-        since: Number.isFinite(s.since) ? s.since : null,
+        v: SWEEP_STATE_V,
+        since: current && Number.isFinite(s.since) ? s.since : null,
         marked: s.marked && typeof s.marked === 'object' ? s.marked : {},
-        scan: s.scan && Number.isFinite(s.scan.start) ? s.scan : null,
+        scan: current && s.scan && Number.isFinite(s.scan.start) && typeof s.scan.cursor === 'string'
+          ? s.scan : null,
       };
     }
   } catch { /* missing or corrupt -> full pass */ }
-  return { since: null, marked: {}, scan: null };
+  return { v: SWEEP_STATE_V, since: null, marked: {}, scan: null };
 }
 
 function saveSweepState(state) {
@@ -217,6 +227,11 @@ function orphanMarkSweep(ownSessionId, state = loadSweepState()) {
   const own = (ownSessionId || '').toLowerCase();
   const full = state.since === null;
   if (full && !state.scan) state.scan = { start, cursor: '' };
+  // The resume key joins folder and file with '\u0000', which sorts below every
+  // character a folder name can hold. With '/', a folder `P-wt` (after `P` in the
+  // sort) had keys BELOW a cursor left inside `P` ('-' < '/'), so a budget cut
+  // there skipped all of `P-wt` for good (pre-push review of 8f4e20c6; V-MLS-05). A state from
+  // before this key is not resumed but restarted (SWEEP_STATE_V, V-MLS-06).
   const since = full ? null : state.since - MTIME_SLACK_MS;
   const seen = new Set();
   let cut = false;
@@ -235,7 +250,7 @@ function orphanMarkSweep(ownSessionId, state = loadSweepState()) {
       const uuid = f.slice(0, -'.jsonl'.length);
       if (!UUID_RE.test(uuid)) continue;
       if (own && uuid.toLowerCase() === own) continue;
-      const key = proj + '/' + f;
+      const key = proj + '\u0000' + f;
       if (full && key <= state.scan.cursor) continue;          // done in an earlier chunk
       const filePath = path.join(dir, f);
       if (!full) {

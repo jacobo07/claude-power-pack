@@ -95,7 +95,8 @@ def codex_gates(td: Path):
     def go(args, **extra):
         env = {k: v for k, v in os.environ.items() if k not in ("OPENAI_API_KEY", "PYTHONUTF8", "PYTHONIOENCODING")}
         env.update(CODEX_HOME=str(home), CHM_CODEX_CMD=json.dumps([sys.executable, "-X", "utf8", str(fake)]),
-                   CHM_CODEX_PARALLEL="2", **extra)
+                   CHM_CODEX_PARALLEL="2")
+        env.update(extra)  # after the defaults, so a test can override CHM_CODEX_CMD itself
         return subprocess.run([sys.executable, "-X", "utf8", "-I", str(wrapper)] + args + ["--project", str(proj)],
                               capture_output=True, env=env, timeout=300, cwd=str(proj))
 
@@ -135,6 +136,17 @@ def codex_gates(td: Path):
     out = (r.stdout + r.stderr).decode("utf-8", "replace")
     ok("V-CHM-CODEX-FAILURE-REPORTED", out.count("FAILED") == 5 and "fake refusal" in out
        and len(list(variants.glob("*.png"))) == 11, out[-400:])
+
+    # Pre-push review of 2f2d977f: an npm codex.cmd/.bat shim is refused before anything runs (cmd.exe would
+    # re-parse the prompt). The shim path names a file that does not exist, so a call that slipped through would
+    # not be counted as a call either: the observable is FAILED with the shim reason and no new calls.jsonl row.
+    before = len(calls())
+    r = go(["render", "--concepts", "miga"], CHM_CODEX_CMD=json.dumps([str(home / "codex.cmd")]))
+    out = (r.stdout + r.stderr).decode("utf-8", "replace")
+    r2 = go(["render", "--concepts", "miga"], CHM_CODEX_CMD=json.dumps(["cmd", "/c", str(home / "codex")]))
+    out2 = (r2.stdout + r2.stderr).decode("utf-8", "replace")
+    ok("V-CHM-CODEX-SHIM-REFUSED", out.count("batch shim") == 5 and out2.count("batch shim") == 5
+       and len(calls()) == before, (out[-200:], out2[-200:]))
 
 
 def main():

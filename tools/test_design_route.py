@@ -471,6 +471,13 @@ def test_shell() -> None:
     nonpaths = dr.shell_paths(r'Copy-Item $out\p1.png x; ls assets\*.svg; cp %TEMP%\a.html b; "$env:temp\c.css"; '
                               r'f"{out}/p{i}.png"; echo shot?.png; cat app/[slug]/page.tsx docs/real.html')
     ok("V-DSR-SHELL-NON-PATHS-DROPPED", nonpaths == ["app/[slug]/page.tsx", "docs/real.html"], nonpaths)
+    # pre-push review of d850e5f0: a Remix/TanStack route parameter is a literal `$` in a real file name
+    routes = dr.shell_paths(r"cp a.tsx 'app/routes/posts.$slug.tsx'; cp b.tsx app/routes/$.tsx; "
+                            r"cp c.tsx app\routes\$id.tsx; cp d.tsx app/routes/posts.$slug/route.tsx; "
+                            r"Copy-Item $out\p1.png x; cp $name/x.html y")
+    want = ["app/routes/posts.$slug.tsx", "app/routes/$.tsx", r"app\routes\$id.tsx", "app/routes/posts.$slug/route.tsx"]
+    ok("V-DSR-SHELL-ROUTE-PARAM-KEPT", all(w in routes for w in want)
+       and not any(r.startswith("$") for r in routes), routes)
     # review M2: Git Bash names the page /c/Users/... ; that must reach the gate like C:\Users\...
     if os.name == "nt":
         d5, page5 = project(CLEAN)

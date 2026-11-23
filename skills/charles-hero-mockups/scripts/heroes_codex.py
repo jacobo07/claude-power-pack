@@ -52,6 +52,14 @@ def codex_home() -> Path:
 
 def codex_call(project, key, text, dest, src=None, meta=None, tries=2):
     """Drop-in for heroes.call: same arguments, same sidecar, same log, same return strings."""
+    # An npm `codex.cmd`/`.bat` shim runs through cmd.exe, which re-parses the argv: a `"` in the prompt flips its
+    # quoting and a following `&` runs as a command (BatBadBut). Refuse it; the native codex.exe takes argv as is.
+    # Pre-push review of 2f2d977f.
+    # Also an explicit CHM_CODEX_CMD that goes through cmd.exe itself (["cmd", "/c", "codex.cmd"]).
+    if (Path(CODEX[0]).stem.lower() == "cmd"
+            or any(Path(str(a)).suffix.lower() in (".cmd", ".bat") for a in CODEX)):
+        return (f"{dest.name}: FAILED codex resolves to a batch shim ({CODEX[0]}); install the native codex.exe "
+                f"or set CHM_CODEX_CMD to it")
     for attempt in range(1, tries + 1):
         t0 = time.time()
         try:

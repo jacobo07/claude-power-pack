@@ -212,6 +212,10 @@ SHELL_MTIME_SLACK_S = 2.0
 # resolved under the project root. A token still carrying a variable, a glob or a template field is not a literal
 # path; the file it becomes is reached by script_outputs (mtime) instead. `[` stays allowed: app/[slug]/page.tsx is real.
 _SHELL_NONLITERAL_RX = re.compile(r"[$*?{}%]")
+# ...except a Remix/TanStack route parameter: `posts.$slug.tsx`, `routes/$.tsx`, `posts.$slug/route.tsx` are real
+# file names. A `$name` right after `.`, `/` or `\` and right before `.` or `/` is set aside before the check; a
+# variable still fails (`$out\p1.png`, `$env:temp\...`, a leading `$name/`). Pre-push review of d850e5f0.
+_ROUTE_PARAM_RX = re.compile(r"(?<=[./\\])\$[\w-]*(?=[./])")
 
 
 def shell_paths(cmd: str) -> list:
@@ -222,7 +226,7 @@ def shell_paths(cmd: str) -> list:
         if not tok or len(tok) > SHELL_TOKEN_MAX:
             continue
         m = _SHELL_TOKEN_RX.match(tok)
-        if m and _SHELL_NONLITERAL_RX.search(m.group(1)):
+        if m and _SHELL_NONLITERAL_RX.search(_ROUTE_PARAM_RX.sub("", m.group(1))):
             continue
         if m and m.group(1) not in out:
             out.append(m.group(1))

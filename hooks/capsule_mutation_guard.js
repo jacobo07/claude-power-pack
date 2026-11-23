@@ -186,7 +186,15 @@ async function main() {
   return emit(denial(v));
 }
 
-/** The PreToolUse deny for a refused verdict. Shared with the dispatcher's in-process fallback. */
+/** The PreToolUse deny for a refused verdict. Shared with the dispatcher's in-process fallback.
+ *
+ * DRIFT, stated so the published repo does not over-claim (pre-push review of 77ffd14a,
+ * 2026-11-23): that fallback (INPROC_FALLBACK, kill switch CPP_DISPATCH_INPROC_FALLBACK) lives
+ * ONLY in the live ~/.claude/hooks/hook-dispatcher.js. The repo copy hooks/hook-dispatcher.js
+ * does not have it yet; the two dispatchers have drifted both ways, so a whole-file sync is not
+ * the fix (T-HOOK-DISPATCHER-DRIFT-001). hooks/tests/test-capsule-guard-fallback.js tests the
+ * LIVE dispatcher by default. Until the hunk is ported, a timeout of this guard through the repo
+ * copy still fails open. */
 function denial(v) {
   const m = v.marker || {};
   return {
