@@ -13,7 +13,10 @@ License: MIT, Copyright (c) 2026 Charles Liu. The full text follows.
 1. `SKILL.md` has a local "Power Pack (this host)" section at the end. It covers the Windows interpreter and the
    `-X utf8` requirement, the no-key path, the spend gate, the skipped macOS word check, and how the design router
    loads the skill. Upstream text is untouched.
-2. `gallery/` (six example JPEGs, about 1 MB) is not copied. `README.md` still points at it, so those images do not
+2. `scripts/heroes_codex.py` is a local file, not upstream. It imports `heroes.py` unchanged and replaces only
+   `openai_key` and `call`, so renders go through the Owner's Codex CLI (`codex exec`, built-in image generation,
+   ChatGPT login) instead of the OpenAI Images API. This is the default path on this host (Owner, 2026-11-23).
+3. `gallery/` (six example JPEGs, about 1 MB) is not copied. `README.md` still points at it, so those images do not
    display. Nothing the skill runs reads them.
 
 ## Wiring

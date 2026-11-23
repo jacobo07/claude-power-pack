@@ -68,10 +68,9 @@ DONE for this absorption = `python tools/test_claude_swap.py` exit 0 (V-CSWAP-* 
 
 ## Hero Mockups Activation Criteria (added 2026-11-22)
 Invoke the `charles-hero-mockups` skill (`skills/charles-hero-mockups/`, mirrored at `~/.claude/skills/charles-hero-mockups/`) when the Owner asks for hero mockups, hero art or poster-like hero graphics for a landing page, or for art directions for a site's first screen before it is built. Do not wait to be named: the design router (kind `hero_mockup`) loads it for those words. A bare "hero image" on a real page stays web work and keeps its review.
-These are IMAGES (GPT Image), not code. Run `python -X utf8 -I skills/charles-hero-mockups/scripts/heroes.py ...`; without `-X utf8`, accented copy reaches the prompt garbled on this host. `check` and `render --dry-run` need no key. A real render needs `OPENAI_API_KEY`, which this host lacks: plan, check and dry-run, then say the key is the only thing missing.
-**Spend:** about $0.05 per render, five per page. Up to $5 per batch runs without asking; above $5 the Owner sees the count and the cost first. `out/` and reference screenshots never go into git.
+These are IMAGES, not code. They render through the Owner's Codex CLI (Owner, 2026-11-23), with no API key: `python -X utf8 -I skills/charles-hero-mockups/scripts/heroes_codex.py <check|render|fix|review|board> --project <folder>`. That is upstream `heroes.py` with only the network call swapped for `codex exec` (built-in image tool, `-m gpt-5.6-luna`, about 30-60 s per render, two at a time). Without `-X utf8`, accented copy reaches the prompt garbled on this host.
+**Spend:** Codex renders draw on the Owner's ChatGPT plan. Up to 20 renders per batch run without asking; above that the Owner hears the count first. On a usage-limit error, stop and say so; never loop. `out/` and reference screenshots never go into git.
 Upstream LemonFace0309/charles-skills (MIT, commit `738e27f`), vendored; read `skills/charles-hero-mockups/NOTICE.md` before editing. DONE for this absorption = `python tools/test_charles_hero_mockups.py` exit 0 (V-CHM-* gates).
-
 
 ## Experience Contract — baseline for any interactive surface (CDIO-07, added 2026-08-24)
 A surface is judged at rest by CDIO-01..06. How it BEHAVES — on touch, and while it waits —

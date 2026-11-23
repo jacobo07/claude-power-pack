@@ -46,7 +46,7 @@
       "prompt": "\\b(hero (mock-?ups?|art|graphics?|posters?|directions?)|mock-?ups? (de(l)?|for (a|an|the|my|our)) hero|mock[- ]?up (a|an|the|my|our|some|two|three|four|five|six) hero(es)?|maquetas? (de(l)?|para (el|la|un|una)) hero|art directions? for (the|a|an|my|our) (site|landing|website|homepage|first screen)|direcci[oó]n(es)? de arte (para|de) (la|el|una|un|mi) (web|landing|p[aá]gina|sitio|portada)|awwwards[- ]style hero|poster[- ]like (site|hero|website))\\b",
       "required": ["charles-hero-mockups"],
       "recommended": [],
-      "advice": "Hero mockups are IMAGES of a site's first screen (GPT Image), not code. Run the skill with `python -X utf8 -I <skill>/scripts/heroes.py <check|render|fix|review|board> --project <folder>`: -X utf8 is required on Windows. `check` and `render --dry-run` need no key; a real render needs OPENAI_API_KEY and costs about $0.05 per image (5 per page). Spend up to $5 per batch without asking; above $5, show the cost to the Owner first. Keep `<folder>/out/` and reference screenshots out of git.",
+      "advice": "Hero mockups are IMAGES of a site's first screen (GPT Image), not code. Run the skill through the Owner's Codex CLI: `python -X utf8 -I <skill>/scripts/heroes_codex.py <check|render|fix|review|board> --project <folder>` (no OPENAI_API_KEY; -X utf8 is required on Windows). Up to 20 renders per batch without asking; above that, tell the Owner the count first. The API path (heroes.py + OPENAI_API_KEY, about $0.05 per image) is the fallback: up to $5 per batch without asking. Keep `<folder>/out/` and reference screenshots out of git.",
       "taste": false,
       "review": false,
       "overrides": ["web", "app_ui"]

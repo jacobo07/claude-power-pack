@@ -21,7 +21,8 @@ from modules.cdio import design_route as dr  # noqa: E402
 SKILL = ROOT / "skills" / "charles-hero-mockups"
 MIRROR = Path.home() / ".claude" / "skills" / "charles-hero-mockups"
 SCRIPT = SKILL / "scripts" / "heroes.py"
-FILES = ["SKILL.md", "README.md", "NOTICE.md", "references/craft.md", "scripts/heroes.py", "scripts/ocr.swift"]
+FILES = ["SKILL.md", "README.md", "NOTICE.md", "references/craft.md", "scripts/heroes.py", "scripts/ocr.swift",
+         "scripts/heroes_codex.py"]
 
 # One invented page, with non-ASCII copy on purpose: the encoding gate needs "Común" in it.
 CONCEPTS = {"miga": {
@@ -51,6 +52,89 @@ def run(args, project, utf8=True):
     env = {k: v for k, v in os.environ.items() if k not in ("OPENAI_API_KEY", "PYTHONUTF8", "PYTHONIOENCODING")}
     cmd = [sys.executable] + (["-X", "utf8"] if utf8 else []) + ["-I", str(SCRIPT)] + args + ["--project", str(project)]
     return subprocess.run(cmd, capture_output=True, env=env, timeout=120, cwd=str(project))
+
+
+FAKE_CODEX = r'''
+import json, os, sys, time, uuid
+from pathlib import Path
+from PIL import Image
+argv = sys.argv[1:]
+home = Path(os.environ["CODEX_HOME"])
+t0 = time.time()
+time.sleep(float(os.environ.get("FAKE_SLEEP", "0.3")))
+tid = str(uuid.uuid4())
+print(json.dumps({"type": "thread.started", "thread_id": tid}))
+img = argv[argv.index("-i") + 1] if "-i" in argv else None
+prompt = [a for a in argv if a.startswith("Use your built-in")]
+with open(home / "calls.jsonl", "a", encoding="utf-8") as f:
+    f.write(json.dumps({"argv": argv, "image": img, "prompt": prompt[0] if prompt else None, "t0": t0, "t1": time.time()}, ensure_ascii=False) + "\n")
+if os.environ.get("FAKE_FAIL"):
+    print(json.dumps({"type": "turn.failed", "error": {"message": "fake refusal"}}))
+    sys.exit(1)
+d = home / "generated_images" / tid
+d.mkdir(parents=True)
+Image.new("RGB", (1536, 1024), (31, 95, 216)).save(d / "exec-fake.png")
+print(json.dumps({"type": "turn.completed"}))
+'''
+
+
+def codex_gates(td: Path):
+    """The Codex path, end to end through heroes.py's own commands, against a fake codex (no quota spent)."""
+    home, proj = td / "codexhome", td / "proj"
+    home.mkdir()
+    proj.mkdir()
+    fake = td / "fake_codex.py"
+    fake.write_text(FAKE_CODEX, encoding="utf-8")
+    ref = proj / "ref.png"
+    from PIL import Image
+    Image.new("RGB", (1500, 1000), (200, 190, 170)).save(ref)
+    concepts = {"miga": dict(CONCEPTS["miga"]), "refpage": dict(CONCEPTS["miga"], ref=str(ref), layout="centred")}
+    (proj / "concepts.json").write_text(json.dumps(concepts, ensure_ascii=False, indent=1), encoding="utf-8")
+    wrapper = SKILL / "scripts" / "heroes_codex.py"
+
+    def go(args, **extra):
+        env = {k: v for k, v in os.environ.items() if k not in ("OPENAI_API_KEY", "PYTHONUTF8", "PYTHONIOENCODING")}
+        env.update(CODEX_HOME=str(home), CHM_CODEX_CMD=json.dumps([sys.executable, "-X", "utf8", str(fake)]),
+                   CHM_CODEX_PARALLEL="2", **extra)
+        return subprocess.run([sys.executable, "-X", "utf8", "-I", str(wrapper)] + args + ["--project", str(proj)],
+                              capture_output=True, env=env, timeout=300, cwd=str(proj))
+
+    def calls():
+        p = home / "calls.jsonl"
+        return [json.loads(x) for x in p.read_text(encoding="utf-8").splitlines()] if p.is_file() else []
+
+    r = go(["render"])
+    out = (r.stdout + r.stderr).decode("utf-8", "replace")
+    variants = proj / "out" / "variants"
+    pngs = sorted(variants.glob("*.png")) if variants.is_dir() else []
+    sides = [json.loads(p.with_suffix(".json").read_text(encoding="utf-8")) for p in pngs]
+    ok("V-CHM-CODEX-RENDER-NO-KEY", r.returncode == 0 and len(pngs) == 10 and out.count("ok ") == 10
+       and all(s.get("provider") == "codex" and s.get("codex_thread") for s in sides), (r.returncode, len(pngs), out[-400:]))
+    cs = calls()
+    ok("V-CHM-CODEX-PROMPT-INTACT", len(cs) == 10 and all(c["prompt"] and "Miga Común" in c["prompt"] for c in cs),
+       [c.get("prompt", "")[:80] for c in cs[:2]])
+    with_ref = [c for c in cs if c["image"]]
+    ok("V-CHM-CODEX-REF-ATTACHED", len(with_ref) == 5 and all(Path(c["image"]) == ref for c in with_ref)
+       and all("Edit the attached image" in c["prompt"] for c in with_ref)
+       and all("-i" not in c["argv"] for c in cs if not c["image"]), [(c["image"], c["argv"][-2:]) for c in cs[:6]])
+    ok("V-CHM-CODEX-MODEL-PINNED", all(c["argv"][c["argv"].index("-m") + 1] == "gpt-5.6-luna" for c in cs)
+       and all("read-only" in c["argv"] for c in cs), cs[0]["argv"][:10] if cs else None)
+    spans = sorted((c["t0"], c["t1"]) for c in cs)
+    peak = max(sum(1 for a, b in spans if a <= t < b) for t, _ in spans) if spans else 0
+    ok("V-CHM-CODEX-PARALLEL-BOUNDED", 1 <= peak <= 2, peak)
+
+    before = len(calls())
+    r = go(["fix", "--render", "miga-1", "--note", "make the crumb catch more light", "--n", "1"])
+    new = calls()[before:]
+    fixed = proj / "out" / "variants" / "miga-6.png"
+    ok("V-CHM-CODEX-FIX-EDITS-THE-RENDER", r.returncode == 0 and fixed.is_file() and len(new) == 1
+       and Path(new[0]["image"]) == proj / "out" / "variants" / "miga-1.png" and "crumb catch more light" in new[0]["prompt"],
+       ((r.stdout + r.stderr).decode("utf-8", "replace")[-300:], new))
+
+    r = go(["render", "--concepts", "miga"], FAKE_FAIL="1")
+    out = (r.stdout + r.stderr).decode("utf-8", "replace")
+    ok("V-CHM-CODEX-FAILURE-REPORTED", out.count("FAILED") == 5 and "fake refusal" in out
+       and len(list(variants.glob("*.png"))) == 11, out[-400:])
 
 
 def main():
@@ -102,6 +186,10 @@ def main():
         r3 = run(["render"], proj)
         err = (r3.stdout + r3.stderr).decode("utf-8", "replace")
         ok("V-CHM-RENDER-REFUSES-WITHOUT-KEY", r3.returncode != 0 and "OPENAI_API_KEY not found" in err, err[-300:])
+
+    # --- the Owner's Codex CLI as the image provider (fake codex, no quota) ---
+    with tempfile.TemporaryDirectory() as td:
+        codex_gates(Path(td))
 
     # --- router: loads the skill unnamed, and does not steal ordinary web work ---
     routes = dr.load_routes()
