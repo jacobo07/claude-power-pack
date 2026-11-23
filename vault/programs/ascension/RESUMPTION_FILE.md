@@ -5,6 +5,16 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**2026-11-23 (pane 0240c4ec, /kresume of 6d054073). T3-CT W1(b) DONE; HR-COST-002 cap 2.6M exceeded (3.57M by
+the replay, Owner "carry on").**
+- Worktree commit: `session_autopsy.py --replay` (never / fixed_150k / economic / greedy_hindsight + exact DP
+  optimum). Gate test_session_autopsy_replay 16/16, 2/2 mutants killed. `throughput/W1B_ROTATION_REPLAY.md` + JSON.
+- Estate: 1,915 sessions, 47,563 calls, 10.43B. At R p50 1.23M: fixed 150k saves 28.6% (88% of the optimum 32.5%) and
+  economic saves 27.9%. At R p95 3.30M fixed collapses to 0.7% (172 sessions worse), while economic keeps 13.0%.
+- Verdict: fixed 150k is confirmed at the median and fragile at the tail. ECONOMIC is the W1(c) shadow signal.
+- NEXT: W1(c) in a FRESH pane. Add the economic shadow row to tco_compact_gate (env kill switch), with R as a running
+  p50 from `--rebootstrap`.
+
 **2026-11-23 12:3xZ (pane 6d054073, /kresume of 218d8162). T3-CT W1(a) DONE, then STOPPED by HR-COST-002.**
 - Worktree b164225f: `session_autopsy.py --rebootstrap` (+ gate test_session_autopsy_rebootstrap 9/9, both mutants
   killed) and `throughput/W1A_REBOOTSTRAP_CENSUS.md`. Over 92 unique successors (14 days), R from /kresume to the
