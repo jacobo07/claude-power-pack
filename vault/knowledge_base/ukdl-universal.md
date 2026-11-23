@@ -23009,6 +23009,11 @@ correct Next.js site would have taken a major. No fixture could have shown it.
 **Consumer:** `counts_as_failed` in `tools/design_review_record.py`, pinned by V-DSR-RENDER-ABORTED-NOT-FAILED;
 evidence `vault/audits/cdio_portfolio_vs_bodeguita_2026-11-22.md`.
 
-### Candidate, NOT promoted: hero protagonist below the phone fold
-Observed on 2 of 2 live sites (portfolio, Bodeguita), one author, one date. Needs a third site, a non-food,
-non-personal sector and a counterexample review (a text-led B2B hero can be right) before it becomes a criterion.
+### PROMOTED 2026-11-23 (Owner "go ahead"): hero protagonist in the first phone screen, scoped
+First observed on 2 of 2 live sites (portfolio, Bodeguita), one author, one date. The conditions set here were met
+on 2026-11-22: a third sector (professional service), and a counterexample (a data dashboard, where "hero" does
+not apply). It is promoted only in the scoped form, in CDIO-05 Lens 2:
+- `hero-protagonist-first-phone-screen` for marketing and landing surfaces.
+- `urgent-info-first-screen` for data and app screens.
+- Not applicable to brand sheets and legal pages.
+Evidence E2 (one LLM judge, one author's fixtures); a marketing counterexample in a live review re-scopes it.

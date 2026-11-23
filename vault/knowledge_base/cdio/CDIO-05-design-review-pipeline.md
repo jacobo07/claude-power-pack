@@ -34,6 +34,30 @@ scrolling: value proposition, primary CTA, at least one trust signal (CDIO-03
 §1, §2; CDIO-04 §1). Missing primary action or missing value above the fold are
 findings.
 
+The protagonist in the first phone screen (promoted 2026-11-23 by the Owner).
+Judge it on the phone render, 390x844, first screen without scrolling. The rule
+depends on the surface:
+- `hero-protagonist-first-phone-screen` applies to marketing and landing surfaces.
+  The protagonist is the one thing the page sells or shows: the offer, the product,
+  the dish, the person or the place. Absent from the first phone screen is major.
+  Present but cut by the fold, so that it cannot be recognized, is minor.
+- `urgent-info-first-screen` applies to data and app screens (dashboard, list,
+  detail). "Hero" does not apply there. The test is that the most urgent
+  information (what needs action now) is in the first screen. Absent is major.
+  Partly cut is minor.
+- Brand sheets and legal pages: not applicable. Report `unassessed`, never fail.
+
+Evidence and limits: E2. The criterion was found on 2 of 2 live sites (portfolio,
+Bodeguita). It was then confirmed across a third and fourth sector: a professional
+service, where the baseline had no protagonist and the CDIO final put the offer in
+screen one, and a mobile app and a brand kit. A blind A/B judge preferred the
+version that met it in both pairs. That judge is one LLM, and the fixtures are from
+one author. The dashboard was the counterexample, which is why data screens get
+`urgent-info-first-screen` instead. Sources:
+`vault/audits/cdio_portfolio_vs_bodeguita_2026-11-22.md` and
+`vault/audits/cdio_cross_sector_benchmark_2026-11-22.md` (Item 4). If live reviews
+find a counterexample on a marketing surface, re-scope before trusting the major.
+
 **Lens 3 — Visual hierarchy.** Does the eye land on the intended element first;
 are there at most three type levels; is spacing systematic; does contrast clear
 the floor (CDIO-01)? This lens carries the mechanical accessibility checks.
