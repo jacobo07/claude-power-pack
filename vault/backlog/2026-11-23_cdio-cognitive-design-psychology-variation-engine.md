@@ -41,7 +41,7 @@ No invented numerical psychology coefficient or pseudo-neuroscience. A fixed sco
 ### Verified starting scientific evidence (review date 2026-11-23; evaluate exact claims and newer replications at implementation)
 
 1. Kurosu & Kashimura, CHI 1995 — *Apparent Usability vs. Inherent Usability*, https://chi1995.acm.org/proceedings/shortppr/mk_bdy.htm . Historical correlation between aesthetic properties and apparent usability; not proof that prettier = objectively more usable.
-2. Reber, Schwarz & Winkielman, Psychological Science review (2004), https://pubmed.ncbi.nlm.nih.gov/15582859/ . Processing fluency theory and conditions; theoretical account, not a universal conversion equation.
+2. Reber, Schwarz & Winkielman, Pers Soc Psychol Rev (2004), https://pubmed.ncbi.nlm.nih.gov/15582859/ . Processing fluency theory and conditions; theoretical account, not a universal conversion equation.
 3. Lindgaard et al., Behaviour & Information Technology 25(2), https://doi.org/10.1080/01449290500330448 . Rapid visual appeal evaluations at brief exposure; does not prove final purchasing decisions.
 4. Tuch et al., International Journal of Human–Computer Studies 70(11), https://research.google/pubs/the-role-of-visual-complexity-and-prototypicality-regarding-first-impression-of-websites-working-towards-understanding-aesthetic-judgments/ . Visual complexity and prototypicality affect first-impression ratings; culture, stimulus and context limits.
 5. Liu & Gajos, CHI 2013, https://doi.org/10.1145/2470654.2481281 . Quantification of complexity/colorfulness and rapid aesthetic judgments; prediction of rated visual appeal is not conversion or individual neuropsychological inference.
@@ -131,7 +131,7 @@ No autonomous production A/B deployments, behavioral data collection or paid exp
 | V-CDP-06 | 3 variations change only hex color and call themselves independent art directions | Diversity/grammar test fails |
 | V-CDP-07 | Variant uses competitor's logo, photo, type composition or protected layout | Originality/rights gate rejects |
 | V-CDP-08 | Variant violates approved brand constraints for apparent novelty | Preserve original identity |
-| V-CDP-09 | LLM assigns 98/100 to its own design with no rendered/people evidence | No quality/casual proof; UNASSESSED |
+| V-CDP-09 | LLM assigns 98/100 to its own design with no rendered/people evidence | No quality/causal proof; UNASSESSED |
 | V-CDP-10 | Visual appeal improves while conversion task disappears | Function/goal floor refuses |
 | V-CDP-11 | Accessibility falls below requirements due to palette/typography | Reject candidate regardless of aesthetics |
 | V-CDP-12 | Model preselects winner and online A/B shows contradictory or null result | Update hypothesis; field evidence wins within scope |
