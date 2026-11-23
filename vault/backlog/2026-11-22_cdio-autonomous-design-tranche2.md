@@ -116,6 +116,18 @@ shipped. This file is the handoff for a fresh agent: it holds no context that is
 - Paused before item 3 on budget: the campaign passed 2x the Owner's 250k planning reference (subagents alone
   168k measured). Item 3 needs about 4 build + independent-review cycles at ~50k each: Owner budget call first.
 
+- (session da3be14f, 2026-11-23) Closeout debt:
+  - Repo dispatcher drift FIXED 0cd70523: capsule guard first in the Bash and Edit chains, plus INPROC_FALLBACK.
+    test-capsule-guard-fallback went 4/7 -> 7/7, priority-lane 4/4.
+  - OVO report left local on purpose: `.gitignore:24` ignores `vault/audits/ovo_*.md` (public repo).
+  - **BLOCKED: GEX44 `/tmp/dis.py`** (owner kobii, 452 B, mtime Oct 30, author unknown, not ours). It shadows
+    stdlib `dis` for un-isolated Python run from /tmp. RULE-090 forbids SSH to GEX44, and no dispatcher job type
+    does housekeeping. Borrowing a KSR job name would falsify that job's evidence trail. The proper route is a
+    new `dispatcher_patches/07_*` job that moves the file (not rm) into a dated quarantine, then a
+    kobiiclaw.service restart (RULE-099). That is a live-VPS change: Owner go needed. Until then, run Python
+    on GEX44 with `-I`.
+  - Process note: session c711a976 verified on GEX44 over direct `ssh gex44`, outside the RULE-090 carrier.
+
 ## Mission gates: state at end of tranche 1
 PASS with evidence: 1 reality, 5 functional integrity (fixture), 8 production reality (real Stop hook on a real
 transcript), 9 adversarial (red-team 5, 6, 15, 19, 20, 24 pinned), 10 autonomous repair, 13 institutional learning.
