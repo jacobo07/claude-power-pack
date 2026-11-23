@@ -325,23 +325,35 @@ def gate_g7() -> Gate:
 # ---------- G8: Component D ----------
 
 def gate_g8() -> Gate:
-    g = Gate("G8", "Component D probe writes marker (+ handoff on gaps)")
+    g = Gate("G8", "Component D probe writes its marker OUTSIDE the project (+ handoff on gaps)")
     probe = PP_ROOT / "tools" / "first_time_project_init.py"
     if not probe.is_file():
         g.failed("first_time_project_init.py missing")
         return g
     cwd = _mk_project("g8")
+    # Since 8263232f (B-5) the run-once marker lives in the state folder under
+    # state_key(cwd), never in the project; point that folder at a temp dir so
+    # the gate does not write into the real ~/.claude/state.
+    state = Path(tempfile.mkdtemp(prefix="g8state-"))
     try:
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("ftp_g8", probe)
+        ftp = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(ftp)
         proc = subprocess.run(
             [PYTHON, str(probe), "--cwd", str(cwd), "--session", "g8"],
             capture_output=True, text=True, timeout=15,
+            env=dict(os.environ, CPP_FIRST_TIME_STATE_DIR=str(state)),
         )
         if proc.returncode != 0:
             g.failed(f"probe exit {proc.returncode}: {proc.stderr.strip()[:160]}")
             return g
-        marker = cwd / ".pp-onboarded-prereqs"
+        if (cwd / ".pp-onboarded-prereqs").exists():
+            g.failed("probe wrote its marker INTO the project (B-5 regression)")
+            return g
+        marker = state / f"{ftp.state_key(cwd)}.json"
         if not marker.is_file():
-            g.failed("marker missing after probe")
+            g.failed(f"marker missing after probe (expected {marker.name} in the state dir)")
             return g
         try:
             data = json.loads(marker.read_text(encoding="utf-8"))
@@ -355,14 +367,17 @@ def gate_g8() -> Gate:
         if gaps == 0:
             g.passed("probe ran 4 checks, 0 gaps on this host (marker valid)")
         else:
-            handoff_dir = cwd / "vault" / "handoffs"
+            # A gap handoff goes to vault/handoffs only in a repo that has vault/;
+            # otherwise next to the marker (8263232f).
+            handoff_dir = cwd / "vault" / "handoffs" if (cwd / "vault").is_dir() else state
             handoffs = list(handoff_dir.glob("pp-onboarding-*.md")) if handoff_dir.is_dir() else []
             if handoffs:
-                g.passed(f"gaps={gaps}, handoff written")
+                g.passed(f"gaps={gaps}, handoff written to {handoff_dir.name}")
             else:
-                g.failed(f"gaps={gaps} but no handoff in vault/handoffs/")
+                g.failed(f"gaps={gaps} but no handoff in {handoff_dir}")
     finally:
         shutil.rmtree(cwd, ignore_errors=True)
+        shutil.rmtree(state, ignore_errors=True)
     return g
 
 
