@@ -5,6 +5,27 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**2026-11-23 ~14:45Z (pane 02c33ead, /kresume of 0240c4ec). T3-CT W1(c) DONE, W1 CLOSED. STOP: T3-CT hard
+authority 24M is exceeded (HR-COST-002). Owner decision needed before W2.**
+- Worktree 0cc2d499: `tco_compact_gate` now carries a `rotation_shadow` row. It shows the economic rule at the live
+  segment's current call: rotate when (resident - floor) * age > R. The row is advisory and never moves
+  should_compact or the recommendation (pinned). Kill switch `CPP_ROTATION_SHADOW=0`. The SessionStart path skips it.
+- R = the running p50 from `tco_compact_gate.py --refresh-r`, which writes the 14-day /kresume census to
+  `~/.claude/state/rotation_r_census.json`. The refresh takes 94 s, so it is run explicitly. A census missing or
+  older than 3 days falls back to the W1(a) constants, labelled STALE.
+  - Live census: n=90, R p50 1,228,888, floor 98,697.
+- Gate `tools/test_tco_rotation_shadow.py`: 15/15, 2/2 mutants killed. test_tco: 14/14.
+- Live on this pane: resident 150,917, age 28, surplus*age 1.46M > R, so `would_rotate=True` (fixed150k also True).
+- W1 OVERRUN, all measured from transcripts:
+  - W1(a) pane 6d054073: 8.89M.
+  - W1(b) pane 0240c4ec: ~4.0M.
+  - W1(c) this pane: 4.81M over 35 calls.
+  - W1 total: ~17.7M against a P50 of 2.0M (2x stop = 4.0M).
+  - T3-CT so far: W0 8.18M + W1 17.7M = ~25.9M, over the 24M HARD authority.
+- NEXT: Owner decision first: raise the authority, cut the scope, or stop T3-CT. W2 (attribution + Pareto + 648k
+  forensic via context_floor_census) does NOT start without it. When the shadow is promoted from advisory to
+  enforcing, the Owner makes that call after reading the rows.
+
 **2026-11-23 (pane 0240c4ec, /kresume of 6d054073). T3-CT W1(b) DONE; HR-COST-002 cap 2.6M exceeded (3.57M by
 the replay, Owner "carry on").**
 - Worktree commit: `session_autopsy.py --replay` (never / fixed_150k / economic / greedy_hindsight + exact DP
