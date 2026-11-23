@@ -151,6 +151,53 @@ def main() -> int:
              mw is not None and mw.resolve() == main.resolve()
              and not s.get("not_adopted"),
              f"main_worktree={mw}, not_adopted={s.get('not_adopted')}")
+
+        # first_time_project_init.py (SessionStart): it probed the GLOBAL PP install yet
+        # wrote <cwd>/.pp-onboarded-prereqs into every repo with a manifest, and
+        # vault/handoffs/ on a gap. USERPROFILE/HOME point at an empty folder, so every
+        # check finds no Power Pack and the gap path (the handoff) is exercised for real.
+        state = tmp / "ftstate"
+        fakehome = tmp / "fthome"
+        fakehome.mkdir()
+        ftenv = _env(CPP_FIRST_TIME_STATE_DIR=str(state), HOME=str(fakehome),
+                     USERPROFILE=str(fakehome))
+        probe = PP_ROOT / "tools" / "first_time_project_init.py"
+
+        def _probe(cwd: Path) -> int:
+            return subprocess.run([sys.executable, str(probe), "--cwd", str(cwd), "--session", "vfrw"],
+                                  capture_output=True, text=True, timeout=60, env=ftenv).returncode
+
+        sys.path.insert(0, str(PP_ROOT / "tools"))
+        from first_time_project_init import state_key
+        ftf = _repo(tmp / "ftforeign")
+        rc = _probe(ftf)
+        key = state_key(ftf)
+        in_repo = sorted(p.name for p in ftf.iterdir() if p.name not in (".git", "index.html"))
+        gaps = sorted(p.name for p in state.glob(f"{key}-gaps-*.md")) if state.is_dir() else []
+        gate("V-FRW-FIRSTTIME-FOREIGN-UNTOUCHED",
+             rc == 0 and not in_repo and (state / f"{key}.json").is_file() and bool(gaps),
+             f"rc={rc}, written in repo={in_repo}, state marker={(state / f'{key}.json').is_file()}, gaps={gaps}")
+
+        fta = _repo(tmp / "ftadopted")
+        (fta / "vault").mkdir()
+        rc = _probe(fta)
+        hd = fta / "vault" / "handoffs"
+        written = sorted(p.name for p in hd.glob("pp-onboarding-*.md")) if hd.is_dir() else []
+        gate("V-FRW-FIRSTTIME-ADOPTED-HANDOFF",
+             rc == 0 and bool(written) and not (fta / ".pp-onboarded-prereqs").exists(),
+             f"rc={rc}, vault handoffs={written}")
+
+        before = sorted(p.name for p in state.iterdir())
+        rc = _probe(ftf)
+        after = sorted(p.name for p in state.iterdir())
+        gate("V-FRW-FIRSTTIME-RUNS-ONCE", rc == 0 and before == after,
+             f"new files on second run={sorted(set(after) - set(before))}")
+
+        hook = PP_ROOT / "hooks" / "first-time-project.js"
+        js = subprocess.run([NODE, "-e", "process.stdout.write(require(process.argv[1]).stateKey(process.argv[2]))",
+                             str(hook), str(ftf)], capture_output=True, text=True, timeout=30)
+        gate("V-FRW-FIRSTTIME-KEY-PARITY", js.returncode == 0 and js.stdout == key,
+             f"js={js.stdout!r} py={key!r} err={js.stderr[-120:]!r}")
     finally:
         # git object files are read-only on Windows; plain ignore_errors left
         # every .git/objects file behind in %TEMP%.

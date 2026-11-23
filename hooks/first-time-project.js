@@ -10,22 +10,40 @@
  * stub; D runs a quick prereq probe to surface PP install gaps the first
  * time the agent visits a real project dir.
  *
- * Decision tree (idempotent via .pp-onboarded-prereqs marker - distinct
- * from .pp-onboarded so Component A and D don't race or stomp each other):
- *   1. cwd/.pp-onboarded-prereqs exists                  -> silent no-op
+ * Decision tree (idempotent via a marker OUTSIDE the project since B-5, 2026-11-23:
+ * ~/.claude/state/first-time-project/<stateKey(cwd)>.json):
+ *   1. legacy cwd/.pp-onboarded-prereqs, or the state marker, exists -> silent no-op
  *   2. cwd missing .git                                  -> silent no-op
  *   3. cwd has .git + manifest                           -> detached probe
- *   4. Probe writes .pp-onboarded-prereqs with results,
- *      and vault/handoffs/pp-onboarding-<ts>.md when gaps exist.
+ *   4. Probe writes the state marker with results. When gaps exist it writes a
+ *      handoff: vault/handoffs/pp-onboarding-<ts>.md only if the repo already has
+ *      vault/ (a PP project); otherwise next to the state marker. A repo that never
+ *      adopted the Power Pack gets nothing written into it.
  *
  * Shared boilerplate lives in hooks/_shared/hook-runtime.js.
  */
 'use strict';
 
+const crypto = require('crypto');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { spawn } = require('child_process');
+
+// B-5 (2026-11-23): the run-once marker lives OUTSIDE the project, keyed by its path, because the
+// probe checks the global PP install and its old <cwd>/.pp-onboarded-prereqs landed in every client
+// repo. Must equal state_key() in tools/first_time_project_init.py (V-FRW-FIRSTTIME-KEY-PARITY).
+function stateKey(cwd) {
+  let norm = path.resolve(cwd);
+  if (process.platform === 'win32') norm = norm.toLowerCase();
+  return crypto.createHash('sha1').update(norm, 'utf8').digest('hex').slice(0, 16);
+}
+function stateFile(cwd) {
+  const dir = process.env.CPP_FIRST_TIME_STATE_DIR ||
+    path.join(os.homedir(), '.claude', 'state', 'first-time-project');
+  return path.join(dir, stateKey(cwd) + '.json');
+}
+module.exports = { stateKey, stateFile };
 
 const PP_ROOT = path.normalize(
   path.join(os.homedir(), '.claude/skills/claude-power-pack')
@@ -34,13 +52,14 @@ const rt = require(path.join(PP_ROOT, 'hooks/_shared/hook-runtime'));
 const PROBE_SCRIPT = path.join(PP_ROOT, 'tools', 'first_time_project_init.py');
 const logErr = rt.makeLogErr('first-time-project');
 
-rt.runHook(logErr, async (event) => {
+if (require.main === module) rt.runHook(logErr, async (event) => {
   // Env-payload fallback (BL-SESSION-FOLD-001): the hub detached-spawns this
   // hook with no stdin, passing cwd via PP_EVT_CWD. The standalone entry
   // still supplies cwd via stdin.
   const cwd = (event && event.cwd) || process.env.PP_EVT_CWD;
   if (!cwd) return;
-  if (fs.existsSync(path.join(cwd, '.pp-onboarded-prereqs'))) return;
+  if (fs.existsSync(path.join(cwd, '.pp-onboarded-prereqs'))) return;   // legacy in-repo marker
+  if (fs.existsSync(stateFile(cwd))) return;
   if (!fs.existsSync(path.join(cwd, '.git'))) return;
   if (!rt.detectManifest(cwd)) return;
   if (!fs.existsSync(PROBE_SCRIPT)) return;

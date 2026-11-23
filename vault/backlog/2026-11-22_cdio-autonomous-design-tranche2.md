@@ -90,6 +90,18 @@ shipped. This file is the handoff for a fresh agent: it holds no context that is
   - Owner "go ahead" + "opt-in by folder" (2026-11-23): B-5 FIXED (verifier needs vault/, ADS needs docs/<type>/,
     session-delta needs .claude/cache/learnings/; worktrees inherit the main checkout's). V-FRW 6/6, ADS 20/20.
     Still open: B-4, B-1, hero criterion.
+  - (session 85563ce8, Owner "y")
+    - B-4 FIXED d850e5f0: tokens with $ * ? { } % are not paths. Next.js [slug] routes are kept.
+    - B-1 FIXED ff5de9dd: file:// links to missing local files are dead links (FACTS_VERSION 2). A small icon
+      repeated is still not a duplicate image, by design (DUP_MIN_PX).
+    - B-5 residual FIXED (next commit): the SessionStart first-time probe wrote `.pp-onboarded-prereqs`, and
+      `vault/handoffs/` on a gap, into every repo with a manifest. Its marker now lives in
+      `~/.claude/state/first-time-project/`. The handoff goes into the repo only if it already has `vault/`.
+      Gates: V-FRW 10/10, 4 new; the HEAD probe was shown littering a clean repo.
+    - Left as is: `learning-sentinel.js` writes LEARNINGS_PENDING.md only when learning files exist. It is a global
+      `~/.claude/hooks` file and is now unreachable in a foreign repo, since nothing creates the folder there.
+    - The tranche-2 engineering list is closed. What remains is Owner-only: item 4 (hero criterion promotion)
+      and item 7 (Bodeguita photos).
 - (session 85563ce8) Item 3, second run, with a hand-built protocol (`vault/fixtures/cdio_benchmark/BRIEF.md`) and a
   "very clean always" bar. It runs alongside c711a976's headless run in the same folder, with different files.
   - First independent review: b2b 94, pro_service 90, mobile_app 98, brand_kit 88. All APPROVE, 0 critical, 0 major.

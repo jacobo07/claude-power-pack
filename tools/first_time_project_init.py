@@ -6,8 +6,17 @@ SessionStart in a real project dir (.git + manifest, no
 .pp-onboarded-prereqs marker).
 
 Runs 4 quick checks (each <500 ms) and writes:
-  - <cwd>/.pp-onboarded-prereqs           (audit trail, always)
-  - <cwd>/vault/handoffs/pp-onboarding-<ts>.md  (only when gaps exist)
+  - ~/.claude/state/first-time-project/<key>.json   (audit trail + run-once marker, always)
+  - when gaps exist, a handoff: <cwd>/vault/handoffs/pp-onboarding-<ts>.md if the repo
+    already has vault/ (a Power Pack project), else ~/.claude/state/first-time-project/
+    <key>-gaps-<ts>.md
+
+Nothing is written inside a repo that never adopted the Power Pack (CDIO benchmark B-5,
+2026-11-23, "opt-in by folder"): the checks are about the global PP install, not the project,
+and the old <cwd>/.pp-onboarded-prereqs marker landed in every client repo with a manifest.
+A legacy in-repo marker is still honoured as "already probed". <key> is the first 16 hex of
+sha1(normcase(abspath(cwd))); hooks/first-time-project.js computes the same key
+(V-FRW-FIRSTTIME-KEY-PARITY). CPP_FIRST_TIME_STATE_DIR overrides the state folder (tests).
 
 Quick checks (the slow surface area of verify_full_install.py is
 intentionally excluded - this is a first-impression probe, not the full
@@ -23,6 +32,7 @@ re-probe).
 """
 from __future__ import annotations
 import argparse
+import hashlib
 import json
 import os
 import sys
@@ -33,6 +43,14 @@ from pathlib import Path
 HOME = Path(os.path.expanduser("~"))
 PP_ROOT = HOME / ".claude" / "skills" / "claude-power-pack"
 LOG_FILE = HOME / ".claude" / "logs" / "first-time-project.log"
+STATE_DIR = Path(os.environ.get("CPP_FIRST_TIME_STATE_DIR")
+                 or HOME / ".claude" / "state" / "first-time-project")
+
+
+def state_key(cwd) -> str:
+    """Per-project key, outside the project. Must equal stateKey() in hooks/first-time-project.js."""
+    norm = os.path.normcase(os.path.abspath(str(cwd)))
+    return hashlib.sha1(norm.encode("utf-8")).hexdigest()[:16]
 
 
 def log(msg: str) -> None:
@@ -102,7 +120,10 @@ def main() -> int:
         log(f"cwd not a directory: {cwd}")
         return 0
 
-    marker = cwd / ".pp-onboarded-prereqs"
+    if (cwd / ".pp-onboarded-prereqs").exists():
+        return 0  # legacy in-repo marker from before B-5: already probed
+    key = state_key(cwd)
+    marker = STATE_DIR / f"{key}.json"
     if marker.exists():
         return 0  # belt + suspenders, hook already guards this
 
@@ -126,16 +147,21 @@ def main() -> int:
     }
 
     try:
+        STATE_DIR.mkdir(parents=True, exist_ok=True)
         marker.write_text(json.dumps(summary, indent=2), encoding="utf-8")
     except Exception as e:
         log(f"marker write failed: {e}")
 
     if gaps:
         try:
-            handoff_dir = cwd / "vault" / "handoffs"
-            handoff_dir.mkdir(parents=True, exist_ok=True)
             ts = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H-%M-%SZ")
-            handoff_path = handoff_dir / f"pp-onboarding-{ts}.md"
+            if (cwd / "vault").is_dir():   # a Power Pack project: the handoff belongs in its vault
+                handoff_dir = cwd / "vault" / "handoffs"
+                handoff_path = handoff_dir / f"pp-onboarding-{ts}.md"
+            else:                           # any other repo stays untouched (B-5)
+                handoff_dir = STATE_DIR
+                handoff_path = handoff_dir / f"{key}-gaps-{ts}.md"
+            handoff_dir.mkdir(parents=True, exist_ok=True)
             lines = [
                 "# Power Pack Onboarding Gaps Detected",
                 "",
