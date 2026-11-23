@@ -340,6 +340,7 @@ SEEDED_EXTRA = ('<img src="missing-hero.jpg" alt="Sala" width="400" height="300"
                 '<a href="%s">Reservar mesa</a></header><div style="width:900px">Carta</div>'
                 '<img src="plato.svg" alt="Plato" width="200" height="200">'
                 '<img src="plato.svg" alt="Plato" width="200" height="200">'
+                '<a href="servicios.html">Servicios</a><a href="plato.svg#top">Ver plato</a>'
                 '<script>throw new Error("seeded failure")</script>') % NOWHERE
 PLATO_SVG = ('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200">'
              '<rect width="200" height="200" fill="#a33"/></svg>')
@@ -391,6 +392,11 @@ def test_render() -> None:
     ok("V-DSR-RENDER-FACTS-SEEDED", all(w in got for w in SEEDED_WANT) and over is not None
        and "phone" in over.observed and "desktop" not in over.observed,
        ([w for w in SEEDED_WANT if w not in got], {k: v.observed for k, v in got.items()}, (r.stdout + r.stderr)[-300:]))
+    # benchmark 2026-11-22, B-1: a link to a local file that does not exist is dead on a file:// render; one that exists
+    # (with a #fragment) is not
+    dead = got.get("RENDER-DEAD-LINK")
+    ok("V-DSR-RENDER-DEAD-LOCAL-LINK", dead is not None and "servicios.html" in dead.observed
+       and "Ver plato" not in dead.observed, dead.observed if dead else None)
     # benchmark 2026-11-22, B-8: a one-file app swaps sibling <section hidden> screens by JS state; the render captured
     # the first screen only, so the APPROVE bound bytes whose other screens no render showed. Every hidden screen is now
     # revealed alone, captured and observed. Negative control: a hidden role=dialog section is an overlay, not a screen.

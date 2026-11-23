@@ -52,7 +52,7 @@ def _launch(pw):
 # Render facts (V-DSR-RENDER-FACTS, 2026-11-22): what the browser itself observed while rendering, so a defect a
 # machine can see never depends on the reviewer noticing it in a PNG. Six reviewer "pass" verdicts used to APPROVE a
 # page whose images were broken. Images under DUP_MIN_PX wide (icons, logos in a list) do not count as repeats.
-FACTS_VERSION = 1
+FACTS_VERSION = 2   # 2: dead_links also lists links to missing local files on a file:// render (B-1)
 DUP_MIN_PX = 120
 OVERFLOW_TOLERANCE_PX = 1
 FACTS_JS = """() => {
@@ -67,10 +67,27 @@ FACTS_JS = """() => {
     const h = (a.getAttribute('href') ?? '').trim();
     return h === '' || h === '#' || /^javascript:/i.test(h);
   }).map(a => (a.textContent || '').trim().replace(/\\s+/g, ' ').slice(0, 60));
+  const local = [...document.querySelectorAll('a[href]')].filter(a => a.protocol === 'file:' && (a.textContent || '').trim())
+    .map(a => [(a.textContent || '').trim().replace(/\\s+/g, ' ').slice(0, 60), a.href]);
   const de = document.documentElement;
-  return {broken_images: broken, duplicate_images: dup, dead_links: dead,
+  return {broken_images: broken, duplicate_images: dup, dead_links: dead, local_links: local,
           overflow_px: Math.max(0, de.scrollWidth - window.innerWidth), viewport_px: window.innerWidth};
 }""" % DUP_MIN_PX
+
+
+def _missing_local_links(seen: dict) -> dict:
+    """B-1 (benchmark 2026-11-22): on a file:// render a link to a local file that does not exist goes nowhere, but
+    the browser never requests it, so no fact saw it (reports.html, servicios.html were caught only by a reviewer).
+    Each file: link is checked on disk; a missing target joins dead_links. The raw list is not kept in the facts."""
+    from urllib.parse import urlsplit
+    from urllib.request import url2pathname
+    for text, href in seen.pop("local_links", None) or []:
+        path = url2pathname(urlsplit(href).path)
+        if path and not os.path.exists(path):
+            entry = "%s -> %s (missing file)" % (text, os.path.basename(path.rstrip("\\/")) or path)
+            if entry not in seen.setdefault("dead_links", []):
+                seen["dead_links"].append(entry)
+    return seen
 _IGNORED_URL = re.compile(r"/favicon\.ico(?:$|\?)", re.I)
 
 # One-file apps swap sibling screens by JS state (cross-sector benchmark 2026-11-22, B-8: the nurse app's onboarding
@@ -129,7 +146,7 @@ def _render_screens(page, out_dir: Path, stem: str) -> tuple:
             page.wait_for_timeout(150)
             png = out_dir / ("%s-screen-%d.png" % (stem, i))
             page.screenshot(path=str(png), full_page=True)
-            seen = page.evaluate(FACTS_JS)
+            seen = _missing_local_links(page.evaluate(FACTS_JS))
         except Exception:  # noqa: BLE001 -- a screen the browser could not show is reported, never skipped silently
             unrendered.append(label)
             continue
@@ -197,7 +214,7 @@ def _observe(page, uri: str) -> dict:
       const faint = [...touched].filter(el => parseFloat(getComputedStyle(el).opacity) < 0.5).length;
       return {n, faint};
     }""")
-    seen = page.evaluate(FACTS_JS)
+    seen = _missing_local_links(page.evaluate(FACTS_JS))
     seen["scroll_animations_neutralised"] = neut["n"]
     seen["scroll_animations_still_faint"] = neut["faint"]
     seen["failed_requests"] = [u for u in failed if not _IGNORED_URL.search(u.split(" (")[0])][:20]
@@ -241,7 +258,7 @@ def facts_verdicts(facts: dict) -> list:
           "every stylesheet, script, font and image the page asks for must load"),
         v("RENDER-CONSOLE-ERROR", "ux", "major", union("console_errors"), "console/page error(s)",
           "an uncaught error usually means a broken interaction"),
-        v("RENDER-DEAD-LINK", "conversion", "major", union("dead_links"), "link(s) going nowhere (href '#', empty or javascript:)",
+        v("RENDER-DEAD-LINK", "conversion", "major", union("dead_links"), "link(s) going nowhere (href '#', empty, javascript: or a missing local file)",
           "point every link at a real destination or make it a button with a handler"),
         v("RENDER-HORIZONTAL-OVERFLOW", "ux", "major", overflow, "viewport(s) scroll sideways",
           "find the element wider than the viewport (fixed widths, long words, 100vw plus a scrollbar)"),
