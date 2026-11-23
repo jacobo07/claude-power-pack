@@ -128,6 +128,10 @@ Complete implementation must prove: actual source permissible -> persisted factu
 **Success threshold:** not a fixed count of references or a numeric taste score. It is demonstrated improvement, compared to a controlled baseline, on eligible business tasks while preserving brand/rights, accessibility, functional truth and costs; a fresh Claude Code task can use those gains **without manual commands**. Every third-party platform and seeded case must have a recorded, justified disposition and error state, including lawful non-adoption.
 
 
+## Next-stage cross-sector capability — cognitive explanation and original variations (2026-11-23)
+
+The Owner proposed that CDIO should go beyond retrieving examples, rigorously study **why** visual designs may influence attention, fluency, perceived usability, clarity, trust and choice, and **create new original design variations** through systematic recombination and experimentation. See [CDIO-CDPVE-001 — Cognitive Design Psychology & Original Variation Engine](2026-11-23_cdio-cognitive-design-psychology-variation-engine.md): **19 tasks, 24 adversarial tests** and peer-reviewed starting sources. Extend CDIO-01..04, CCF Visual DNA, existing design-index and research/QA; no psychology oracle, parallel scorer or rival autonomous runtime. Treat reference-derived psychological mechanisms as falsifiable hypotheses, use human/task evidence before causal or conversion claims, and constrain variants by brand, a11y, authenticity, rights and Production Reality. Its implementation is **OPEN**, not triggered by registering this backlog entry.
+
 ## North Star
 
 User: "Build a website for a US kitchen remodeling company."
