@@ -16,6 +16,10 @@
 - Owners to EXTEND (no new system): tools/ccr_pgo.py, tools/session_autopsy.py, tools/context_floor_census.py,
   tools/tco_compact_gate.py, tools/rollover.py.
 - NEXT: W1 step (a) in a fresh pane: re-bootstrap cost census of the /kresume successors.
+- Carrier: `gsd_mission arm` REFUSED by preflight (resource_admission: 2,160 MB available < 3,000 MB floor), so the
+  plan's fallback applies: INLINE, one wave per fresh pane via /kclear -> /kresume. Phases file
+  `throughput/T3CT_PHASES.md` (1dbf380e) is ready for `arm --milestone-from` if RAM later clears. The packet command
+  is in scratchpad arm.ps1 of pane 218d8162: execute the plan directly, no /gsd-discuss or /gsd-plan.
 
 **2026-11-23 (pane 218d8162, /kresume of 2e3b8dd4). T3 W0 DONE** on worktree gsd/ascension-throughput, not merged.
 - e778adbe: 3 false positives in governance/KNOWN_FALSE_POSITIVES.md (FP-DESIGN-ROUTE-WORD-IN-PASTED-LIST,
