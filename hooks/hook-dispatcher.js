@@ -428,6 +428,14 @@ const CHAIN_MAP = {
   // entry per matcher. Same shell:false spawnSync model the Stop-chain
   // has used since 2026-05-15 — proven fork-storm-safe in production.
   'PreToolUse-Bash-chain': [
+    // capsule-v2 pre-certification guard (spec vault/specs/mission-capsule-rollover.md I1, 2026-10-03,
+    // Owner go): a mission successor runs observe commands only until RESUME_CERTIFIED. Critical
+    // because its silent failure is UNSAFE (a mutation lands uncertified). Pure node; non-mission
+    // sessions cost one readdir. FIRST in the lane (Owner "both", 2026-11-22): it timed out ~217x on
+    // 2026-11-21 behind an 8 s guard on a starved host; a timeout now gets an in-process verdict
+    // (INPROC_FALLBACK below). Proof: hooks/tests/test-capsule-mutation-guard.js (+ --e2e) and
+    // hooks/tests/test-capsule-guard-fallback.js.
+    { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/capsule_mutation_guard.js', timeoutMs: 4000, block: true, critical: true },
     // Folded standalone PreToolUse Bash guard (PreToolUse-fold 2026-06-07).
     // Was a top-level matcher=Bash settings.json entry; blocks git/mix/gh/npm/
     // pnpm/corepack via Bash on Windows (emits {decision:"block"} + exit 2 --
@@ -437,11 +445,7 @@ const CHAIN_MAP = {
     // `critical`: this guard timing out is the Owner's cross-repo MSYS2 freeze.
     // It failed open 12,237-timeouts-deep into a log nobody reads. Priority lane.
     { exe: NODE_EXE, script: './windows-bash-bridge-guard.js', timeoutMs: 8000, block: true, critical: true },
-    // capsule-v2 pre-certification guard (spec vault/specs/mission-capsule-rollover.md I1, 2026-10-03,
-    // Owner go): a mission successor runs observe commands only until RESUME_CERTIFIED. Critical
-    // because its silent failure is UNSAFE (a mutation lands uncertified). Pure node; non-mission
-    // sessions cost one readdir. Proof: hooks/tests/test-capsule-mutation-guard.js (+ --e2e).
-    { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/capsule_mutation_guard.js', timeoutMs: 4000, block: true, critical: true },
+    // (capsule_mutation_guard.js moved to the head of this chain, 2026-11-22.)
     // Blocks launching a packaged desktop build as a child of this shell. The app then inherits
     // the Owner's console and prints its diagnostics into their working pane for as long as it
     // runs -- Orca's (already rate-limited) `[pty] hidden-delivery gate ...` line landed there on
@@ -509,6 +513,9 @@ const CHAIN_MAP = {
     { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/doctrine_cards.js', timeoutMs: 5000 },
   ],
   'PreToolUse-Edit-chain': [
+    // capsule-v2 pre-certification guard: no Write/Edit by a mission successor before RESUME_CERTIFIED
+    // (see the Bash-chain entry; same script, same proof, same move to the head of the lane).
+    { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/capsule_mutation_guard.js', timeoutMs: 4000, block: true, critical: true },
     // SECURITY FIX (2026-06-04, Owner-authorized "Wire firewall + fix
     // dispatcher block-bug"): wire the HR-SECRET-001 firewall into the
     // already-registered Edit-chain. Investigation found secret_firewall_gate.js
@@ -534,9 +541,7 @@ const CHAIN_MAP = {
     // are noisy; these two and the two anti-hang guards are unsafe.
     { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/secret_firewall_gate.js', timeoutMs: 8000, critical: true },
     { exe: NODE_EXE, script: './secret-scanner.js', timeoutMs: 8000, critical: true },
-    // capsule-v2 pre-certification guard: no Write/Edit by a mission successor before RESUME_CERTIFIED
-    // (see the Bash-chain entry; same script, same proof).
-    { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/capsule_mutation_guard.js', timeoutMs: 4000, block: true, critical: true },
+    // (capsule_mutation_guard.js moved to the head of this chain, 2026-11-22.)
     { exe: NODE_EXE, script: './quality-gate.js', timeoutMs: 5000 },
     { exe: NODE_EXE, script: './anti-thrash.js', timeoutMs: 5000 },
     { exe: NODE_EXE, script: './readonly-prompts-guard.js', timeoutMs: 3000 },
@@ -1011,6 +1016,37 @@ async function runPool(items, limit, worker) {
   return results;
 }
 
+// --- IN-PROCESS FALLBACK FOR A CRITICAL GUARD THAT COULD NOT RUN (2026-11-22, Owner "both") ---
+// capsule_mutation_guard.js hit its 4000 ms step timeout ~217 times on 2026-11-21, and every one
+// failed OPEN: a pre-certification mission worker's mutation would have landed. Its decision is pure
+// fs reads (decide()), so what killed it was the SPAWN on a starved host, not the logic. When the
+// spawned step errors, the same decide() runs here, in-process, on the same payload: a matched
+// uncertified worker is denied with the guard's own message, every other session is allowed exactly
+// as before (an interactive pane is never denied by this path). Only a script that exports a PURE
+// verdict belongs in this map. Kill switch: CPP_DISPATCH_INPROC_FALLBACK=off.
+// Proof: <PP>/hooks/tests/test-capsule-guard-fallback.js (both poles + the switch-off drill).
+const INPROC_FALLBACK = {
+  '../skills/claude-power-pack/hooks/capsule_mutation_guard.js': (raw, abs) => {
+    const guard = require(abs);
+    const v = guard.decide(JSON.parse(String(raw || '').replace(/^﻿/, '')));
+    return v.allow ? null : JSON.stringify(guard.denial(v));
+  },
+};
+
+function inprocFallback(event, script, rawStdin) {
+  const fn = INPROC_FALLBACK[script];
+  if (!fn || (process.env.CPP_DISPATCH_INPROC_FALLBACK || '').trim().toLowerCase() === 'off') return null;
+  let out;
+  try { out = fn(rawStdin, path.join(__dirname, script)); } catch (e) {
+    // Unparseable payload or unloadable module: same fail-open the spawned guard itself applies.
+    logError(event, 'CRITICAL-GUARD-FALLBACK ' + script + ' verdict=error session=' + sessionOf(rawStdin), e);
+    return null;
+  }
+  logError(event, 'CRITICAL-GUARD-FALLBACK ' + script + ' verdict=' + (out ? 'deny' : 'allow')
+    + ' session=' + sessionOf(rawStdin), new Error('in-process verdict after the spawned guard failed'));
+  return out ? { error: null, status: 0, stdout: out, stderr: '' } : null;
+}
+
 // Run a chain of sub-hooks as shell-free child processes, up to N concurrently.
 // Returns { outputs:[parsedJSON], blocked:bool, blockStderr:string }.
 async function runChain(event, chain, rawStdin, opts) {
@@ -1108,6 +1144,8 @@ async function runChain(event, chain, rawStdin, opts) {
     if (settled[i] && settled[i].error) {
       logError(event, 'CRITICAL-GUARD-INERT ' + runnable[i].script + ' session=' + sessionOf(rawStdin),
         settled[i].error);
+      const fb = inprocFallback(event, runnable[i].script, rawStdin);
+      if (fb) settled[i] = fb;
     }
   }
 
