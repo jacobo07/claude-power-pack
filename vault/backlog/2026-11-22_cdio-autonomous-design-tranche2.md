@@ -87,6 +87,17 @@ shipped. This file is the handoff for a fresh agent: it holds no context that is
     sector and a counterexample (data screen); scoped criterion PROPOSED, not promoted (Owner decision).
   - Owner "go ahead": B-3 FIXED 148af85f, B-8 FIXED ffdc1e35. Still open: B-4 shell-tracker non-paths, B-5 hook
     litter in foreign repos, B-1 file:// dead links, hero criterion promotion (needs evidence beyond one LLM judge).
+- (session 85563ce8) Item 3, second run, with a hand-built protocol (`vault/fixtures/cdio_benchmark/BRIEF.md`) and a
+  "very clean always" bar. It runs alongside c711a976's headless run in the same folder, with different files.
+  - First independent review: b2b 94, pro_service 90, mobile_app 98, brand_kit 88. All APPROVE, 0 critical, 0 major.
+  - After the Owner-approved repairs: all four score 100 with 0 minors (merge 47a90e2f, branch at 2507057d).
+  - Repairs: brand symbol redrawn, wordmark and lockups outlined, fonts self-hosted everywhere, b2b phone chart
+    text and end label, legal spacing.
+  - Subagent spend 675k.
+  - Caveat: `record` hashes HTML and SVG, not CSS or fonts.
+- (session 85563ce8, Owner ask, outside the item list) charles-hero-mockups absorbed (2e39555e, ce2acc07).
+  - Router kind `hero_mockup`.
+  - Renders through the Owner's Codex CLI (2f2d977f, no API key). V-CHM 23/23, one live render.
 - Paused before item 3 on budget: the campaign passed 2x the Owner's 250k planning reference (subagents alone
   168k measured). Item 3 needs about 4 build + independent-review cycles at ~50k each: Owner budget call first.
 
