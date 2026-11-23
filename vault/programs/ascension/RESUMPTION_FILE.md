@@ -5,6 +5,19 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**2026-11-23 12:3xZ (pane 6d054073, /kresume of 218d8162). T3-CT W1(a) DONE, then STOPPED by HR-COST-002.**
+- Worktree b164225f: `session_autopsy.py --rebootstrap` (+ gate test_session_autopsy_rebootstrap 9/9, both mutants
+  killed) and `throughput/W1A_REBOOTSTRAP_CENSUS.md`. Over 92 unique successors (14 days), R from /kresume to the
+  first durable write has p50 1.23M and p95 3.30M. R_exam to RESUME_CERTIFIED has p50 0.33M. A successor takes 11
+  calls; the floor is 99k. 0 censored.
+- Fixed on the way: `_GIT` missed `git -C <repo> commit`. The census double-counted 77 transcripts copied under
+  mcp-video-analyzer (122 -> 92).
+- HR-COST-002: this pane spent 8.89M (63 calls) against W1 P50 2.0M, a stop at 2x = 4.0M. Its own R was 3.3M (p95):
+  a RECOMPILE on HEAD eb687649 cost ~15 calls of `gsd_mission status` greps. The answer was in the ledger:
+  `arm_preflight ok:false` at 11:56Z, so no mission owns W1. The rest went into the instrument and its two fixes.
+- NEXT: Owner decision on the W1 overrun, then W1(b) replay in a FRESH pane. Price rotation at R in [R_exam, R], not
+  the floor.
+
 **2026-11-23 (pane 218d8162). Owner "APRUEBO T3-CT": T3 Cognitive Traffic amendment APPROVED.**
 - Plan: worktree `vault/plans/ascension-T3-cognitive-traffic-amendment-20261123.md` (a59a6c19). Hard authority 24M
   (replaces T3's remaining 6.8M), P50 18M, closeout reserve 1.5M, max 14 cycles / 96 h. Stop and report at 2x a
