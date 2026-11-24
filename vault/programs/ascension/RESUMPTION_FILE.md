@@ -30,7 +30,12 @@
   - Saving DERIVED, not measured: ~317 of 531 Tower copies removed, ~3M tok/day. The N=4 A/B did not fit (pane at 6.24M
     / 52 calls at the review); quality risk is low (the model still gets one identical copy), but it is UNMEASURED.
   - Backup + restore: `~/.claude/backups/t3-w4-20261124T143201/restore.ps1`.
-  - Live proof pending: the Owner's next prompt in pane b91135b9 is Tower offer #3 and must arrive WITHOUT the block.
+  - COMMITTED 9551350b (pathspec, 3 files; pp-code-reviewer APPROVE 0/0/0/2 LOW; CRLF normalised to HEAD's LF first).
+  - LIVE PROOF (real `claude -p` hook path, haiku, sid eab7c1c8, 3 prompts): prompt 1 OFFERED but NOT delivered (ledger
+    row, no transcript row: the G-3 abandoned-stdout case is real); prompt 2 re-offered (correct: nothing on record) and
+    delivered; prompt 3 SUPPRESSED (counter stays 2, no ledger row, 1 Tower row total). Old code: 3 offers.
+  - Pane b91135b9 itself is NOT proof: its counter hit MAX_OFFERS=3 before the fix landed.
+  - W4 spend ~8.3M (ESTIMATE: 6.24M measured at call 52 + ~12 calls), under the 9M stop. A/B N=4 NOT run.
   - NEXT levers (same census): full PP reminder 3.8M (one-shot per session, overlaps SessionStart), AKOS 2.2M,
     ExecutionOS tier 3.4M, R6 false fire on `/kresume` (0.99M). Then (a) deferred-names bench.
 
