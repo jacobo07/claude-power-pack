@@ -31,10 +31,18 @@ const LOG_FILE = path.join(HOME, '.claude', 'state', 'correction-guard.log');
 const MAX_LEN_FOR_SHORT_CORRECTION = 300;
 
 const CORRECTION_REGEXES = [
-  /\bno\s+(es|era|eso|así|asi|lo\s+que)\b/i,
+  // "no es" alone matched every Spanish question ("no es mejor...?"): it was all
+  // 31 of the fires left after the para/stop fix. Now it needs the object.
+  /\bno[,.]?\s+(?:(?:es|era)\s+)?(?:eso|as[ií]|lo\s+que|verdad|correct[oa])\b/i,
+  // "así no." / "eso no" closing a clause ("no, así no"); "eso no es malo" stays quiet.
+  /\b(?:as[ií]|eso)\s+no\s*(?:[.!,;]|$)/i,
   /\beso\s+(es|est[áa])\s+(mal|incorrecto|erroneo|err[oó]neo)\b/i,
   /\b(est[áa]s?|est[aáé]n?)\s+(mal|equivocad)/i,
-  /\b(para|detente|stop)\s*[,.!]?\s*(eso|lo)?\b/i,
+  // Imperative only: the word opens the prompt or a clause AND closes it
+  // ("Para.", "stop!", "para, eso no", "detente ya"). The old /\b(para|...)\b/
+  // fired on the Spanish preposition "para" anywhere: 201 of 220 injections in
+  // 14 days (state/correction-guard.log, 2026-11-24), each one context rent.
+  /(?:^|[.!?;,\n]\s*)(?:para|detente|stop)(?:\s+(?:ya|eso|lo|it|that|now|please|por\s+favor))?\s*(?:[.!,;]|$)/i,
   /\bya\s+(dije|lo\s+dije|hab[ií]a\s+dicho)\b/i,
   /\b(that'?s|this\s+is)\s+(wrong|incorrect|not\s+right)\b/i,
   /\bstop\s+doing\b/i,

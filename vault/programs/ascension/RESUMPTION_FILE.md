@@ -5,6 +5,18 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**2026-11-24 (pane 0bed7af7). Owner "go ahead" = authority raised for the R6 lever. T3-CT W5b R6 fix, LIVE.**
+- The premise "R6 false fire on /kresume" was FALSIFIED. Per the hook's own log (14 d, 220 injections), 201 came from
+  `\b(para|detente|stop)...\b` matching the Spanish PREPOSITION "para" and 19 from a bare "no es". /kresume ~0.
+- `hooks/correction-guard.js` (repo + live mirror, byte-equal): the para/stop pattern is now imperative-only (it opens
+  and closes a clause); the "no es" pattern needs an object (eso/así/lo que/verdad/correcto).
+- Gate `tools/test_correction_guard.py` V-R6 29/29, both poles plus mirror; the old hook fails 5 quiet cases.
+  pp-code-reviewer APPROVE 0/0/1/2. Fixed the MEDIUM (the comma forms "no, así no" / "eso no." now fire) and LOW-2
+  (stop it / now / please / por favor). LOW-3 test cases added.
+- Replay of the real fired prompts (scratchpad r6_replay2.py, patterns parsed from the hook source): old 245/318 ->
+  new 1/318. The 73 unmatched are instrument slack (prompt capture), not fires.
+- Saving: ~0.99M tok/day -> ~0. DERIVED from the replay. Backup in the same `t3-w5-20261124T135919` (restore.ps1 covers both).
+
 **2026-11-24 (pane 0bed7af7, /kresume of b91135b9). Owner pick "PP reminder 3.8M". T3-CT W5 DONE, LIVE.**
 - `~/.claude/hooks/power-pack-reminder.js` v4. The once-per-session full block went from 2,073 to 760 chars (-63%). It
   keeps only what the global CLAUDE.md does not already deliver: the skill-invoke line, the tier ladder (the spelling
