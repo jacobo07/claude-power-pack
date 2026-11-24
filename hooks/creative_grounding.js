@@ -27,8 +27,11 @@ const MAX_PER_ORIGIN = 2;
 const SNIPPET = 220;
 
 // Creative intent: a creative NOUN (what is being made) AND, unless the noun is unambiguous, a making VERB.
-const STRONG = /\b(anuncios?|creatividad(es)?|ad\s*copy|ad\s*creatives?|copys?\b|copywriting|titulares?|headlines?|ganchos?|hooks?\s+(for|para)|guion(es)?\s+(de|para)\s+(anuncio|video|reel)|ugc\s+script|prompt\s+de\s+imagen|image\s+prompt|brief\s+creativo|creative\s+brief|visual\s+lab\s+(slot|brief|round|ronda))\b/i;
-const NOUN = /\b(ads?|advert|creatives?|brief|campa[nñ]a|campaign|landing|slogan|claim|tagline|banner|post\s+de\s+instagram|reel)\b/i;
+// Bare "copy" is NOT strong (T3-CT W3): it is an engineering verb and noun too ("Cognitive Copy-on-Write",
+// "Zero-Copy", "do not let agents copy the institution" fired grounding on a 103k amendment). It is a NOUN, so it
+// needs a making verb beside it ("escribe el copy"), and never inside a hyphenated compound.
+const STRONG = /\b(anuncios?|creatividad(es)?|ad\s*copy|ad\s*creatives?|copywriting|titulares?|headlines?|ganchos?|hooks?\s+(for|para)|guion(es)?\s+(de|para)\s+(anuncio|video|reel)|ugc\s+script|prompt\s+de\s+imagen|image\s+prompt|brief\s+creativo|creative\s+brief|visual\s+lab\s+(slot|brief|round|ronda))\b/i;
+const NOUN = /\b(ads?|adverts?|creatives?|briefs?|campa[nñ]as?|campaigns?|landings?|slogans?|claims?|taglines?|banners?|post\s+de\s+instagram|reels?|(?<!-)copys?(?!-))\b/i;
 const VERB = /\b(haz|hazme|crea|cr[eé]ame|genera|escribe|redacta|dise[nñ]a|mejora|make|create|generate|write|draft|design|improve|rework|rehaz)\b/i;
 // Prompts ABOUT the pipeline, not creative work: code, hooks, gates, tests.
 const NOT_CREATIVE = /\b(hook\s+(de|del|que|in|for\s+the)\s+(power\s+pack|dispatcher|chain)|pytest|stack\s*trace|traceback|regex)\b/i;
@@ -37,10 +40,49 @@ function fold(s) {
   return s.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 }
 
+// T3-CT W3 (FP-AKOS-GROUNDING-NOUN-VERB-FAR-APART): NOUN and VERB anywhere in the prompt made every long text
+// creative (103k amendment: "a brief genuine preference" + "Do not create another loop engine", 50 KB apart). Now the
+// verb must govern the noun: same line, at most PAIR_WINDOW chars apart, not negated, and neither one a mention
+// (quoted, router talk, bare item of an unrelated list; shared rule, prompt_origin.js).
+const PAIR_WINDOW = 80;
+const HEADER_BLOCK = 600;   // chars a "<verb> ...:" header line governs below it, cut at the first blank line
+const NEGATION = /\b(not|don'?t|never|no|nunca|sin|without|ni)\s+(\w+\s+)?$/i;
+
+function negated(text, at) {
+  return NEGATION.test(text.slice(Math.max(0, at - 24), at));
+}
+
 function isCreative(prompt) {
   if (!prompt || NOT_CREATIVE.test(prompt)) return false;
-  if (STRONG.test(prompt)) return true;
-  return NOUN.test(prompt) && VERB.test(prompt);
+  const { liveMatches } = require('./prompt_origin');
+  // A list of creative things ("ads, banners, reels") is still a request: same kind = any creative noun.
+  const kind = new RegExp(STRONG.source + '|' + NOUN.source, 'i');
+  if (liveMatches(STRONG, prompt, kind).length) return true;
+  // "make ads, banners, reels": the verb's list siblings are creative nouns, so its kind is verb OR creative noun.
+  const verbKind = new RegExp(VERB.source + '|' + kind.source, 'i');
+  // An item that holds a creative noun beside the verb ("write ads, emails") heads a request, so nouns pass VERB and
+  // verbs pass the nouns as the request pattern (review of W3, MEDIUM-3).
+  const verbs = liveMatches(VERB, prompt, verbKind, kind).filter((v) => !negated(prompt, v.index));
+  if (!verbs.length) return false;
+  const nouns = liveMatches(NOUN, prompt, kind, VERB);
+  for (const v of verbs) {
+    // A verb that heads a list ("Create the following:\n- 3 ads\n- 2 banners") governs the list lines under it, up
+    // to the next blank line (review of W3, MEDIUM-2).
+    const eol = prompt.indexOf('\n', v.index);
+    const header = eol > 0 && prompt.slice(v.index, eol).trimEnd().endsWith(':');
+    let blockEnd = -1;
+    if (header) {
+      const blank = prompt.slice(eol, eol + HEADER_BLOCK).search(/\n[ \t]*\r?\n/);
+      blockEnd = blank > 0 ? eol + blank : Math.min(prompt.length, eol + HEADER_BLOCK);
+    }
+    for (const n of nouns) {
+      if (header && n.index > eol && n.index < blockEnd) return true;
+      const a = Math.min(n.index, v.index);
+      const b = Math.max(n.index + n[0].length, v.index + v[0].length);
+      if (b - a <= PAIR_WINDOW && !prompt.slice(a, b).includes('\n')) return true;
+    }
+  }
+  return false;
 }
 
 function loadLexicon() {
