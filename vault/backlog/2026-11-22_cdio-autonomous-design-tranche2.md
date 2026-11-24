@@ -127,6 +127,11 @@ shipped. This file is the handoff for a fresh agent: it holds no context that is
     kobiiclaw.service restart (RULE-099). That is a live-VPS change: Owner go needed. Until then, run Python
     on GEX44 with `-I`.
   - Process note: session c711a976 verified on GEX44 over direct `ssh gex44`, outside the RULE-090 carrier.
+  - **RESOLVED 2026-11-24 (Owner "go ahead"), KSR 63fbe95:** job `ksr-gex44-tmp-dis-quarantine` (VPS patches
+    07+08, drill 20/20, kobiiclaw restarted, preflight ROUTABLE). Probe `ksr-20261124-133559` found `/tmp/dis.py`
+    ABSENT before any move. Nothing was moved; who removed it is unknown (tmpfiles ageing is the likely cause).
+    Found on the way: a job type with a collect entry but no `dispatch.log`/`OUT=` returns `ack_but_no_verdict`
+    with its evidence stranded on GEX44 (07's first run). The rule is now in the patches README.
 
 ## Mission gates: state at end of tranche 1
 PASS with evidence: 1 reality, 5 functional integrity (fixture), 8 production reality (real Stop hook on a real
