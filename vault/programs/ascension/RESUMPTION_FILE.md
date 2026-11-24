@@ -5,6 +5,13 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**2026-11-24 (pane a6fa1f65). Owner "raise": T3-CT hard authority 39M -> 48M**, recorded in the plan (throughput
+worktree, `vault/plans/ascension-T3-cognitive-traffic-amendment-20261123.md`). ~34.9M spent; W4 5.8 + prior T3 5.0 +
+closeout 1.5 = 12.3M at P80. Per-wave stop unchanged (W4 P50 4.5M, stop 9M, ~30 calls).
+- NEXT: W4 (capability-listing floor: GPF A/B N=4 per arm, quality probes non-inferior, backups in
+  `~/.claude/backups/t3-w4-<ts>`, one-command rollback; Production Reality = a fresh pane's measured call-1) in a
+  FRESH pane via /kclear -> /kresume.
+
 **2026-11-24 (pane a6fa1f65). Owner "go ahead" after the HR-COST-002 stop: T3-CT W3 DONE, LIVE.**
 - pp-code-reviewer APPROVE with notes (0 CRIT/HIGH); fixed MEDIUM-1 (signal families: router/routers = 1), MEDIUM-2
   (a "<verb> ...:" header governs the list under it), MEDIUM-3 (an item holding a request word is not a list item),
