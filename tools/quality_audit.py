@@ -71,14 +71,14 @@ SLOP_RULES: list[tuple[re.Pattern, str, str]] = [
      "Never ship href=\"#\" as a real navigation target — it goes nowhere."),
     # TODO marker handled context-aware in scan() below (Trap 312):
     # bare word-boundary collides with the Spanish word TODO/todo
-    # (= all/everything). FIXME/HACK/XXX/PLACEHOLDER stay bare: no
-    # Spanish collision.
+    # (= all/everything). FIXME/HACK/XXX stay bare: no Spanish
+    # collision.
     (re.compile(r"\bFIXME\b"), "WOZ",
      "Never ship a FIXME — a known defect left in place is an unshipped defect."),
     (re.compile(r"\b(?:HACK|XXX)\b"), "WOZ",
      "Never ship a HACK/XXX marker — fragile by author's own admission."),
-    (re.compile(r"\bPLACEHOLDER\b", re.I), "WOZ",
-     "Never ship a PLACEHOLDER — zero placeholders in delivered code."),
+    # The stand-in-value marker is handled context-aware in scan() below
+    # (T3-CT W3, FP-WOZ-STUB-WORD-AS-SUBJECT), like TODO.
     (re.compile(r"raise\s+NotImplementedError"), "WOZ",
      "Never ship raise NotImplementedError in a delivered path — wire it end-to-end."),
     (re.compile(r"pass\s*#\s*TODO", re.I), "WOZ",
@@ -94,6 +94,24 @@ SLOP_RULES: list[tuple[re.Pattern, str, str]] = [
 _TODO_PROHIBITION = "Never ship a TODO in delivered code -- finish it this turn or do not scaffold it."
 TODO_CODE_RE = re.compile(r"(?:#|//|/\*|<!--|;)\s*TODO\b|\bTODO\s*[:(]")
 TODO_PROSE_RE = re.compile(r"(?<![A-Za-z])TODO\s*[:(]")
+
+# --- context-aware stand-in marker (T3-CT W3): unfinished work vs the word used as a NAME ---
+# A bare case-insensitive literal vetoed prose that only NAMED the concept: "no <word> left" in a test docstring, the
+# word quoted in a plan, the veto's own title quoted in KNOWN_FALSE_POSITIVES.md (2026-11-22, three vetoes), and the
+# HTML input attribute of that name. The marker forms below are what a stand-in actually looks like.
+_PH_PROHIBITION = "Never ship a PLACEHOLDER — zero placeholders in delivered code."
+# Review of W3 (MEDIUM-4): stand-in CONTENT is caught too ("Some <word> text", "# TBD, <word>", "<h1>Welcome to
+# <word> site</h1>"); (LOW-1) a prop passed on (={<word>}), an arrow body (=> <word>) and a CSS custom property
+# (--<word>-color) are names, not stand-ins. Still not modelled: destructuring ({ <word> }) and f-string fields.
+_PH_BRACKET = r"(?<!=)[<\[{]{1,2}\s*placeholder\b[^>\]}\n]{0,40}[>\]}]"
+PH_CODE_RE = re.compile(
+    r"\bPLACEHOLDER\b"                                                  # the upper-case marker (case-sensitive)
+    r"|(?i:(?:#|//|/\*|<!--|--\s)[^\n]{0,20}\bplaceholder\b(?!\s+tokens?\b))"  # a comment that says it
+    r"|(?i:(?<![\"'`\w])[\"'`][^\"'`\n]{0,60}\bplaceholder\b(?!-)[^\"'`\n]{0,60}[\"'`](?!\s*:))"  # literal, not key
+    r"|(?i:(?:\"\"\"|''')\s*placeholder\b)"                             # a docstring that opens with it
+    r"|(?i:<[A-Za-z][^<>\n]*>[^<\n]{0,60}\bplaceholder\b)"               # a UI text node, after a real tag
+    r"|(?i:" + _PH_BRACKET + r")")                                      # a template token left in
+PH_PROSE_RE = re.compile(r"(?i:(?<![A-Za-z])placeholder\s*[:(])|(?i:" + _PH_BRACKET + r")")
 
 def _norm(path: str) -> str:
     return path.replace("\\", "/")
@@ -183,6 +201,10 @@ def scan(path: str, logical: str | None = None) -> list[tuple[int, str, str, str
     for _m in _todo_re.finditer(text):
         _lineno = text.count(chr(10), 0, _m.start()) + 1
         hits.append((_lineno, file_lens, "TODO", _TODO_PROHIBITION))
+    _ph_re = PH_CODE_RE if (_ext in CODE_EXTS or _ext in UI_EXTS) else PH_PROSE_RE
+    for _m in _ph_re.finditer(text):
+        _lineno = text.count(chr(10), 0, _m.start()) + 1
+        hits.append((_lineno, file_lens, _m.group(0).strip(), _PH_PROHIBITION))
     for rule, lens, prohibition in SLOP_RULES:
         # A WOZ-only code token in a UI file (or vice-versa) still counts —
         # but the verdict is attributed to the file's owning lens.
