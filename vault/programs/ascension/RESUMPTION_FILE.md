@@ -5,6 +5,37 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**2026-11-24 (pane a6fa1f65). Owner "go ahead" after the HR-COST-002 stop: T3-CT W3 DONE, LIVE.**
+- pp-code-reviewer APPROVE with notes (0 CRIT/HIGH); fixed MEDIUM-1 (signal families: router/routers = 1), MEDIUM-2
+  (a "<verb> ...:" header governs the list under it), MEDIUM-3 (an item holding a request word is not a list item),
+  MEDIUM-4 (stand-in CONTENT in literals/comments/text nodes), LOW-1 partial (forwarded prop, arrow body, CSS var), LOW-4.
+- Commits 9c62043b prompt_origin, c3a76edc design_route, 6ab671fe creative_grounding, fd72386d quality_audit,
+  f911b99f V-RI; FF-merged into feature/knowledge-acquisition (452c2918 -> f911b99f). Not pushed.
+- Live tree: V-RI 94/94 (replay arms observed), test_akos_integration 11/11, charles_hero_mockups rc 0; V-DSR 79/79,
+  V-POP 3/3, creative-grounding JS 18/18 (worktree). The live jobs-woz-gatekeeper passes the 2026-11-22 vetoed line,
+  and it vetoed this entry's first draft on a brace-wrapped stand-in token (by design: bracket tokens stay caught).
+  Dispatcher loads both hooks from the main checkout (hook-dispatcher.js:106, :661).
+- DEBT: JS META_RX \b is ASCII-only (py unicode; LOW-2); parity harness passes code-point offsets (LOW-3, BMP-only
+  fixtures); the veto still blocks a destructured stand-in prop and f-string fields; STRONG `hooks? for` bare.
+- Spend: ~13.5M+ for W3 (11.88M at the stop + review/fix tail). T3-CT ~35M of 39M: W4 does not fit; Owner decision.
+
+**(superseded by the entry above) T3-CT W3 BUILT + VERIFIED, UNCOMMITTED. STOP: HR-COST-002**
+(11.88M processed, 79 calls x 150k, measured from this transcript; W3 P50 3.5M, stop 7M). Owner decision needed.
+- Worktree `C:/Users/User/Apps/pp-asc-w3`, branch gsd/ascension-w3-routing off feature/knowledge-acquisition 452c2918
+  (the throughput worktree's router copies are stale: design_route.py 14.8k vs live 25.3k). 5 files dirty, 0 commits:
+  prompt_origin.py + .js (shared mention_reason/live_matches: quoted | meta >=2 signals in +-200 | bare item of a list
+  whose siblings are mostly not same-kind), design_route.classify (FP-A), creative_grounding.isCreative (FP-B: noun +
+  non-negated verb, same line, <=80 chars; bare "copy" STRONG -> NOUN, no hyphen compounds; plural nouns),
+  quality_audit (FP-C: code/prose marker split like TODO), new tools/test_routing_immunity.py.
+- Gates: V-RI 76/76 (old-rule controls, both poles, 7 mutants killed, JS/py parity, real-prompt replay of 2e3b8dd4
+  L2008 + 218d8162 L659), V-DSR 79/79, V-POP 3/3, creative-grounding JS 18/18, conversation_quality_audit rc 0.
+  test_akos_integration + test_charles_hero_mockups fail ONLY in the worktree (path component / mirror), 11/11 + pass
+  on main. Entry points driven end to end: both real prompts silent, web + ad true positives still fire.
+- NEXT (after the Owner): pp-code-reviewer -> one commit per owner -> merge into feature/knowledge-acquisition (that is
+  what makes it live) -> mark the 3 KNOWN_FALSE_POSITIVES entries structurally fixed. Debt: STRONG `hooks? for`
+  still fires bare on engineering prompts (same class, not fixed).
+- T3-CT total ~33.3M of 39M (18.4 + W2 ~3 + W3 11.9); W4 + prior T3 + closeout at P80 = 12.3M does not fit.
+
 **2026-11-23 (pane d524648e, /kresume of 02c33ead). T3-CT W2 DONE** (worktree 7d17a844, `throughput/W2_ATTRIBUTION_PARETO.md`).
 - Pareto (MEASURED, 1,892 main sessions, 9,352M): top 5% = 74.9%, top 10% = 95.6%. Floor rent 43.2%, growth 52.1%,
   UNKNOWN 4.6%. Long-pane floor 90-120k; p50 floor 9k.
