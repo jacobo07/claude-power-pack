@@ -178,6 +178,14 @@ Criterion `one-signature-interaction`.
 
 Criteria `stable-layout-while-loading` and `webgl-has-fallback`.
 
+### The four checks are not the review
+
+The first recipe build (`web-pack/examples/recipe-02-sotomenor/REVIEW.md`, 2026-11-24) passed all
+four checks and was still **BLOCKED at 75** by the CDIO-05 review: its header links were 25.6px
+tall against the 44px tap-target floor, which none of the four covers. Every recipe build
+therefore also runs the full CDIO-05 review on the rendered page, and its browser QA measures tap
+targets explicitly (the example's `qa/qa_site.py` does, with a red drill).
+
 ## 7. The build prompt
 
 Verbatim from page 10 ("Works in Claude Code, Codex, Cursor or any coding agent. Replace the
@@ -263,48 +271,59 @@ without aria-label; VoiceOver reads it letter by letter".
 **Where:** `vault/knowledge_base/cdio/web-pack/vendor/<owner>__<repo>/`, one folder per repo, the
 upstream paths kept. **What:** text only — Markdown, YAML, JSON, code, schemas; images, GIFs,
 video, fonts and minified library copies are left out (`manifest.json` lists every skipped
-path). **Pinned:** every repo at one commit; every file by its upstream sha256 in
-`web-pack/manifest.json`. **Licences:** each repo's own LICENSE ships inside its folder;
-attribution in `web-pack/NOTICE.md`.
+path), **except MengTo/Skills, which ships complete** — its demo media, fonts and large demo
+pages included (Owner, 2026-11-24, D44.2: "Include it"; 653 more files, 185 MB). **Pinned:** every
+repo at one commit; every file by its upstream sha256 in `web-pack/manifest.json`.
+**Licences:** each repo's own LICENSE ships inside its folder; attribution in `web-pack/NOTICE.md`.
 
 | Repo | Commit | Licence | Skills | Files kept |
 |---|---|---|---|---|
 | greensock/gsap-skills | `aed9cfd3` | MIT | 8 | 37 |
 | nateherkai/scroll-craft | `75d81f74` | MIT | 1 | 30 |
-| MengTo/Skills | `e7df6eb7` | MIT | 221 | 1268 |
+| MengTo/Skills (complete) | `e7df6eb7` | MIT | 221 | 1921 |
 | iart-ai/web-animation-skills | `ed3a0451` | MIT | 9 | 41 |
 | iart-ai/webgl-animation-skills | `00419338` | MIT | 3 | 19 |
 | JustineBijuPaul/frontend-ai-skills | `f52d23c5` | MIT | 70 | 80 |
-| anthropics/skills (5 skills) | `e4bb5d96` | Apache-2.0 | 5 | 186 |
+| anthropics/skills (18 skills) | `e4bb5d96` | Apache-2.0 | 18 | 385 |
 
-**317 skills in total.** MengTo ships whole, by category: web-design 102, 3d 32,
+**330 skills in total.** MengTo ships whole, by category: web-design 102, 3d 32,
 game-development 25, codex 20, illustration 14, media 7, ui 7, game-combat 6, workflow 5,
-video-editing 3. From `anthropics/skills`: frontend-design (the one the pack names) and the four
-office skills docx, pdf, pptx, xlsx (Owner, 2026-11-24).
+video-editing 3. From `anthropics/skills`: frontend-design (the one the pack names), the four
+office skills docx, pdf, pptx, xlsx, and (D44.1) academy-guide, algorithmic-art,
+brand-guidelines, canvas-design, claude-api, discernment-nudge, internal-comms, mcp-builder,
+skill-creator, slack-gif-creator, theme-factory, web-artifacts-builder and webapp-testing.
+`doc-coauthoring` is **not** vendored: its folder carries no LICENSE and the repo has none at
+its root, so redistribution could not be confirmed. canvas-design's 54 fonts, theme-factory's
+showcase PDF and web-artifacts-builder's `shadcn-components.tar.gz` are left out under the
+text-only rule; that last skill's script needs the tarball and so does not run from this copy.
 
 **How they are used — read on demand, never installed as live skills.** They are not placed in
-`~/.claude/skills/`, so none of their 317 descriptions enters the prompt on every call (the
+`~/.claude/skills/`, so none of their 330 descriptions enters the prompt on every call (the
 pack's latent-card + JIT rule). `cdio-core` opens the SKILL.md a recipe names, or the one a
 request names ("use MengTo's masked-reveal"), with Read, and follows it as guidance for that
 build. `web-pack/README.md` is the index by need. An installer who wants one as a live skill
 copies its folder into `~/.claude/skills/`; that is a choice per skill, not a default.
 
-**Three live skills (Owner, 2026-11-24: "incluye que se instale también anydesign, impeccable y
-ui-ux-pro-max").** These three are the exception to read-on-demand: they are installed. Each ships
-as a complete upstream folder (scripts and data included, nothing omitted) under
-`web-pack/live/<name>/`, pinned by `web-pack/live/live-manifest.json`:
+**Eleven live skills (Owner, 2026-11-24: "incluye que se instale también anydesign, impeccable y
+ui-ux-pro-max", then D44.4 "Add gsap-skills (8)").** These are the exception to read-on-demand:
+they are installed, at the cost of their descriptions in every prompt. Each ships as a complete
+upstream folder (scripts and data included, nothing omitted) under `web-pack/live/<name>/`,
+pinned by `web-pack/live/live-manifest.json`:
 
 | Skill | Upstream | Commit | Licence | Files |
 |---|---|---|---|---|
 | impeccable | pbakaus/impeccable, `.claude/skills/impeccable` | `b49177d3` | Apache-2.0 | 64 |
 | ui-ux-pro-max | nextlevelbuilder/ui-ux-pro-max-skill, `.claude/skills/ui-ux-pro-max` | `f2f7266b` | MIT | 82 |
 | anydesign | uxKero/anydesign (repo root) | `d81bd895` | MIT | 48 |
+| gsap-core, gsap-frameworks, gsap-performance, gsap-plugins, gsap-react, gsap-scrolltrigger, gsap-timeline, gsap-utils | greensock/gsap-skills, `skills/<name>` | `aed9cfd3` | MIT | 2 each (SKILL.md + repo LICENSE) |
 
 `install.ps1` and `install.sh` (step 11) run `tools/install_cdio_live_skills.py`, which per skill
-checks every file's sha256 first, then installs into `~/.claude/skills/<name>` through a
-`.partial` folder renamed at the end. It never overwrites: a skill already present is skipped,
-and so is one a plugin already provides (`~/.claude/plugins/**/skills/<name>/SKILL.md`), so a
-host that has ui-ux-pro-max as a plugin does not get it twice. Their scripts were read before
+checks every file's sha256 and refuses any unlisted file first, then installs into
+`~/.claude/skills/<name>` through a `.partial` folder renamed at the end. It never overwrites: a
+skill already present is skipped, and so is one that an **installed and enabled** plugin already
+provides (`plugins/installed_plugins.json` + `settings.json` `enabledPlugins`; a marketplace
+clone or a disabled plugin does not count), so a host that has ui-ux-pro-max as a plugin does
+not get it twice. Their scripts were read before
 vendoring: anydesign fetches only the URL it is asked to analyse, impeccable's live mode talks
 only to its own localhost server, ui-ux-pro-max starts subprocesses only in its own tests. In
 the CDIO-12 sequence they are Step 3 generators (ui-ux-pro-max already is), anydesign extracts a
@@ -344,7 +363,7 @@ effect"). Replaced: 3D without a fallback or a weight budget. Criteria `webgl-ha
 
 ### 10.4 Vendored guidance against CDIO floors
 
-The 317 vendored skills were written by others for their own aims; some show scroll-scrubbed
+The 330 vendored skills were written by others for their own aims; some show scroll-scrubbed
 motion, autoplaying loops or contrast pairs CDIO would fail. Kept: their techniques. Replaced:
 nothing silently. When a vendored instruction and a CDIO floor disagree, the floor wins and the
 review records the disagreement as an observed value.
@@ -357,14 +376,16 @@ review records the disagreement as an observed value.
 | PDF images | not viewed: page rendering was unavailable on this host (pdftoppm absent); the 53 embedded images (site screenshots, logos) were not examined |
 | Reference sites | not visited; their stacks are the pack's own claims from public listings |
 | Repos | all 10 exist, none archived, licences as in sec. 3, read 2026-11-24 from the GitHub API |
-| Vendoring | text only; 653 MengTo files skipped (images, video, fonts, minified three.js copies, demo pages over 200 KB); every other repo kept all its text |
-| Untrusted-text scan | 10 hits, all reviewed benign: 9 UTF-8 BOMs at the start of OOXML schemas, 1 zero-width space inside an empty `<title>` in a MengTo build script; no CRITICAL secret pattern |
+| Vendoring | text only for six repos (anthropics/skills skips 54 fonts, a PDF and a tarball); MengTo/Skills complete, its 653 media files (185 MB, largest 12 MB) added by Owner decision D44.2 |
+| Untrusted-text scan | 10 hits on the first 7 repos and 2 on the D44.1 skills, all reviewed benign (UTF-8 BOMs in OOXML schemas, a zero-width space in an empty `<title>`, a "never run `curl \| sh`" instruction, an example tool command); no CRITICAL secret pattern |
 | Skill heat-map indexer | `tools/skill_heat_map_indexer.py` walks `~/.claude/skills/**/SKILL.md`; a vendored SKILL.md resolves to the id `claude-power-pack`, as the pack's own `skills/` folder already does, so it adds no phantom skill |
-| A recipe run end to end in this pack | **PLANNED**: no site has yet been built through CDIO-13; the first real build records its result here |
-| Remaining `anthropics/skills` (14 skills) and MengTo demo media | not vendored; recorded in the backlog (D44) |
+| First recipe run end to end | **DONE 2026-11-24** on an invented brand (`web-pack/examples/recipe-02-sotomenor/`): review 1 BLOCK 75 (one critical, tap target 25.6px), fixed, review 2 APPROVE 100; every assessable sec. 8 criterion passed with measured values; not published, so publish and legal criteria were not assessed |
+| A recipe run on an Owner site | **PLANNED**: the first real client build records its result here |
+| `anthropics/skills` doc-coauthoring | not vendored: no licence in its folder or at the repo root (backlog D44) |
+| `tools/design_gate.py` vacuous pass | observed in the first run: APPROVE 92 with 0 colours and 0 fonts read when tokens were in a table instead of front matter; recorded in the backlog (D44), not fixed here |
 
-The sec. 8 criteria derive from the pack's four checks and its prompt; none has yet been scored
-on an Owner site.
+The sec. 8 criteria derive from the pack's four checks and its prompt; the assessable ones have
+been scored once, on the demo (sec. 6 records what that run showed the checks miss).
 
 ## 12. Common false positives (what CDIO-13 does not flag)
 

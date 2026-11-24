@@ -40,7 +40,18 @@ ships the skill repos it recommends inside the pack, so an installer of Claude P
 - The vendored skills are not installed into `~/.claude/skills/` (no prompt-prefix cost); they
   are read on demand. Lenis, Drei and React Three Fiber are npm libraries and are not copied.
 - Images, video, fonts and minified library copies from the repos are not vendored.
-- The 14 other `anthropics/skills` skills and the MengTo demo media: backlog D44.
+- `anthropics/skills/doc-coauthoring` (no licence found) and a recipe run on a real Owner site:
+  backlog D44.
+
+## Phase 2 — D44 (Owner 2026-11-24: "do D44", then "Include it" / "A demo site, recipe 02" /
+"Add gsap-skills (8)")
+
+6. 13 more `anthropics/skills` skills vendored (330 total); MengTo/Skills vendored complete with
+   its 653 media files (185 MB); gsap-skills' 8 skills added to the live set (11 live).
+7. First recipe run: `web-pack/examples/recipe-02-sotomenor/` (site, DESIGN.md, QA script and
+   measurements, REVIEW.md with the BLOCK 75 -> APPROVE 100 history); CDIO-13 sec. 6 and 11
+   record what it showed. Acceptance unchanged: `python tools/test_cdio_web_pack.py` exit 0, now
+   also checking 330 skills, 11 live skills and the recorded first run.
 
 ## Acceptance
 

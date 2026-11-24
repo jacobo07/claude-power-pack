@@ -12,14 +12,15 @@ and drives the real scorer. It writes nothing and touches no network.
                             (population floor + red drill)
   V-CDIO-WEBPACK-SCORABLE   each criterion, as a failing verdict, lowers the real score
   V-CDIO-WEBPACK-VENDOR     every manifest file exists with its upstream sha256, nothing
-                            unlisted on disk, every repo carries its licence, 317 SKILL.md
+                            unlisted on disk, every repo carries its licence, 330 SKILL.md
                             (red drills: one flipped byte, one stray file)
   V-CDIO-WEBPACK-RECIPES    every vendored path a recipe names exists
-  V-CDIO-WEBPACK-LIVE       the 3 live skills are licensed and hash-pinned; the real installer,
-                            driven in temp dirs, installs them, never overwrites, skips a
-                            plugin-provided one, copies nothing from a tampered copy; both
-                            install.ps1 and install.sh call it (only temp dirs are written)
-  V-CDIO-WEBPACK-HONEST     collisions, unviewed images, PLANNED run, no-live-install recorded
+  V-CDIO-WEBPACK-LIVE       the 11 live skills are licensed and hash-pinned; the real installer,
+                            driven in temp dirs, installs them, never overwrites, skips only an
+                            installed+enabled plugin, refuses a tampered copy and a stray file;
+                            both install.ps1 and install.sh call it (only temp dirs are written)
+  V-CDIO-WEBPACK-HONEST     collisions, unviewed images, Owner-site run PLANNED, first recipe run
+                            recorded with its evidence on disk and its BLOCKed first review kept
   V-CDIO-WEBPACK-WIRED      kernel governs CDIO-13; the three agents name it
   V-CDIO-WEBPACK-MIRRORS    repo agents == live agents (red drill on drift)
 """
@@ -53,7 +54,7 @@ EXPECTED_CRITERIA = {
     "3d-assets-budgeted", "animations-cleaned-up", "split-text-stays-readable",
 }
 EXPECTED_CRITICAL = {"smooth-scroll-yields"}
-EXPECTED_SKILLS = 317
+EXPECTED_SKILLS = 330  # 317 + 13 anthropics/skills (D44.1; doc-coauthoring unlicensed, excluded)
 EXPECTED_REPOS = {
     "greensock/gsap-skills", "nateherkai/scroll-craft", "MengTo/Skills",
     "iart-ai/web-animation-skills", "iart-ai/webgl-animation-skills",
@@ -265,7 +266,9 @@ def v_recipes():
         _ok("V-CDIO-WEBPACK-RECIPES", f"{len(paths)} vendored skills named by recipes, all present")
 
 
-LIVE_SKILLS = {"impeccable", "ui-ux-pro-max", "anydesign"}
+LIVE_SKILLS = {"impeccable", "ui-ux-pro-max", "anydesign",  # Owner, 2026-11-24
+               "gsap-core", "gsap-frameworks", "gsap-performance", "gsap-plugins",  # D44.4
+               "gsap-react", "gsap-scrolltrigger", "gsap-timeline", "gsap-utils"}
 
 
 def v_live():
@@ -358,7 +361,7 @@ def v_live():
     else:
         nfiles = sum(len(s["files"]) for s in manifest["skills"])
         _ok("V-CDIO-WEBPACK-LIVE",
-            f"3 live skills ({nfiles} files) licensed + hash-pinned; installer installed, "
+            f"{len(names)} live skills ({nfiles} files) licensed + hash-pinned; installer installed, "
             "skipped without overwriting, skipped an enabled-plugin duplicate, installed past "
             "a marketplace-only and a disabled plugin, refused a tampered copy and a stray "
             "file; wired in install.ps1 + install.sh")
@@ -367,6 +370,7 @@ def v_live():
 def v_honest():
     text = _read(DATASET)
     collisions, vendored, evidence = _section(text, 10), _section(text, 9), _section(text, 11)
+    review_md = os.path.join(WEBPACK, "examples", "recipe-02-sotomenor", "REVIEW.md")
     markers = {
         "collision 10.1 smooth scroll": "### 10.1" in collisions,
         "collision 10.2 references": "### 10.2" in collisions,
@@ -375,8 +379,18 @@ def v_honest():
         "never installed live": "never installed as live skills" in vendored,
         "outward effects need Owner": "human-facing-external-effects" in vendored,
         "images not viewed": re.search(r"\|\s*PDF images\s*\|\s*not viewed", evidence) is not None,
-        "end-to-end run PLANNED": "**PLANNED**" in evidence,
+        "Owner-site run PLANNED": "**PLANNED**" in evidence,
         "backlog for the rest": "D44" in evidence,
+        "doc-coauthoring excluded": "doc-coauthoring" in vendored and "doc-coauthoring" in evidence,
+        # The first recipe run is recorded AND its evidence exists on disk, including the
+        # blocked first review: a record of only the passing pass would hide what it caught.
+        "first run recorded": "examples/recipe-02-sotomenor" in evidence and all(
+            os.path.isfile(os.path.join(WEBPACK, "examples", "recipe-02-sotomenor", *p.split("/")))
+            for p in ("index.html", "DESIGN.md", "REVIEW.md", "qa/qa.json", "qa/qa-tap-drill.json")),
+        # Exact heading, and a missing file fails the marker instead of crashing the gate.
+        "first review BLOCK kept": os.path.isfile(review_md) and re.search(
+            r"^## Review 1 -- BLOCK\b", _read(review_md), flags=re.M) is not None,
+        "checks are not the review": "The four checks are not the review" in _section(text, 6),
     }
     absent = [k for k, ok in markers.items() if not ok]
     if absent:

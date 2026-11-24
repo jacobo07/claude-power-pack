@@ -1715,8 +1715,9 @@ Deep research (Owner same turn): `vault/programs/ascension/research/` (per-funct
 
 ## D44 -- CDIO-13 Creative Web Pack: what was not vendored, and the first real build (Owner 2026-11-24: "option 1 with all skill repos in the backlog", then "include games, illustration, video, pure 3D and anthropic's office skills")
 Origin: absorption of Sanjai Builds' "The WEB Pack" PDF as CDIO-13 (`vault/specs/cdio-13-creative-web-pack.md`). Shipped: 7 repos, 317 skills, text only, pinned + sha256 (`vault/knowledge_base/cdio/web-pack/manifest.json`), gate `python tools/test_cdio_web_pack.py`.
-1. **anthropics/skills, the other 14 skills** (academy-guide, algorithmic-art, brand-guidelines, canvas-design, claude-api, discernment-nudge, doc-coauthoring, internal-comms, mcp-builder, skill-creator, slack-gif-creator, theme-factory, web-artifacts-builder, webapp-testing): not vendored. Read each LICENSE.txt at a pinned commit first; several overlap skills already on this host.
-2. **MengTo/Skills demo media** (653 skipped paths in the manifest: images, video, fonts, minified three.js, demo pages >200 KB): not vendored; decide whether demos are worth ~110 MB in every install.
-3. **First recipe build**: no site has been built through CDIO-13 yet (dataset sec. 11 PLANNED); the first one records which criteria fired.
-4. **Live-skill opt-in**: impeccable, ui-ux-pro-max and anydesign are now installed live (Owner same day; `tools/install_cdio_live_skills.py`, install step 11). Still open: whether any of the 317 read-on-demand skills (e.g. gsap-scrolltrigger, frontend-design) should join them, at the cost of its description in every prompt.
-Status: QUEUED.
+1. **anthropics/skills, the other 14 skills**: DONE 2026-11-24 for 13 (Apache-2.0, LICENSE.txt read at e4bb5d96; 330 skills total). **Open:** `doc-coauthoring` has no licence in its folder or at the repo root; vendor it only once its terms are confirmed.
+2. **MengTo/Skills demo media**: DONE 2026-11-24 (Owner: "Include it"): 653 files, 185 MB measured (the ~110 MB estimate was GitHub's compressed repo size), largest file 12 MB.
+3. **First recipe build**: DONE 2026-11-24 (Owner: "A demo site, recipe 02"), `vault/knowledge_base/cdio/web-pack/examples/recipe-02-sotomenor/`: review 1 BLOCK 75 (tap target 25.6px, which none of the recipe's four checks covers), fixed, review 2 APPROVE 100. **Open:** the first run on a real Owner site.
+4. **Live-skill opt-in**: DONE 2026-11-24 (Owner: "Add gsap-skills (8)"): 11 live skills now.
+5. **NEW, `tools/design_gate.py` passes vacuously**: on the demo's first DESIGN.md (palette in a markdown table, no `fontFamily:` lines) it returned APPROVE 92 with `palette-cliche: 0 color(s), no clichéd palette detected`. A gate that read zero tokens must not report a pass (instrument-before-claim): it should ABSTAIN or fail `palette-cliche` when no colour was read. Not fixed in this tranche.
+Status: items 1-4 DONE except the two named opens; item 5 QUEUED.

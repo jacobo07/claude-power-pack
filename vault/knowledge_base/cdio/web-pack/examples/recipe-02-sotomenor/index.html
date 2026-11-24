@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sotomenor — a guesthouse in the chestnut valley (demo)</title>
+<meta name="description" content="Demo site for CDIO-13 recipe 02. Sotomenor is an invented four-room guesthouse in a chestnut valley.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500&family=Figtree:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --lichen: #C9CDB8; --bark: #3B2A20; --moss: #3F5240; --sloe: #4B3A5A; --mist: #E4E6DA;
+    --display: "Bodoni Moda", Georgia, serif; --body: "Figtree", system-ui, sans-serif;
+    --measure: 34rem; --gutter: clamp(1rem, 4vw, 3rem);
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  html { background: var(--lichen); color: var(--bark); }
+  body { margin: 0; font: 400 1.125rem/1.6 var(--body); }
+  img, svg { display: block; max-width: 100%; }
+  a { color: var(--sloe); text-underline-offset: .2em; }
+  a:focus-visible { outline: 3px solid var(--sloe); outline-offset: 3px; }
+  .skip { position: absolute; left: -999px; }
+  .skip:focus { left: var(--gutter); top: 1rem; background: var(--mist); padding: .5rem 1rem; }
+
+  header.site { display: flex; justify-content: space-between; align-items: center;
+    padding: .5rem var(--gutter); }
+  .wordmark { font: 500 1.5rem/1 var(--display); letter-spacing: .01em; text-decoration: none; color: var(--bark);
+    display: inline-flex; align-items: center; min-height: 44px; }
+  nav ul { display: flex; gap: .5rem; list-style: none; margin: 0; padding: 0; font-size: 1rem; }
+  nav a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 .5rem; }
+
+  .hero { min-height: calc(100svh - 4.5rem); display: grid; grid-template-columns: 1.1fr .9fr;
+    align-items: end; gap: var(--gutter); padding: 0 var(--gutter) clamp(2rem, 6vh, 4rem); }
+  .hero h1 { font: 400 clamp(2.75rem, 7vw, 6.25rem)/1.02 var(--display); margin: 0 0 1.5rem;
+    max-width: 11ch; }
+  .hero p { max-width: var(--measure); margin: 0 0 2rem; }
+  .cta { display: inline-block; background: var(--sloe); color: #fff; text-decoration: none;
+    padding: .9rem 1.6rem; border-radius: 999px; font-weight: 600; }
+  .cta:focus-visible { outline-color: var(--bark); }
+  .hero .arch { align-self: stretch; max-height: 78svh; }
+
+  .arch { position: relative; overflow: hidden; border-radius: 50% 50% 0 0 / 34% 34% 0 0;
+    background: var(--moss); aspect-ratio: 3 / 4; }
+  .arch svg { width: 100%; height: 100%; }
+  figure { margin: 0; }
+  figcaption { margin-top: .75rem; max-width: 24rem; }
+
+  section { padding: clamp(4rem, 12vh, 9rem) var(--gutter); }
+  h2 { font: 400 clamp(2rem, 4.2vw, 3.6rem)/1.1 var(--display); margin: 0 0 1.5rem; max-width: 16ch; }
+  .lede { max-width: var(--measure); margin: 0 0 3.5rem; }
+
+  .rooms { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--gutter); align-items: start; }
+  .rooms figure:nth-child(2) { margin-top: 6rem; }
+  .rooms h3 { font: 500 1.5rem/1.2 var(--display); margin: 1.25rem 0 .5rem; }
+  .rooms p { margin: 0; max-width: 24rem; }
+
+  .valley { background: var(--moss); color: var(--mist); }
+  .valley h2 { color: var(--mist); }
+  .valley .cols { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gutter); max-width: 70rem; }
+  .valley p { margin: 0; max-width: var(--measure); }
+
+  .stay dl { display: grid; grid-template-columns: max-content 1fr; gap: .75rem 2rem; max-width: 44rem; margin: 0; }
+  .stay dt { font-weight: 600; } .stay dd { margin: 0; }
+
+  footer { padding: 2.5rem var(--gutter); font-size: 1rem; border-top: 1px solid rgba(59,42,32,.25); }
+  footer p { margin: 0 0 .5rem; max-width: 46rem; }
+
+  @media (max-width: 760px) {
+    nav ul { gap: 1rem; }
+    .hero { grid-template-columns: 1fr; min-height: auto; padding-top: .5rem; }
+    .hero .arch { order: -1; max-height: 44svh; aspect-ratio: 4 / 5; }
+    .rooms, .valley .cols { grid-template-columns: 1fr; }
+    .rooms figure:nth-child(2) { margin-top: 0; }
+    .stay dl { grid-template-columns: 1fr; gap: .25rem; }
+    .stay dd { margin-bottom: .75rem; }
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+  <a class="wordmark" href="#main">Sotomenor</a>
+  <nav aria-label="Main">
+    <ul>
+      <li><a href="#rooms">Rooms</a></li>
+      <li><a href="#stay">Stay</a></li>
+      <li><a href="#enquire">Enquire</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main id="main">
+  <div class="hero">
+    <div>
+      <h1>Four rooms under the chestnuts</h1>
+      <p>A small stone guesthouse at the end of a track, in a valley that turns gold in October.
+        Open from March to November.</p>
+      <a class="cta" href="#enquire">Ask about dates</a>
+    </div>
+    <figure class="arch" data-arch>
+      <svg viewBox="0 0 300 400" preserveAspectRatio="xMidYMid slice" role="img" aria-labelledby="h-t">
+        <title id="h-t">Illustration: chestnut-covered hills folding into the valley at dusk</title>
+        <rect width="300" height="400" fill="#B9C0A4"/>
+        <circle cx="210" cy="120" r="34" fill="#E4E6DA" opacity=".8"/>
+        <path d="M0 210 C60 170 110 200 160 175 S260 150 300 180 V400 H0Z" fill="#8E9A7A"/>
+        <path d="M0 260 C70 225 120 255 180 232 S270 220 300 240 V400 H0Z" fill="#5E6E55"/>
+        <path d="M0 315 C80 285 140 318 200 296 S280 290 300 300 V400 H0Z" fill="#3F5240"/>
+        <path d="M0 360 C90 340 150 365 220 350 S290 345 300 350 V400 H0Z" fill="#2E3D30"/>
+      </svg>
+    </figure>
+  </div>
+
+  <section id="rooms" aria-labelledby="rooms-h">
+    <h2 id="rooms-h">The house</h2>
+    <p class="lede">Each room looks a different way down the valley. Thick walls keep them cool in
+      August and warm in November.</p>
+    <div class="rooms">
+      <figure>
+        <div class="arch" data-arch>
+          <svg viewBox="0 0 300 400" preserveAspectRatio="xMidYMid slice" role="img" aria-labelledby="r1-t">
+            <title id="r1-t">Illustration: the east room's window onto the morning ridge</title>
+            <rect width="300" height="400" fill="#D7D9C6"/>
+            <path d="M0 240 C80 200 150 230 300 190 V400 H0Z" fill="#9AA585"/>
+            <path d="M0 300 C100 270 170 300 300 270 V400 H0Z" fill="#6B7A5E"/>
+            <rect x="95" y="90" width="110" height="150" rx="55" fill="none" stroke="#3B2A20" stroke-width="6"/>
+          </svg>
+        </div>
+        <figcaption><h3>East room</h3><p>A double bed and the first light over the ridge.</p></figcaption>
+      </figure>
+      <figure>
+        <div class="arch" data-arch>
+          <svg viewBox="0 0 300 400" preserveAspectRatio="xMidYMid slice" role="img" aria-labelledby="r2-t">
+            <title id="r2-t">Illustration: chestnut branches seen from the garden room</title>
+            <rect width="300" height="400" fill="#AEB79A"/>
+            <path d="M40 400 C60 300 90 230 150 180 M150 180 C190 150 230 140 270 150 M110 250 C70 230 40 200 20 160"
+              stroke="#3B2A20" stroke-width="10" fill="none" stroke-linecap="round"/>
+            <circle cx="210" cy="150" r="40" fill="#5E6E55"/><circle cx="60" cy="170" r="34" fill="#5E6E55"/>
+            <circle cx="150" cy="190" r="46" fill="#3F5240"/>
+          </svg>
+        </div>
+        <figcaption><h3>Garden room</h3><p>Opens straight onto the terrace under the old chestnut.</p></figcaption>
+      </figure>
+      <figure>
+        <div class="arch" data-arch>
+          <svg viewBox="0 0 300 400" preserveAspectRatio="xMidYMid slice" role="img" aria-labelledby="r3-t">
+            <title id="r3-t">Illustration: the loft under the roof beams at night</title>
+            <rect width="300" height="400" fill="#4B3A5A"/>
+            <circle cx="200" cy="110" r="22" fill="#E4E6DA"/>
+            <path d="M0 330 C90 300 160 320 300 290 V400 H0Z" fill="#2E3D30"/>
+            <path d="M30 400 L150 230 L270 400" fill="none" stroke="#C9CDB8" stroke-width="5"/>
+          </svg>
+        </div>
+        <figcaption><h3>Loft</h3><p>Under the beams, with a window for the stars. Best for two.</p></figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="valley" aria-labelledby="valley-h">
+    <div class="cols">
+      <h2 id="valley-h">The valley does the rest</h2>
+      <p>There is a path from the door to the river, an hour down and a little more back up.
+        In autumn the chestnut harvest fills the lanes. We leave a map in every room and keep
+        the evenings quiet.</p>
+    </div>
+  </section>
+
+  <section id="stay" class="stay" aria-labelledby="stay-h">
+    <h2 id="stay-h">Staying here</h2>
+    <dl>
+      <dt>Rooms</dt><dd>Four, each for two people.</dd>
+      <dt>Season</dt><dd>March to November. Closed in winter.</dd>
+      <dt>Getting here</dt><dd>By car. The last three kilometres are an unpaved track.</dd>
+      <dt>Breakfast</dt><dd>Served on the terrace, or in the kitchen when it rains.</dd>
+    </dl>
+  </section>
+
+  <section id="enquire" aria-labelledby="enq-h">
+    <h2 id="enq-h">Ask about dates</h2>
+    <p class="lede">Write with the dates you have in mind and how many of you are coming.</p>
+    <a class="cta" href="mailto:hola@sotomenor.example?subject=Dates%20at%20Sotomenor">Email hola@sotomenor.example</a>
+  </section>
+</main>
+
+<footer>
+  <p>Sotomenor is an invented guesthouse. This is a demo site built to test a design recipe; it is
+    not a real business and hola@sotomenor.example does not receive mail.</p>
+  <p>Illustrations drawn for this demo.</p>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script>
+  // The one signature interaction: each arch opens once as it enters. Without GSAP, or with
+  // reduced motion, every arch is open from the start (CDIO-13 layout-before-motion).
+  if (window.gsap && window.ScrollTrigger) {
+    gsap.registerPlugin(ScrollTrigger);
+    gsap.matchMedia().add("(prefers-reduced-motion: no-preference)", () => {
+      gsap.utils.toArray("[data-arch]").forEach((el) => {
+        gsap.fromTo(el,
+          { clipPath: "inset(30% 14% 0% 14% round 50% 50% 0% 0%)" },
+          { clipPath: "inset(0% 0% 0% 0% round 50% 50% 0% 0%)", duration: 1.4, ease: "power2.out",
+            scrollTrigger: { trigger: el, start: "top 88%", once: true } });
+      });
+    });
+  }
+</script>
+</body>
+</html>

@@ -25,7 +25,14 @@ own licence file; that file governs the copy.
 | iart-ai/web-animation-skills | ed3a045192679b24d32090ee7a983871311ababd | MIT | `vendor/iart-ai__web-animation-skills/LICENSE` |
 | iart-ai/webgl-animation-skills | 0041933813688c357804f7b13dcb85095c5a3210 | MIT | `vendor/iart-ai__webgl-animation-skills/LICENSE` |
 | JustineBijuPaul/frontend-ai-skills | f52d23c5b8f51caefccb97ea2bc88f6db7bc6120 | MIT | `vendor/JustineBijuPaul__frontend-ai-skills/LICENSE` |
-| anthropics/skills (frontend-design, docx, pdf, pptx, xlsx) | e4bb5d960d87126ff3b3a8af1a104b7db67560ba | Apache-2.0 | `vendor/anthropics__skills/skills/<skill>/LICENSE.txt` |
+| anthropics/skills (18 skills: frontend-design, docx, pdf, pptx, xlsx, academy-guide, algorithmic-art, brand-guidelines, canvas-design, claude-api, discernment-nudge, internal-comms, mcp-builder, skill-creator, slack-gif-creator, theme-factory, web-artifacts-builder, webapp-testing) | e4bb5d960d87126ff3b3a8af1a104b7db67560ba | Apache-2.0 | `vendor/anthropics__skills/skills/<skill>/LICENSE.txt` |
+
+`anthropics/skills/skills/doc-coauthoring` is not vendored: its folder carries no licence file
+and the repository has none at its root, so its redistribution terms could not be confirmed.
+MengTo/Skills is vendored complete, media included (Owner decision 2026-11-24); its MIT LICENSE
+covers the repository, and `agent-skills/3d/3d-harbour-water/demo/assets/LICENSE-three.txt` and
+`agent-skills/media/html-explainer-video/sounds/LICENSE.txt` cover the bundled third-party assets
+they sit beside.
 
 ## Live skills (installed by install.ps1 / install.sh)
 

@@ -1,0 +1,84 @@
+{
+  "desktop.cls": 0,
+  "desktop.hero_h1_bottom": 663,
+  "desktop.hero_cta_bottom": 834,
+  "desktop.hero_fits": true,
+  "desktop.overflow_x": false,
+  "desktop.gsap_loaded": true,
+  "desktop.scrolltriggers": 4,
+  "desktop.arches_before_scroll": [
+    "inset(0% round 50% 50% 0% 0%)",
+    "inset(30% 14% 0% round 50% 50% 0% 0%)",
+    "inset(30% 14% 0% round 50% 50% 0% 0%)",
+    "inset(30% 14% 0% round 50% 50% 0% 0%)"
+  ],
+  "desktop.arches_after_scroll": [
+    "inset(0% round 50% 50% 0% 0%)",
+    "inset(0% round 50% 50% 0% 0%)",
+    "inset(0% round 50% 50% 0% 0%)",
+    "inset(0% round 50% 50% 0% 0%)"
+  ],
+  "desktop.cta_target_exists": true,
+  "desktop.mailto": "mailto:hola@sotomenor.example?subject=Dates%20at%20Sotomenor",
+  "desktop.small_text_px": 16,
+  "desktop.tap_targets_under_44": [],
+  "desktop.hero_cta_bottom_after_fix": 834,
+  "desktop.console_errors": [],
+  "desktop.throttled.cls": 0.0028,
+  "desktop.reduced.arches": [
+    "none",
+    "none",
+    "none",
+    "none"
+  ],
+  "desktop.reduced.scrolltriggers": 0,
+  "desktop.nojs.arches": [
+    "none",
+    "none",
+    "none",
+    "none"
+  ],
+  "desktop.nojs.sections_visible": true,
+  "desktop.nojs.nav_stay_scrolls": true,
+  "mobile.cls": 0.0018,
+  "mobile.hero_h1_bottom": 590,
+  "mobile.hero_cta_bottom": 790,
+  "mobile.hero_fits": true,
+  "mobile.overflow_x": false,
+  "mobile.gsap_loaded": true,
+  "mobile.scrolltriggers": 4,
+  "mobile.arches_before_scroll": [
+    "inset(0% round 50% 50% 0% 0%)",
+    "inset(30% 14% 0% round 50% 50% 0% 0%)",
+    "inset(30% 14% 0% round 50% 50% 0% 0%)",
+    "inset(30% 14% 0% round 50% 50% 0% 0%)"
+  ],
+  "mobile.arches_after_scroll": [
+    "inset(0% round 50% 50% 0% 0%)",
+    "inset(0% round 50% 50% 0% 0%)",
+    "inset(0% round 50% 50% 0% 0%)",
+    "inset(0% round 50% 50% 0% 0%)"
+  ],
+  "mobile.cta_target_exists": true,
+  "mobile.mailto": "mailto:hola@sotomenor.example?subject=Dates%20at%20Sotomenor",
+  "mobile.small_text_px": 16,
+  "mobile.tap_targets_under_44": [],
+  "mobile.hero_cta_bottom_after_fix": 790,
+  "mobile.console_errors": [],
+  "mobile.throttled.cls": 0.0018,
+  "mobile.reduced.arches": [
+    "none",
+    "none",
+    "none",
+    "none"
+  ],
+  "mobile.reduced.scrolltriggers": 0,
+  "mobile.nojs.arches": [
+    "none",
+    "none",
+    "none",
+    "none"
+  ],
+  "mobile.nojs.sections_visible": true,
+  "mobile.nojs.nav_stay_scrolls": true
+}
