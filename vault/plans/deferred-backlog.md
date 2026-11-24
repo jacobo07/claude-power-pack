@@ -1712,3 +1712,11 @@ Origin: pane 5a77ca0e, answer to "most important systems for autonomy ... until 
 4. **Yield-based budget**: tokens to the method with the highest certs per token now; stop a cluster on sustained zero yield; replaces day caps and most judging.
 Limits: hand-written asm ends as ASM_KEPT (verified identical); functions >=256 B (68-80% of bytes) match 0-7% today, so no completion is promised.
 Deep research (Owner same turn): `vault/programs/ascension/research/` (per-function failure atlas on GEX44 + external state of the art). Status: QUEUED.
+
+## D44 -- CDIO-13 Creative Web Pack: what was not vendored, and the first real build (Owner 2026-11-24: "option 1 with all skill repos in the backlog", then "include games, illustration, video, pure 3D and anthropic's office skills")
+Origin: absorption of Sanjai Builds' "The WEB Pack" PDF as CDIO-13 (`vault/specs/cdio-13-creative-web-pack.md`). Shipped: 7 repos, 317 skills, text only, pinned + sha256 (`vault/knowledge_base/cdio/web-pack/manifest.json`), gate `python tools/test_cdio_web_pack.py`.
+1. **anthropics/skills, the other 14 skills** (academy-guide, algorithmic-art, brand-guidelines, canvas-design, claude-api, discernment-nudge, doc-coauthoring, internal-comms, mcp-builder, skill-creator, slack-gif-creator, theme-factory, web-artifacts-builder, webapp-testing): not vendored. Read each LICENSE.txt at a pinned commit first; several overlap skills already on this host.
+2. **MengTo/Skills demo media** (653 skipped paths in the manifest: images, video, fonts, minified three.js, demo pages >200 KB): not vendored; decide whether demos are worth ~110 MB in every install.
+3. **First recipe build**: no site has been built through CDIO-13 yet (dataset sec. 11 PLANNED); the first one records which criteria fired.
+4. **Live-skill opt-in**: impeccable, ui-ux-pro-max and anydesign are now installed live (Owner same day; `tools/install_cdio_live_skills.py`, install step 11). Still open: whether any of the 317 read-on-demand skills (e.g. gsap-scrolltrigger, frontend-design) should join them, at the cost of its description in every prompt.
+Status: QUEUED.

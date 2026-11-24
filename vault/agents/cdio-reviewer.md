@@ -40,6 +40,10 @@ yourself picking a number, stop — you record verdicts, the code scores them.
    criteria (fact-sheet provenance, first viewport, CTA target, real contact
    data, still equivalent for motion, publish root); `claims-have-source` and
    `motion-has-still-equivalent` are critical.
+   For a motion site built from a CDIO-13 recipe, also apply its sec. 8 criteria
+   (layout before motion, smooth scroll yields, mobile motion, one signature
+   interaction, stable loading, WebGL fallback, 3D budget, cleanup, readable
+   split text); `smooth-scroll-yields` is critical.
 4. **Trust signals** — present, specific, honest, well-placed; no trust leaks?
    For any public website or web app, also apply CDIO-10 §3 (legal surface): run
    `python -m modules.cdio.legal_surface check <site_root> --jurisdiction us|eu|es`

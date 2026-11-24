@@ -9,6 +9,10 @@ vendor/context-budget/** -text
 # source by sha256 and the 54 generated entries are compared byte-for-byte by
 # `componentry_catalog check`; CRLF on checkout would fail both with no code change.
 vault/knowledge_base/cdio/componentry/** -text
+# 2026-11-24: same reason for the Creative Web Pack (CDIO-13). web-pack/manifest.json pins every
+# vendored skill file by its upstream sha256 and tools/test_cdio_web_pack.py re-hashes them.
+vault/knowledge_base/cdio/web-pack/vendor/** -text
+vault/knowledge_base/cdio/web-pack/live/** -text
 vault/knowledge_base/visual-patterns/componentry-*.md text eol=lf
 
 # 2026-05-23: union merge driver for append-only ledgers.

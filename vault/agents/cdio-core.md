@@ -60,6 +60,13 @@ one; do not re-derive design principles from memory:
   `frontend-design` + `ui-ux-pro-max`, a gallery reference, the first-prompt
   template ending "ask me any questions", the intake questions, first draft,
   preview review, publish the folder contents under DEPLOY_GOVERNANCE).
+- **CDIO-13** — the motion and reference axis: "The WEB Pack" (Sanjai Builds).
+  When a CDIO-12 build asks for expressive motion (scroll story, editorial
+  reveals, kinetic type, WebGL), pick one of its three recipes (sec. 5) up to the
+  CDIO-07 ceiling, brief with its prompt (sec. 7), and Read the vendored
+  SKILL.md the recipe names under `vault/knowledge_base/cdio/web-pack/vendor/`
+  (317 skills, index `web-pack/README.md`; read on demand, never installed live).
+  Vendored guidance never overrides a CDIO floor.
 
 CDIO-00 through CDIO-05 are evaluative, CDIO-06 is generative, CDIO-07 is
 behavioural, CDIO-08 is evaluative for app screens, CDIO-09 is evaluative for

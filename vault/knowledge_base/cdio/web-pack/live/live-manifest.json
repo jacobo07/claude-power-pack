@@ -1,0 +1,1195 @@
+{
+  "skills": [
+    {
+      "name": "impeccable",
+      "repo": "pbakaus/impeccable",
+      "commit": "b49177d32788f2dc585c42831d845dacf1ebed2c",
+      "folder": ".claude/skills/impeccable",
+      "licence": "Apache-2.0",
+      "files": [
+        {
+          "path": "LICENSE",
+          "bytes": 10766,
+          "sha256": "02bb8c3b4e70190e3986c0404ad2fd8d639b4f534252d82379cc1b502b6d1812",
+          "upstream": "LICENSE"
+        },
+        {
+          "path": "SKILL.md",
+          "bytes": 12679,
+          "sha256": "4016dcce91b3eca06756ac7e03c7b644ea6a1278163e1202b8b3034c06e4664e",
+          "upstream": ".claude/skills/impeccable/SKILL.md"
+        },
+        {
+          "path": "reference/adapt.md",
+          "bytes": 11375,
+          "sha256": "ea9dfb9576f5f6566d488e3f2b9b3770e974e2b4b05d6e69724898f1e16845dd",
+          "upstream": ".claude/skills/impeccable/reference/adapt.md"
+        },
+        {
+          "path": "reference/adapt.native.md",
+          "bytes": 3910,
+          "sha256": "acbeecbcbf6558d438ed4aec6b85027d72587bf181b8ae12d4dfbe8dce62e9a5",
+          "upstream": ".claude/skills/impeccable/reference/adapt.native.md"
+        },
+        {
+          "path": "reference/android.md",
+          "bytes": 4203,
+          "sha256": "43780abcf10ac12a569d98001ae38af2b337727a0f7ce66268246ac1d54b5d34",
+          "upstream": ".claude/skills/impeccable/reference/android.md"
+        },
+        {
+          "path": "reference/animate.md",
+          "bytes": 8753,
+          "sha256": "bcfeac70dae3a796e79eb126a44d0b41bd7235a0a734159ebd3adbfcec37b1f8",
+          "upstream": ".claude/skills/impeccable/reference/animate.md"
+        },
+        {
+          "path": "reference/audit.md",
+          "bytes": 12179,
+          "sha256": "dc714231c614c13acea309ed315068dc6ab8e62b3db35cf2890a0c9c97fedcf0",
+          "upstream": ".claude/skills/impeccable/reference/audit.md"
+        },
+        {
+          "path": "reference/audit.native.md",
+          "bytes": 9098,
+          "sha256": "d47edf03d1a53910fdf89860c31eb847af2e3fbe479dc23caf732673fd49b709",
+          "upstream": ".claude/skills/impeccable/reference/audit.native.md"
+        },
+        {
+          "path": "reference/bolder.md",
+          "bytes": 3497,
+          "sha256": "bd217b7bc011c2346ce94902071ecd940aa017e8f563539e31c1ad38ce256401",
+          "upstream": ".claude/skills/impeccable/reference/bolder.md"
+        },
+        {
+          "path": "reference/clarify.md",
+          "bytes": 4590,
+          "sha256": "6c382f8283756e8a693d832b750f7e4cbff1ca5bdcc3825b2b4ef4da9f21876a",
+          "upstream": ".claude/skills/impeccable/reference/clarify.md"
+        },
+        {
+          "path": "reference/colorize.md",
+          "bytes": 4537,
+          "sha256": "d1fbd55074abb2251bdaa03749d34acc42c38e46e47549f18f5848df57d43c42",
+          "upstream": ".claude/skills/impeccable/reference/colorize.md"
+        },
+        {
+          "path": "reference/component-review.md",
+          "bytes": 8017,
+          "sha256": "6996198844d6459392b816e7bfb7d256f07b6884614e88069ffab5544b4886df",
+          "upstream": ".claude/skills/impeccable/reference/component-review.md"
+        },
+        {
+          "path": "reference/craft-floor.md",
+          "bytes": 4749,
+          "sha256": "9ed569418edc4a348ca6ac85cc2436e95e9ebfa624cabd352b809b7c1f2ff8b7",
+          "upstream": ".claude/skills/impeccable/reference/craft-floor.md"
+        },
+        {
+          "path": "reference/craft.md",
+          "bytes": 555,
+          "sha256": "9205e222bc6565b37fb504ceec93233c2d2a456802b69d16e6b1c44723907c4c",
+          "upstream": ".claude/skills/impeccable/reference/craft.md"
+        },
+        {
+          "path": "reference/critique-rubric.md",
+          "bytes": 19937,
+          "sha256": "ba070404e3f61c62b40c25a5d096b803825408de12a0fbb559b1587c89692866",
+          "upstream": ".claude/skills/impeccable/reference/critique-rubric.md"
+        },
+        {
+          "path": "reference/critique.md",
+          "bytes": 27846,
+          "sha256": "b63cb887b97a26bce304f4f266e04b3c2efa739c648b5900eb9e69f938f809f4",
+          "upstream": ".claude/skills/impeccable/reference/critique.md"
+        },
+        {
+          "path": "reference/degraded/asset-producer.md",
+          "bytes": 8478,
+          "sha256": "153936d4487fd9bf495f50b96c0c4fee258144583192d7f040310fc08384a02d",
+          "upstream": ".claude/skills/impeccable/reference/degraded/asset-producer.md"
+        },
+        {
+          "path": "reference/degraded/documenter.md",
+          "bytes": 3834,
+          "sha256": "5a175082e1357b20cbf25c965e18b520700aa441d9fdb76757cc43fc590b9305",
+          "upstream": ".claude/skills/impeccable/reference/degraded/documenter.md"
+        },
+        {
+          "path": "reference/degraded/finish-reviewer.md",
+          "bytes": 16751,
+          "sha256": "905e318d3664baae7ac01afa8d52446e8e9aff92ed549a582cd71f6569411ae9",
+          "upstream": ".claude/skills/impeccable/reference/degraded/finish-reviewer.md"
+        },
+        {
+          "path": "reference/degraded/manual-edit-applier.md",
+          "bytes": 7685,
+          "sha256": "357b19acc7ef688c337a4f020633a49db23c84620b13636f9ff20d3ab934df1a",
+          "upstream": ".claude/skills/impeccable/reference/degraded/manual-edit-applier.md"
+        },
+        {
+          "path": "reference/degraded/motion-reviewer.md",
+          "bytes": 6666,
+          "sha256": "363003cd992724abdec08c30d54e79e33829d1938b5f875a7770be98d15e043f",
+          "upstream": ".claude/skills/impeccable/reference/degraded/motion-reviewer.md"
+        },
+        {
+          "path": "reference/delight.md",
+          "bytes": 3716,
+          "sha256": "56500b1f9d2fcec8324d7f448d813048b5831a46d3feeb1055bd3eb17ec3660f",
+          "upstream": ".claude/skills/impeccable/reference/delight.md"
+        },
+        {
+          "path": "reference/distill.md",
+          "bytes": 5626,
+          "sha256": "a5702d46b5a17a38c555044439c2e76585848ee8c5a74b8470fa5de06aaa03f8",
+          "upstream": ".claude/skills/impeccable/reference/distill.md"
+        },
+        {
+          "path": "reference/doctor.md",
+          "bytes": 6034,
+          "sha256": "729b2d4779652b14f0dd8ac4c128583ab54199a3c6fa35936ba74a8653ef98a9",
+          "upstream": ".claude/skills/impeccable/reference/doctor.md"
+        },
+        {
+          "path": "reference/document.md",
+          "bytes": 28328,
+          "sha256": "6a729b362d2a63ba7a17d14a122fa35963d0cf5923121204cc59708edd004a7b",
+          "upstream": ".claude/skills/impeccable/reference/document.md"
+        },
+        {
+          "path": "reference/extract.md",
+          "bytes": 3337,
+          "sha256": "29044a3df6598786b2f9023af89aa6683b9745b7cd9a0c89386da2d0e50e0166",
+          "upstream": ".claude/skills/impeccable/reference/extract.md"
+        },
+        {
+          "path": "reference/foundations.md",
+          "bytes": 7598,
+          "sha256": "8be7197e4b7c1d858b3c350827e7ae79cb598186a034ece2fc26f62e3d48f990",
+          "upstream": ".claude/skills/impeccable/reference/foundations.md"
+        },
+        {
+          "path": "reference/generate.md",
+          "bytes": 13152,
+          "sha256": "b174077972447e829db722dacbf6d6bb643184832b42686f17492348bab9bfe8",
+          "upstream": ".claude/skills/impeccable/reference/generate.md"
+        },
+        {
+          "path": "reference/harden.md",
+          "bytes": 10748,
+          "sha256": "98244db22d907a134cac0c94ffb829ba480ba61cfac67ae155ac2f46444da7c9",
+          "upstream": ".claude/skills/impeccable/reference/harden.md"
+        },
+        {
+          "path": "reference/hooks.md",
+          "bytes": 17759,
+          "sha256": "d9bbd42c311ed28c38be9fc4dc460a23ed6042c6b8911cdb73df8b746da27718",
+          "upstream": ".claude/skills/impeccable/reference/hooks.md"
+        },
+        {
+          "path": "reference/init.md",
+          "bytes": 12696,
+          "sha256": "2d82b692fb2b427be1e2b2d188d3fe93e3353693508c4d05234fb9f3112a5d45",
+          "upstream": ".claude/skills/impeccable/reference/init.md"
+        },
+        {
+          "path": "reference/ios.md",
+          "bytes": 3812,
+          "sha256": "40c87038b5f75147a5952a96237acf312a327bf70c1bcd8e0a5f064625ae9668",
+          "upstream": ".claude/skills/impeccable/reference/ios.md"
+        },
+        {
+          "path": "reference/layout.md",
+          "bytes": 5161,
+          "sha256": "64802d14087fc96b38ef3881fef8098b36068d07f3b942031637b18eef3dd2af",
+          "upstream": ".claude/skills/impeccable/reference/layout.md"
+        },
+        {
+          "path": "reference/live-setup.md",
+          "bytes": 8447,
+          "sha256": "ceddbcf4515c3c45f5a2bb57c188a620f0cf8001f2288df73c58d530f895689e",
+          "upstream": ".claude/skills/impeccable/reference/live-setup.md"
+        },
+        {
+          "path": "reference/live.md",
+          "bytes": 41907,
+          "sha256": "c8d7111a36772aa47f277a0dfdd421c86a53041873632426b94642b82533dca0",
+          "upstream": ".claude/skills/impeccable/reference/live.md"
+        },
+        {
+          "path": "reference/mode-operate.md",
+          "bytes": 4716,
+          "sha256": "7a52dd7a94ee75f6ae89542c86a1b6e1d306812b16e0d9dbf12d4acad44d148b",
+          "upstream": ".claude/skills/impeccable/reference/mode-operate.md"
+        },
+        {
+          "path": "reference/mode-persuade.md",
+          "bytes": 3638,
+          "sha256": "21e78c8a77badb3f83290cd4577ed3b24bd4dd3b57136d7da75733d4f3ee9ac0",
+          "upstream": ".claude/skills/impeccable/reference/mode-persuade.md"
+        },
+        {
+          "path": "reference/mode-read.md",
+          "bytes": 4396,
+          "sha256": "a569989e6a3d6453b4c45e9474e162a15cc54e11732ac6baa7990a6e7cccc0b5",
+          "upstream": ".claude/skills/impeccable/reference/mode-read.md"
+        },
+        {
+          "path": "reference/new-work-comp.md",
+          "bytes": 14526,
+          "sha256": "ede0fee36507bc143bf4864bb4bf2e3e32b364c63444d9a4b2e390e0fc5a1872",
+          "upstream": ".claude/skills/impeccable/reference/new-work-comp.md"
+        },
+        {
+          "path": "reference/new-work-world.md",
+          "bytes": 19871,
+          "sha256": "29e18324ff2b125fddd148fc05d46014fc6405962e26bdf15f4e8997f077eb38",
+          "upstream": ".claude/skills/impeccable/reference/new-work-world.md"
+        },
+        {
+          "path": "reference/new-work.md",
+          "bytes": 35236,
+          "sha256": "710c72eab7a172a9edd8f8b6ae1de2c8783e8f6cb0dddc58937d7ff0e8d6c876",
+          "upstream": ".claude/skills/impeccable/reference/new-work.md"
+        },
+        {
+          "path": "reference/onboard.md",
+          "bytes": 7966,
+          "sha256": "9fa9e5cd55b00cc17ddf0d8053b8f238ad833d0d4527933257d9f1622833c8de",
+          "upstream": ".claude/skills/impeccable/reference/onboard.md"
+        },
+        {
+          "path": "reference/operate.md",
+          "bytes": 4145,
+          "sha256": "a9d2203acd45ca33a13d5c68b02b23ed512425ac15f0e8438318ed124b43729d",
+          "upstream": ".claude/skills/impeccable/reference/operate.md"
+        },
+        {
+          "path": "reference/optimize.md",
+          "bytes": 7577,
+          "sha256": "7ecc07226fa99b198eba37ea57f3c3e2465a80cc65093f0098dc888f7ee27273",
+          "upstream": ".claude/skills/impeccable/reference/optimize.md"
+        },
+        {
+          "path": "reference/overdrive.md",
+          "bytes": 9192,
+          "sha256": "3dcde0d10ba7098b8fc10557663ec10af3505d72cb78282e9a9168ade0ef1009",
+          "upstream": ".claude/skills/impeccable/reference/overdrive.md"
+        },
+        {
+          "path": "reference/polish.md",
+          "bytes": 6728,
+          "sha256": "48b1b024c2c2d168197570382ecd7e19e5c25983fc7c014ee79d53de5517037a",
+          "upstream": ".claude/skills/impeccable/reference/polish.md"
+        },
+        {
+          "path": "reference/quieter.md",
+          "bytes": 4996,
+          "sha256": "51592b206ae91048701d221391a1ecd9011c6a103ecf8f2c29d7c0896198ecf5",
+          "upstream": ".claude/skills/impeccable/reference/quieter.md"
+        },
+        {
+          "path": "reference/region-map.md",
+          "bytes": 3361,
+          "sha256": "4ea8e05d0f88d24f182ad554da84317f90b9730e29fad262143ddf423a1f8645",
+          "upstream": ".claude/skills/impeccable/reference/region-map.md"
+        },
+        {
+          "path": "reference/routing.md",
+          "bytes": 3336,
+          "sha256": "56285b28b0ffe471761c2ad062d3f933ed2346ca1b617f1323a30fed99a1a852",
+          "upstream": ".claude/skills/impeccable/reference/routing.md"
+        },
+        {
+          "path": "reference/shape.md",
+          "bytes": 3547,
+          "sha256": "a55f016c046cb6a27c55bd7f346375aeb506a755c4fbca19a5f92dbd42309c23",
+          "upstream": ".claude/skills/impeccable/reference/shape.md"
+        },
+        {
+          "path": "reference/typeset.md",
+          "bytes": 7035,
+          "sha256": "1c6cf66f66276da34b52f059cf64bfbb1e4020bab27cc3fd11ce399e58edcb8f",
+          "upstream": ".claude/skills/impeccable/reference/typeset.md"
+        },
+        {
+          "path": "reference/visualize.md",
+          "bytes": 14053,
+          "sha256": "3138cd268dd74f2726c480b4172742a36eb84b4a0ca9b55b644b409491389e6c",
+          "upstream": ".claude/skills/impeccable/reference/visualize.md"
+        },
+        {
+          "path": "scripts/VERSION",
+          "bytes": 7,
+          "sha256": "246a6387221ae9ed8e7b362df6959a816c0a2a1e8f98481beec0cecfe3976486",
+          "upstream": ".claude/skills/impeccable/scripts/VERSION"
+        },
+        {
+          "path": "scripts/command-metadata.json",
+          "bytes": 8318,
+          "sha256": "c6dcbeed7f13152205ca022c8f24d08683770835083f0a7325261c1c2d5f215c",
+          "upstream": ".claude/skills/impeccable/scripts/command-metadata.json"
+        },
+        {
+          "path": "scripts/data/font-index-failures.json",
+          "bytes": 2437,
+          "sha256": "835f19a0a3812f3652dd6979a2ce5597f654fd01f26e1b420b92d5f42b997ce4",
+          "upstream": ".claude/skills/impeccable/scripts/data/font-index-failures.json"
+        },
+        {
+          "path": "scripts/data/font-index.json",
+          "bytes": 1100013,
+          "sha256": "47edbdfaf27073c47033d1ac7dfee881be49e2dcbda7671d1157300481dde6da",
+          "upstream": ".claude/skills/impeccable/scripts/data/font-index.json"
+        },
+        {
+          "path": "scripts/engine-checksums.txt",
+          "bytes": 787,
+          "sha256": "1c5f99b7551d026f9aeccc4e34bf082ce0da663a6e0c790912b6bb3d8f3c9d19",
+          "upstream": ".claude/skills/impeccable/scripts/engine-checksums.txt"
+        },
+        {
+          "path": "scripts/impeccable",
+          "bytes": 13724,
+          "sha256": "9a82c1d8a5fc34b0edb3040cf25098c7c5a662e703118e99f96bacd543ed6d68",
+          "upstream": ".claude/skills/impeccable/scripts/impeccable"
+        },
+        {
+          "path": "scripts/impeccable.cmd",
+          "bytes": 15105,
+          "sha256": "d779a2f3ad945568f4c9265d9a282578721fa6755fae3b83bb7ffd2752b58eb2",
+          "upstream": ".claude/skills/impeccable/scripts/impeccable.cmd"
+        },
+        {
+          "path": "scripts/live-browser-dom.js",
+          "bytes": 12283,
+          "sha256": "4b379aff87ce0f485008a2b6a0dc711d00a869f5cf0ec2459279d6364fbf0c9e",
+          "upstream": ".claude/skills/impeccable/scripts/live-browser-dom.js"
+        },
+        {
+          "path": "scripts/live-browser-ignores.js",
+          "bytes": 10423,
+          "sha256": "ba8905ab865fde5162e34fc17eb80eba26cc990b319b14a6eed6ca89fd491897",
+          "upstream": ".claude/skills/impeccable/scripts/live-browser-ignores.js"
+        },
+        {
+          "path": "scripts/live-browser-session.js",
+          "bytes": 5838,
+          "sha256": "e042339a54d4521fc47555b602013ed5b51410ec9d7d8878d99a526f5f237f68",
+          "upstream": ".claude/skills/impeccable/scripts/live-browser-session.js"
+        },
+        {
+          "path": "scripts/live-browser.js",
+          "bytes": 566559,
+          "sha256": "994b06b63602c99d87206cfd9184a6f40bc7fc7881e92fc652c9eee0c055a36d",
+          "upstream": ".claude/skills/impeccable/scripts/live-browser.js"
+        },
+        {
+          "path": "scripts/modern-screenshot.umd.js",
+          "bytes": 29290,
+          "sha256": "bb36665889124a0b6e15f16045265737449c3bdcf2712cdb08af3cfa01563e2b",
+          "upstream": ".claude/skills/impeccable/scripts/modern-screenshot.umd.js"
+        }
+      ]
+    },
+    {
+      "name": "ui-ux-pro-max",
+      "repo": "nextlevelbuilder/ui-ux-pro-max-skill",
+      "commit": "f2f7266b07805025421611656045e9b44b41e2eb",
+      "folder": ".claude/skills/ui-ux-pro-max",
+      "licence": "MIT",
+      "files": [
+        {
+          "path": "LICENSE",
+          "bytes": 1075,
+          "sha256": "738f69dfa83db5c347c678fb9d90e560877059f0de93a327c39001bff92dc014",
+          "upstream": "LICENSE"
+        },
+        {
+          "path": "SKILL.md",
+          "bytes": 18640,
+          "sha256": "d99f9475eaff0522549bc71843b6b2a8563253329d99ad7c0236275a039c2659",
+          "upstream": ".claude/skills/ui-ux-pro-max/SKILL.md"
+        },
+        {
+          "path": "data/app-interface.csv",
+          "bytes": 11046,
+          "sha256": "331e7cf2c0b222d80c566c5f255c63cb339f65bfd02e471a720f28e4864a9f08",
+          "upstream": ".claude/skills/ui-ux-pro-max/data/app-interface.csv"
+        },
+        {
+          "path": "data/catalog-summary.json",
+          "bytes": 2392,
+          "sha256": "764bdc2a5a0de8f1a4e43cb3de2324d9d3df10360a5aaea3d18c99737e389229",
+          "upstream": ".claude/skills/ui-ux-pro-max/data/catalog-summary.json"
+        },
+        {
+          "path": "data/charts.csv",
+          "bytes": 23682,
+          "sha256": "80045f5793cbeca3b1373831851c992444a38967960cbba900c1472f1420e978",
+          "upstream": ".claude/skills/ui-ux-pro-max/data/charts.csv"
+        },
+        {
+          "path": "data/colors.csv",
+          "bytes": 38488,
+          "sha256": "f14cc97bc4c3527e6181b2ec3231704271249ca4ad56dcaa9bf562ab795a3dd7",
+          "upstream": ".claude/skills/ui-ux-pro-max/data/colors.csv"
+        },
+        {
+          "path": "data/data-provenance.json",
+          "bytes": 47776,
+          "sha256": "4021c3b675f823857561ebaadae7b6c43f7c25bc97950af4ae7739ce4fc0ae00",
+          "upstream": ".claude/skills/ui-ux-pro-max/data/data-provenance.json"
+        },
+        {
+          "path": "data/google-font-licenses.json",
+          "bytes": 433127,
+          "sha256": "35688523f2955795caa1a47c53b83099e60c1708461476f9cc3a050cf3b0148a",
+          "upstream": ".claude/skills/ui-ux-pro-max/data/google-font-licenses.json"
+        },
+        {
+          "path": "data/google-fonts.csv",
+          "bytes": 747241,
+          "sha256": "1c8c3b2ea1faf6a1012da463756def8b3889db33f2226f0343bb4daa80307d03",
+          "upstream": ".claude/skills/ui-ux-pro-max/data/google-fonts.csv"
+        },
+        {
+          "path": "data/icons.csv",
+          "bytes": 57945,
+          "sha256": "50816c6012030178195a16ee481ebf58b47bd985d70e8ec58886cc83f6eddafc",
+          "upstream": ".claude/skills/ui-ux-pro-max/data/icons.csv"
+        },
+        {
+          "path": "data/landing.csv",
+          "bytes": 25449,
+          "sha256": "9a2edd3bb676c2a58f00ade7a062e285222d4297bfd847c8d5b056f0dbbf52d0",
+          "upstream": ".claude/skills/ui-ux-pro-max/data/landing.csv"
+        },
+        {
+          "path": "data/motion.csv",
+          "bytes": 14679,
+          "sha256": "381affe8df8ea1f66fbbda2598827f9f54299107bbe6a1b4e9b68f6b62091ceb",
+          "upstream": ".claude/skills/ui-ux-pro-max/data/motion.csv"
+        },
+        {
+          "path": "data/phosphor-icons-upstream.json",
+          "bytes": 823933,
+          "sha256": "2399325233b277b5c97a80e6a5e8941154f5d057beee4e7613db87c87d700236",
+          "upstream": ".claude/skills/ui-ux-pro-max/data/phosphor-icons-upstream.json"
+        },
+        {
+          "path": "data/products.csv",
+          "bytes": 78382,
+          "sha256": "2b78d254f0fe0cc137ee811df280215c257868df24d2041264624d01f747f511",
+          "upstream": ".claude/skills/ui-ux-pro-max/data/products.csv"
+        },
+        {
+          "path": "data/react-performance.csv",
+          "bytes": 15080,
+          "sha256": "3d925802539abac5afeb63ae8aa1960b7229ad271b3a47caed40ab2d97ad0734",
+          "upstream": ".claude/skills/ui-ux-pro-max/data/react-performance.csv"
+        },
+        {
+          "path": "data/stacks/angular.csv",
+          "bytes": 19863,
+          "sha256": "704be83f2bad30c7e6de01afb113ffa01e0c458762f48b7102f31ba2367b5553",
+          "upstream": ".claude/skills/ui-ux-pro-max/data/stacks/angular.csv"
+        },
+        {
+          "path": "data/stacks/astro.csv",
+          "bytes": 14591,
+          "sha256": "2c2f55fadaafc05e04cc321c8194a1a28b656e6757fe2ba316f41b16428299c6",
+          "upstream": ".claude/skills/ui-ux-pro-max/data/stacks/astro.csv"
+        },
+        {
+          "path": "data/stacks/avalonia.csv",
+          "bytes": 27327,
+          "sha256": "442fca14675a020683473e7e49f08abb27b9df0765c80efe54aef61f1a4ac258",
+          "upstream": ".claude/skills/ui-ux-pro-max/data/stacks/avalonia.csv"
+        },
+        {
+          "path": "data/stacks/flutter.csv",
+          "bytes": 14192,
+          "sha256": "64dba0ac17349f28bce517a0f5f48c54d9ed2e487ec0c0258303463b382f41a0",
+          "upstream": ".claude/skills/ui-ux-pro-max/data/stacks/flutter.csv"
+        },
+        {
+          "path": "data/stacks/html-tailwind.csv",
+          "bytes": 16551,
+          "sha256": "d05a581d20af57b8ca0104a6d31d90a07c437d500662a96c3029fc2f9a4678ee",
+          "upstream": ".claude/skills/ui-ux-pro-max/data/stacks/html-tailwind.csv"
+        },
+        {
+          "path": "data/stacks/javafx.csv",
+          "bytes": 33577,
+          "sha256": "2e819b8d5abdd23ad4dae0991650fdb57af497aabd68b37463aa9c442944c869",
+          "upstream": ".claude/skills/ui-ux-pro-max/data/stacks/javafx.csv"
+        },
+        {
+          "path": "data/stacks/jetpack-compose.csv",
+          "bytes": 12295,
+          "sha256": "699de218b286948eaec7d15767b6e1350ee299167e49bf476d82e3ff58724e0a",
+          "upstream": ".claude/skills/ui-ux-pro-max/data/stacks/jetpack-compose.csv"
+        },
+        {
+          "path": "data/stacks/laravel.csv",
+          "bytes": 20163,
+          "sha256": "854ea4daa5fc61292d22235ad33b49ba3fe22423c3de8d3cb03758ffed3b59f9",
+          "upstream": ".claude/skills/ui-ux-pro-max/data/stacks/laravel.csv"
+        },
+        {
+          "path": "data/stacks/nextjs.csv",
+          "bytes": 18687,
+          "sha256": "ecd2c27b2ea0127d203ae726060efcdd7335b5e83f96b99e4f3befbbfeebd5a4",
+          "upstream": ".claude/skills/ui-ux-pro-max/data/stacks/nextjs.csv"
+        },
+        {
+          "path": "data/stacks/nuxt-ui.csv",
+          "bytes": 32292,
+          "sha256": "9c0179d559abe39ad63b958b54cb29c82be1dd20706430476096ea8967bfa328",
+          "upstream": ".claude/skills/ui-ux-pro-max/data/stacks/nuxt-ui.csv"
+        },
+        {
+          "path": "data/stacks/nuxtjs.csv",
+          "bytes": 23014,
+          "sha256": "3d9b54ed2d151bd9c86e9e5609b8a6f88a00c4c52fa601a30af96c49b2c4d176",
+          "upstream": ".claude/skills/ui-ux-pro-max/data/stacks/nuxtjs.csv"
+        },
+        {
+          "path": "data/stacks/react-native.csv",
+          "bytes": 14049,
+          "sha256": "ba31dd9c0c04da6bc02a74448bf121f9c0728ae5ba3b4d47b487778b0a1135b5",
+          "upstream": ".claude/skills/ui-ux-pro-max/data/stacks/react-native.csv"
+        },
+        {
+          "path": "data/stacks/react.csv",
+          "bytes": 21166,
+          "sha256": "4dd176a9787e5c6306b5df94158d75955adcdc6edab41ce5286641a5842303c1",
+          "upstream": ".claude/skills/ui-ux-pro-max/data/stacks/react.csv"
+        },
+        {
+          "path": "data/stacks/shadcn.csv",
+          "bytes": 23184,
+          "sha256": "e56cfde5b74907836ac3582a4779d5b7f3d206a702ab81b8669a1b668c3eeb51",
+          "upstream": ".claude/skills/ui-ux-pro-max/data/stacks/shadcn.csv"
+        },
+        {
+          "path": "data/stacks/svelte.csv",
+          "bytes": 15078,
+          "sha256": "f6e379ba802941ba26b01d4ffbe3cd39120f2587659a1d93851c707f66bc13db",
+          "upstream": ".claude/skills/ui-ux-pro-max/data/stacks/svelte.csv"
+        },
+        {
+          "path": "data/stacks/swiftui.csv",
+          "bytes": 15323,
+          "sha256": "bdd9231ff3ad658f4e7c063e1eb49df2fd09ac8d90631a86df899b39833b9623",
+          "upstream": ".claude/skills/ui-ux-pro-max/data/stacks/swiftui.csv"
+        },
+        {
+          "path": "data/stacks/threejs.csv",
+          "bytes": 46769,
+          "sha256": "155d583b9c64da0df4b6c6cb060c02eab222505e0734d6353da02c9e2b5d982b",
+          "upstream": ".claude/skills/ui-ux-pro-max/data/stacks/threejs.csv"
+        },
+        {
+          "path": "data/stacks/uno.csv",
+          "bytes": 30091,
+          "sha256": "a0474363e4225b5367214d5675fd3e075f137026f9500f0d04357882ef4f6d48",
+          "upstream": ".claude/skills/ui-ux-pro-max/data/stacks/uno.csv"
+        },
+        {
+          "path": "data/stacks/uwp.csv",
+          "bytes": 24692,
+          "sha256": "c409f08c1fbba1f1029f1acaa554e7b4471cc85517a5751c9f2e62465badcd5c",
+          "upstream": ".claude/skills/ui-ux-pro-max/data/stacks/uwp.csv"
+        },
+        {
+          "path": "data/stacks/vue.csv",
+          "bytes": 12813,
+          "sha256": "b655f1ebb9dff2652d15981f31b1784c8a6d4759efd2815a14f3088257569f95",
+          "upstream": ".claude/skills/ui-ux-pro-max/data/stacks/vue.csv"
+        },
+        {
+          "path": "data/stacks/winui.csv",
+          "bytes": 27890,
+          "sha256": "e676dc1c13ee6c205c40b0746f1335150a346c7a49a0616d2545bc3d2c930c85",
+          "upstream": ".claude/skills/ui-ux-pro-max/data/stacks/winui.csv"
+        },
+        {
+          "path": "data/stacks/wpf.csv",
+          "bytes": 24158,
+          "sha256": "9781a9950b20333637b30a02e498b7efca21b618a3eeb8665836f3ac6e974da7",
+          "upstream": ".claude/skills/ui-ux-pro-max/data/stacks/wpf.csv"
+        },
+        {
+          "path": "data/styles.csv",
+          "bytes": 152958,
+          "sha256": "a9b6cadbd1cb9e7cb8398a3b445e0691d01e42ed5e5efa60a5d0c08c99c8100d",
+          "upstream": ".claude/skills/ui-ux-pro-max/data/styles.csv"
+        },
+        {
+          "path": "data/typography.csv",
+          "bytes": 49997,
+          "sha256": "321fc446e89024488ebae96dda93efc4d2307bd8bddb240857ad51364f6782c8",
+          "upstream": ".claude/skills/ui-ux-pro-max/data/typography.csv"
+        },
+        {
+          "path": "data/ui-reasoning.csv",
+          "bytes": 78979,
+          "sha256": "60b8b1a0fc426d65c8d536fbd348e89e6c6484ab9cb54ddbcfe85b4339d960f9",
+          "upstream": ".claude/skills/ui-ux-pro-max/data/ui-reasoning.csv"
+        },
+        {
+          "path": "data/ux-guidelines.csv",
+          "bytes": 41929,
+          "sha256": "03b89ae5e237ab2f23a2e9a7ecebd5d70e42776341d0d7eb7302393fbd79c26a",
+          "upstream": ".claude/skills/ui-ux-pro-max/data/ux-guidelines.csv"
+        },
+        {
+          "path": "references/pro-rules.md",
+          "bytes": 10909,
+          "sha256": "d28442d61c310b49c054a4ea736f89fb3008beebdbbc38c4b3a540b8f7fadf23",
+          "upstream": ".claude/skills/ui-ux-pro-max/references/pro-rules.md"
+        },
+        {
+          "path": "references/quick-reference.md",
+          "bytes": 27369,
+          "sha256": "ede37ffbdd543eb56c4ca328155d395fef979b3bf3e9c25581123c5cb46fdb65",
+          "upstream": ".claude/skills/ui-ux-pro-max/references/quick-reference.md"
+        },
+        {
+          "path": "scripts/core.py",
+          "bytes": 45708,
+          "sha256": "5d0b789c82be150fab860cabc1dc8bb666986ba548bc35b728891af3ca863ab9",
+          "upstream": ".claude/skills/ui-ux-pro-max/scripts/core.py"
+        },
+        {
+          "path": "scripts/design_system.py",
+          "bytes": 81780,
+          "sha256": "df3a6a10f54fb3e1919103b1bcfe9cb332d471c4cebbe30ab70bff5d3e57e742",
+          "upstream": ".claude/skills/ui-ux-pro-max/scripts/design_system.py"
+        },
+        {
+          "path": "scripts/preview.py",
+          "bytes": 20012,
+          "sha256": "ca34658b15afea5eeabeb19d09a6d7a11f3067ef43a6cc27deaa6f48f1b271fc",
+          "upstream": ".claude/skills/ui-ux-pro-max/scripts/preview.py"
+        },
+        {
+          "path": "scripts/reasoning_contract.py",
+          "bytes": 5824,
+          "sha256": "b8bac1af82aa280d3e06f00aabaeac4337e632996b07fed874e2b6ee6e9c5913",
+          "upstream": ".claude/skills/ui-ux-pro-max/scripts/reasoning_contract.py"
+        },
+        {
+          "path": "scripts/search.py",
+          "bytes": 14207,
+          "sha256": "d6ae5b3421ff9fb7fde20c817d83b0b89feb557ebb9201d9effe2b3e3e8d89fc",
+          "upstream": ".claude/skills/ui-ux-pro-max/scripts/search.py"
+        },
+        {
+          "path": "scripts/tests/fixtures/catalogs/google-api.json",
+          "bytes": 1079,
+          "sha256": "22d8dc81a7d6827b7e8b64b53e7d184210fb9759e8e294e0d5133c81cc460176",
+          "upstream": ".claude/skills/ui-ux-pro-max/scripts/tests/fixtures/catalogs/google-api.json"
+        },
+        {
+          "path": "scripts/tests/fixtures/catalogs/google-catalog.json",
+          "bytes": 1772,
+          "sha256": "c608ad5c4084ebc50a4bbbfb69ea2456c01fd5519c457e18410fffd250ae948f",
+          "upstream": ".claude/skills/ui-ux-pro-max/scripts/tests/fixtures/catalogs/google-catalog.json"
+        },
+        {
+          "path": "scripts/tests/fixtures/catalogs/google-existing.csv",
+          "bytes": 480,
+          "sha256": "4e0761b839dc6b2187a370e82eddc0aed8a7ff10c09e28dd814bb3656dac595b",
+          "upstream": ".claude/skills/ui-ux-pro-max/scripts/tests/fixtures/catalogs/google-existing.csv"
+        },
+        {
+          "path": "scripts/tests/fixtures/catalogs/google-metadata.json",
+          "bytes": 328,
+          "sha256": "30bffc29ae348416a2de2f9c6c418e768e4578f136b0f4bac5d2f70124f2e9ba",
+          "upstream": ".claude/skills/ui-ux-pro-max/scripts/tests/fixtures/catalogs/google-metadata.json"
+        },
+        {
+          "path": "scripts/tests/fixtures/catalogs/google-overrides.json",
+          "bytes": 97,
+          "sha256": "6243a48a4619986768c4628e2d0c98ff195beba71ba9be5df8f0c52fc6d90c0b",
+          "upstream": ".claude/skills/ui-ux-pro-max/scripts/tests/fixtures/catalogs/google-overrides.json"
+        },
+        {
+          "path": "scripts/tests/fixtures/catalogs/icons-curated.csv",
+          "bytes": 495,
+          "sha256": "68362c9a700c13b96f000784a0198c1c7e117a7088a01c85744e44233038fe9d",
+          "upstream": ".claude/skills/ui-ux-pro-max/scripts/tests/fixtures/catalogs/icons-curated.csv"
+        },
+        {
+          "path": "scripts/tests/fixtures/catalogs/phosphor-core.json",
+          "bytes": 571,
+          "sha256": "ae4d0bb076240824e1b643c2270d1f8cc0952a69502ec1e622b7dedd85b930bb",
+          "upstream": ".claude/skills/ui-ux-pro-max/scripts/tests/fixtures/catalogs/phosphor-core.json"
+        },
+        {
+          "path": "scripts/tests/fixtures/catalogs/phosphor-package.json",
+          "bytes": 370,
+          "sha256": "500588c757d6de03e3d7e69b27a8b8b1f88ccf6bb0333e4c1e9b0d6a4f112475",
+          "upstream": ".claude/skills/ui-ux-pro-max/scripts/tests/fixtures/catalogs/phosphor-package.json"
+        },
+        {
+          "path": "scripts/tests/fixtures/catalogs/phosphor-react-exports.json",
+          "bytes": 87,
+          "sha256": "d79f2ee0afdbc2f87776733e145df3538a16a25d7c2fba0056bb48295dad0ded",
+          "upstream": ".claude/skills/ui-ux-pro-max/scripts/tests/fixtures/catalogs/phosphor-react-exports.json"
+        },
+        {
+          "path": "scripts/tests/fixtures/catalogs/phosphor-react-package.json",
+          "bytes": 81,
+          "sha256": "1c57a1d76bcc0cdd3632d4c18b9c0e79576b4591df39831c9607e5d0eb4f2cec",
+          "upstream": ".claude/skills/ui-ux-pro-max/scripts/tests/fixtures/catalogs/phosphor-react-package.json"
+        },
+        {
+          "path": "scripts/tests/fixtures/relevance-baseline.json",
+          "bytes": 89426,
+          "sha256": "0df200fc54c1cb97a52d6775e7f501509163cea8f8b73fd7268429bc1f835afe",
+          "upstream": ".claude/skills/ui-ux-pro-max/scripts/tests/fixtures/relevance-baseline.json"
+        },
+        {
+          "path": "scripts/tests/fixtures/relevance-cases.json",
+          "bytes": 36734,
+          "sha256": "e77d36eebbf6ddc2860946a02cdb659351da6c09f2688f1ed30939a418099646",
+          "upstream": ".claude/skills/ui-ux-pro-max/scripts/tests/fixtures/relevance-cases.json"
+        },
+        {
+          "path": "scripts/tests/fixtures/relevance-thresholds.json",
+          "bytes": 5079,
+          "sha256": "02e7a9e7467254a951be9230c6b800600baca2e2480e2e05a7b398d0ab1829ab",
+          "upstream": ".claude/skills/ui-ux-pro-max/scripts/tests/fixtures/relevance-thresholds.json"
+        },
+        {
+          "path": "scripts/tests/test_catalog_refresh.py",
+          "bytes": 19466,
+          "sha256": "3e2ca5d12702318f641ae62d0c14f22a3bcc84d84e79b863c0e947d475604adb",
+          "upstream": ".claude/skills/ui-ux-pro-max/scripts/tests/test_catalog_refresh.py"
+        },
+        {
+          "path": "scripts/tests/test_catalog_summary_line_endings.py",
+          "bytes": 2947,
+          "sha256": "fa6ff09f0ec2c99013588c77397f5082dddebe8f467e94c5f8378ec9595f4989",
+          "upstream": ".claude/skills/ui-ux-pro-max/scripts/tests/test_catalog_summary_line_endings.py"
+        },
+        {
+          "path": "scripts/tests/test_core.py",
+          "bytes": 16680,
+          "sha256": "3527fe2f4b852f69f07c17ddc0d615d9a6e025c924e45a33985579a94a8d2118",
+          "upstream": ".claude/skills/ui-ux-pro-max/scripts/tests/test_core.py"
+        },
+        {
+          "path": "scripts/tests/test_core_data_quality.py",
+          "bytes": 8954,
+          "sha256": "3ffc6b4905c9ea26d7ac4527ab154d153584231aee71b2ae4bd017977fa09cc5",
+          "upstream": ".claude/skills/ui-ux-pro-max/scripts/tests/test_core_data_quality.py"
+        },
+        {
+          "path": "scripts/tests/test_data_contracts.py",
+          "bytes": 19513,
+          "sha256": "6c819a2596520e47f4f459ed6b763fec5fb71e35a8074563f8c35432fc5c9ced",
+          "upstream": ".claude/skills/ui-ux-pro-max/scripts/tests/test_data_contracts.py"
+        },
+        {
+          "path": "scripts/tests/test_design_system_mode.py",
+          "bytes": 9815,
+          "sha256": "95ad2c154349f7021f55a558f8dcdd71df1a24fcf531a4364a8e49526a0865ef",
+          "upstream": ".claude/skills/ui-ux-pro-max/scripts/tests/test_design_system_mode.py"
+        },
+        {
+          "path": "scripts/tests/test_design_system_preview.py",
+          "bytes": 11164,
+          "sha256": "e425adfcdc64abfb3be598dadd39624cf8a700db58b97c0f51ea116abecb5caa",
+          "upstream": ".claude/skills/ui-ux-pro-max/scripts/tests/test_design_system_preview.py"
+        },
+        {
+          "path": "scripts/tests/test_design_system_stack.py",
+          "bytes": 2261,
+          "sha256": "83d09ffe8cfbf7b265f362129f061dfe8e5e167ce5db43adaead197cabc9ca38",
+          "upstream": ".claude/skills/ui-ux-pro-max/scripts/tests/test_design_system_stack.py"
+        },
+        {
+          "path": "scripts/tests/test_design_system_tokens.py",
+          "bytes": 13259,
+          "sha256": "a23e0207074079390caf5c4720b8f4c96d8d8c4dac18a448826553fb6561b4f7",
+          "upstream": ".claude/skills/ui-ux-pro-max/scripts/tests/test_design_system_tokens.py"
+        },
+        {
+          "path": "scripts/tests/test_form_error_handling.py",
+          "bytes": 4045,
+          "sha256": "39ebda1e6d4f01e6d5a80f9143600af2cf78112cbb87c61e62aeb9cd28a29526",
+          "upstream": ".claude/skills/ui-ux-pro-max/scripts/tests/test_form_error_handling.py"
+        },
+        {
+          "path": "scripts/tests/test_ime_composition.py",
+          "bytes": 4702,
+          "sha256": "7d4fc32b18ccfca02835a48163c93a36f44f9a794d25aaca888bba0b2127c05e",
+          "upstream": ".claude/skills/ui-ux-pro-max/scripts/tests/test_ime_composition.py"
+        },
+        {
+          "path": "scripts/tests/test_map_guidance.py",
+          "bytes": 3926,
+          "sha256": "1564c10c01676423c32de146559f7b4023423f9f374ad6f88d205debf6196e4f",
+          "upstream": ".claude/skills/ui-ux-pro-max/scripts/tests/test_map_guidance.py"
+        },
+        {
+          "path": "scripts/tests/test_map_product_types.py",
+          "bytes": 2198,
+          "sha256": "36f70fa5cd0ed71084be2cbf2eac20f59f3304c60ba1ce8b7e8c7690a11f4d77",
+          "upstream": ".claude/skills/ui-ux-pro-max/scripts/tests/test_map_product_types.py"
+        },
+        {
+          "path": "scripts/tests/test_native_desktop_stack_freshness.py",
+          "bytes": 8375,
+          "sha256": "3942845712b9a829323cd3568511483135f2a8c7cd79ccf61679da4b0f624dbb",
+          "upstream": ".claude/skills/ui-ux-pro-max/scripts/tests/test_native_desktop_stack_freshness.py"
+        },
+        {
+          "path": "scripts/tests/test_relevance_evaluator.py",
+          "bytes": 8430,
+          "sha256": "2fe56a4d6fe5fff15ff592274b0eeaba925146cefea6c0fa29d8f1b77c9aca1f",
+          "upstream": ".claude/skills/ui-ux-pro-max/scripts/tests/test_relevance_evaluator.py"
+        },
+        {
+          "path": "scripts/tests/test_rtl_support.py",
+          "bytes": 11945,
+          "sha256": "b41abae964f8e5919af4b21b9d629ed772d9a5bee184f0c0fc8cec0284859adf",
+          "upstream": ".claude/skills/ui-ux-pro-max/scripts/tests/test_rtl_support.py"
+        },
+        {
+          "path": "scripts/tests/test_skill_script_paths.py",
+          "bytes": 4305,
+          "sha256": "7cec24b94be771bc60bc84f8993e614bb16d4047930e1dd3d3bed91628311d44",
+          "upstream": ".claude/skills/ui-ux-pro-max/scripts/tests/test_skill_script_paths.py"
+        },
+        {
+          "path": "scripts/tests/test_style_taxonomy.py",
+          "bytes": 7425,
+          "sha256": "58c14be6c741de5382e3aeca858480570ba96d374532c3b22f44851a02d3076b",
+          "upstream": ".claude/skills/ui-ux-pro-max/scripts/tests/test_style_taxonomy.py"
+        },
+        {
+          "path": "scripts/tests/test_text_layout_resilience.py",
+          "bytes": 5874,
+          "sha256": "b51d32ee8a15505b87cb81957fb2d1b385e041e8beb4463c311d236bfd29ebd4",
+          "upstream": ".claude/skills/ui-ux-pro-max/scripts/tests/test_text_layout_resilience.py"
+        },
+        {
+          "path": "scripts/tests/test_web_stack_freshness.py",
+          "bytes": 8288,
+          "sha256": "83a6d597410f442441cdb17d0913be151404a608ada6a2487dd2bfe2fbf31e5d",
+          "upstream": ".claude/skills/ui-ux-pro-max/scripts/tests/test_web_stack_freshness.py"
+        },
+        {
+          "path": "scripts/validate_data.py",
+          "bytes": 52627,
+          "sha256": "6f160c5baeb00dc82d526f8544457eadd5b53eeeb23760b94347614b54c3752b",
+          "upstream": ".claude/skills/ui-ux-pro-max/scripts/validate_data.py"
+        }
+      ]
+    },
+    {
+      "name": "anydesign",
+      "repo": "uxKero/anydesign",
+      "commit": "d81bd8957a21c2d7fba8d2a8f4f60050d09368b5",
+      "folder": ".",
+      "licence": "MIT",
+      "files": [
+        {
+          "path": ".gitignore",
+          "bytes": 867,
+          "sha256": "f24bb1bfcae6938de9395f7a71982876cfd2e138c3962731f65cc932b6a3edd0",
+          "upstream": ".gitignore"
+        },
+        {
+          "path": "CHANGELOG.md",
+          "bytes": 22248,
+          "sha256": "a10fce98b91b33acf37b2755492deb020a08b6c9dc66df660e0c0b5b1728a34e",
+          "upstream": "CHANGELOG.md"
+        },
+        {
+          "path": "LICENSE",
+          "bytes": 1078,
+          "sha256": "8944c177c447a01dea050a1321c3caf7a0add53aea709493f8571d16ecf2ecbf",
+          "upstream": "LICENSE"
+        },
+        {
+          "path": "README.md",
+          "bytes": 15759,
+          "sha256": "1153eeb1f44a04e8945af07fb03db170b743bb5ae71b51d00ecb1544f24af8cb",
+          "upstream": "README.md"
+        },
+        {
+          "path": "SKILL.md",
+          "bytes": 6060,
+          "sha256": "111b7b76bf2d2490d3ac786c10fe5bacc616330be152696b551a0f2c64e7562b",
+          "upstream": "SKILL.md"
+        },
+        {
+          "path": "examples/README.md",
+          "bytes": 6914,
+          "sha256": "9fc4fe6f6f93bba03db25ba175584870ea731dc0253fc45930230f7711108f16",
+          "upstream": "examples/README.md"
+        },
+        {
+          "path": "examples/discord-hero-asset/element-3D-isolated.png",
+          "bytes": 178303,
+          "sha256": "20d54add07ea375803206bdfb69702b2104ef506c40cd3aa9a60380087856171",
+          "upstream": "examples/discord-hero-asset/element-3D-isolated.png"
+        },
+        {
+          "path": "examples/discord-hero-asset/element-3D.png",
+          "bytes": 491917,
+          "sha256": "83c36957cc773188068286ab027139d5567ca5d5b0525d377ba6d8189e5b7c95",
+          "upstream": "examples/discord-hero-asset/element-3D.png"
+        },
+        {
+          "path": "examples/discord-hero-asset/element.md",
+          "bytes": 9089,
+          "sha256": "1a09897f3bf0ea1a81d4813a719806d0f3bfe733676783a941183087838e7621",
+          "upstream": "examples/discord-hero-asset/element.md"
+        },
+        {
+          "path": "examples/discord-hero-asset/element.png",
+          "bytes": 266673,
+          "sha256": "345c7e7ac3b067fb9203f34dfb206ec674ce1b55d55bd0843e6d652d8e4c15f5",
+          "upstream": "examples/discord-hero-asset/element.png"
+        },
+        {
+          "path": "examples/discord-hero-asset/source.md",
+          "bytes": 2986,
+          "sha256": "69f7d37e815e28077affa88c1a2e5a18f144f9b7efc80813c200d10eb7fe6cc9",
+          "upstream": "examples/discord-hero-asset/source.md"
+        },
+        {
+          "path": "examples/game-asset-pack/asset-character.png",
+          "bytes": 257297,
+          "sha256": "d61a1dbfb8e97a3b9bbdfe4fed3144985b11a7b1bab6436a2170c9e40c092b1e",
+          "upstream": "examples/game-asset-pack/asset-character.png"
+        },
+        {
+          "path": "examples/game-asset-pack/element.md",
+          "bytes": 6628,
+          "sha256": "7a6094c2c0fe35fd6523eb6f6ff82bb8d5fcb289fd809967c4999d86e996957f",
+          "upstream": "examples/game-asset-pack/element.md"
+        },
+        {
+          "path": "examples/game-asset-pack/element.png",
+          "bytes": 693062,
+          "sha256": "889b7d1bb90566470f2c433588aa1446c982db6e0e3ac91d03b6899ab9a71b82",
+          "upstream": "examples/game-asset-pack/element.png"
+        },
+        {
+          "path": "examples/game-asset-pack/source.md",
+          "bytes": 2721,
+          "sha256": "74b65b30cdcf523847013216c99faf4bc2cd608d8a461332ed6c47dd300f30ac",
+          "upstream": "examples/game-asset-pack/source.md"
+        },
+        {
+          "path": "examples/landing-example/design-a11y.md",
+          "bytes": 1557,
+          "sha256": "b64f4e299bfa0815d12bdccda15473511ddda6266545a27ae8aba823d4a86cf0",
+          "upstream": "examples/landing-example/design-a11y.md"
+        },
+        {
+          "path": "examples/landing-example/design-tokens.json",
+          "bytes": 5946,
+          "sha256": "0d0ba28358e9a5aa77d6ceeb4287d23f0e07e6b938633d46f9cca71f61aa97c3",
+          "upstream": "examples/landing-example/design-tokens.json"
+        },
+        {
+          "path": "examples/landing-example/design.md",
+          "bytes": 16746,
+          "sha256": "ae4f43ba6950f93d6c5153a0a8648a745831773198a3109d7f4943730ad79337",
+          "upstream": "examples/landing-example/design.md"
+        },
+        {
+          "path": "examples/landing-example/source.md",
+          "bytes": 1484,
+          "sha256": "45714aaeb26d6ecfd9497bcd6421ec6605af8a261d660bfa491819e63c4381a5",
+          "upstream": "examples/landing-example/source.md"
+        },
+        {
+          "path": "examples/poolsuite-player-element/element.html",
+          "bytes": 20127,
+          "sha256": "fb7702bffe8098bee7ad2d74c96316642d789d5d8726fd757fedc2c526acb417",
+          "upstream": "examples/poolsuite-player-element/element.html"
+        },
+        {
+          "path": "examples/poolsuite-player-element/element.md",
+          "bytes": 12444,
+          "sha256": "3fa86fd34654fba67859391f5f4437b5199418b1d77c50b5eb0ea2df4ca39a47",
+          "upstream": "examples/poolsuite-player-element/element.md"
+        },
+        {
+          "path": "examples/poolsuite-player-element/element.png",
+          "bytes": 87689,
+          "sha256": "281b266f5bc39a206ea685ec61c9fe85c8859eb6229ba894488d265f1352e837",
+          "upstream": "examples/poolsuite-player-element/element.png"
+        },
+        {
+          "path": "examples/poolsuite-player-element/source.md",
+          "bytes": 2857,
+          "sha256": "10e31690d954fe20791e14bff515fa3b2c90fb9f3d6a3869ab7af4ff63c21421",
+          "upstream": "examples/poolsuite-player-element/source.md"
+        },
+        {
+          "path": "examples/poolsuite-player-element/v0-result.png",
+          "bytes": 30993,
+          "sha256": "59f018e39219f2cdefb2567dcb5ed5ec113e4610b81d563917847b3cc29f6712",
+          "upstream": "examples/poolsuite-player-element/v0-result.png"
+        },
+        {
+          "path": "examples/v0-downstream-demo/README.md",
+          "bytes": 1753,
+          "sha256": "0416d75016633fbe5b1b3c6795f18492bf65d31bdaec7a3e608e411305b4c808",
+          "upstream": "examples/v0-downstream-demo/README.md"
+        },
+        {
+          "path": "examples/v0-downstream-demo/screenshot.png",
+          "bytes": 182531,
+          "sha256": "e9665bb448dd9240b648315e4bd71b797a92440d663b0fd6a58b4e24660dec89",
+          "upstream": "examples/v0-downstream-demo/screenshot.png"
+        },
+        {
+          "path": "examples/vercel-landing/capture.png",
+          "bytes": 232575,
+          "sha256": "7726383b9c75345c8f70779fade5bfb3e1286370f006bb61131c959a948975ef",
+          "upstream": "examples/vercel-landing/capture.png"
+        },
+        {
+          "path": "examples/vercel-landing/claude-design-bundle/README-claude-design.md",
+          "bytes": 2331,
+          "sha256": "deea9e8ee0352aea0634cb5cdef18247486d19ed517ba21f6258c7189739a4ba",
+          "upstream": "examples/vercel-landing/claude-design-bundle/README-claude-design.md"
+        },
+        {
+          "path": "examples/vercel-landing/claude-design-bundle/brand-kit.pptx",
+          "bytes": 50215,
+          "sha256": "c53d6989304ffd78f33aba3b3319249e750f07c8505d344ea672215554d46fb5",
+          "upstream": "examples/vercel-landing/claude-design-bundle/brand-kit.pptx"
+        },
+        {
+          "path": "examples/vercel-landing/claude-design-bundle/brand-overview.docx",
+          "bytes": 50865,
+          "sha256": "5b56c1a2903f3d877359229b514907616ada15de5817620b615e19aba0f1a36a",
+          "upstream": "examples/vercel-landing/claude-design-bundle/brand-overview.docx"
+        },
+        {
+          "path": "examples/vercel-landing/claude-design-bundle/tailwind.config.ts",
+          "bytes": 5303,
+          "sha256": "f36af33d4a6784d0996827c1d841a13869f237a8a8cc312a5e099e1de80c9f06",
+          "upstream": "examples/vercel-landing/claude-design-bundle/tailwind.config.ts"
+        },
+        {
+          "path": "examples/vercel-landing/claude-design-bundle/tokens.css",
+          "bytes": 5563,
+          "sha256": "a0e4e74c3569798b30bf0b5700b139eab85d76df67da452c60cee933ffa3241b",
+          "upstream": "examples/vercel-landing/claude-design-bundle/tokens.css"
+        },
+        {
+          "path": "examples/vercel-landing/design-a11y.md",
+          "bytes": 2159,
+          "sha256": "9764802a5450b96065e3b5c5f15270649ae689e03f9cfd4f4f9add8812bd22a2",
+          "upstream": "examples/vercel-landing/design-a11y.md"
+        },
+        {
+          "path": "examples/vercel-landing/design-tokens.json",
+          "bytes": 16359,
+          "sha256": "e8dea60979e79bb5293e11da3b99149b48294c1613ed044f146ad905d28d46bc",
+          "upstream": "examples/vercel-landing/design-tokens.json"
+        },
+        {
+          "path": "examples/vercel-landing/design.md",
+          "bytes": 33293,
+          "sha256": "ffdc98179d30464a6206fa6bc03fe81bd979ac34a30132fb7fe5a620411eff3f",
+          "upstream": "examples/vercel-landing/design.md"
+        },
+        {
+          "path": "examples/vercel-landing/source.md",
+          "bytes": 3353,
+          "sha256": "679ce8a904d49564cc443132f62aa6d1fef9d0980633c5d48d91d22d550e2263",
+          "upstream": "examples/vercel-landing/source.md"
+        },
+        {
+          "path": "references/capture-flows.md",
+          "bytes": 7798,
+          "sha256": "d025a5bb956321106f705a739e5ded6a904e2a86949cd163bd81f5619334a140",
+          "upstream": "references/capture-flows.md"
+        },
+        {
+          "path": "references/design-md.md",
+          "bytes": 11216,
+          "sha256": "c04e223ac9d0ffc159cd2f1893066fc346476cbaee26ff8ae781376695ff5375",
+          "upstream": "references/design-md.md"
+        },
+        {
+          "path": "references/element-copy.md",
+          "bytes": 13495,
+          "sha256": "a4e2bd81e29cbc117daeaf0b6527ead693ab77bb63020e85cd84fce39847c256",
+          "upstream": "references/element-copy.md"
+        },
+        {
+          "path": "requirements.txt",
+          "bytes": 793,
+          "sha256": "f4c14db812e2eddff9b33e2cc8bb84c388b689d53b5bb35ccb7e58ea905fb0d0",
+          "upstream": "requirements.txt"
+        },
+        {
+          "path": "scripts/build_tokens_json.py",
+          "bytes": 11392,
+          "sha256": "5e96c2c85c4b994c8c3bd70284820984fa7ba21f75112a9da1032f51ea4386da",
+          "upstream": "scripts/build_tokens_json.py"
+        },
+        {
+          "path": "scripts/capture_site.py",
+          "bytes": 18268,
+          "sha256": "9a41c6e1ca1ca1f8c75aab482ca4d5297295970cdcb254b31b0d3fdfb2fefa05",
+          "upstream": "scripts/capture_site.py"
+        },
+        {
+          "path": "scripts/check_contrast.py",
+          "bytes": 6687,
+          "sha256": "b8f63d6704dae7483896bd40f305564d3bd185478db5d6acb9ee20ab89f8477f",
+          "upstream": "scripts/check_contrast.py"
+        },
+        {
+          "path": "scripts/export_for_claude_design.py",
+          "bytes": 44133,
+          "sha256": "8f2a6237c053e95f83313c4188df1875a3535dc7ab61ecba2d5a4d0a505b5ad2",
+          "upstream": "scripts/export_for_claude_design.py"
+        },
+        {
+          "path": "scripts/extract_colors.py",
+          "bytes": 4836,
+          "sha256": "9de38727e2f1fd78940b7a046024f76fa5f398458458585c8b64363cd5a744f7",
+          "upstream": "scripts/extract_colors.py"
+        },
+        {
+          "path": "scripts/extract_css_vars.py",
+          "bytes": 17010,
+          "sha256": "41091ff0dec0ebdc16e89b910b12b0c1df0d036321a467afed072666073cd8d2",
+          "upstream": "scripts/extract_css_vars.py"
+        },
+        {
+          "path": "scripts/lint_design_md.py",
+          "bytes": 12157,
+          "sha256": "3b33714dd5b8ad4226cef209cbbe210c316a19cdc922084f2241f3bb70a187e6",
+          "upstream": "scripts/lint_design_md.py"
+        },
+        {
+          "path": "scripts/verify_design.py",
+          "bytes": 12595,
+          "sha256": "631c535f4bedb492f9efc47309ef54cecb443bcf0137af27a42540d459ef6d0f",
+          "upstream": "scripts/verify_design.py"
+        }
+      ]
+    }
+  ]
+}

@@ -32,7 +32,9 @@ exists to prevent.
   would justify a design_gate check), **CDIO-10** legal surface (its vendored
   templates are re-vendored from upstream at a new commit, never edited in place;
   its sec. 8 names the PLANNED browser consent check), **CDIO-12** website build
-  workflow (its sec. 8 names the PLANNED first end-to-end build). CDIO-08 §12 names
+  workflow (its sec. 8 names the PLANNED first end-to-end build), **CDIO-13** creative
+  web pack (its vendored skills are re-vendored at a new pinned commit with a new
+  manifest, never edited in place; its sec. 11 names the PLANNED first recipe build). CDIO-08 §12 names
   its thresholds as uncalibrated: the first real app reviews that cite them are
   the evidence you re-check them against.
 - The invariant that every criterion is expressed as a **threshold with an

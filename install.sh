@@ -267,6 +267,19 @@ if [ -d "$VENDOR_DIR" ] && [ -f "$GATE_SCRIPT" ]; then
   fi
 fi
 
+# 11. CDIO-13 live skills (impeccable, ui-ux-pro-max, anydesign) into ~/.claude/skills.
+# Never overwrites an installed skill and skips one a plugin already provides.
+LIVE_INSTALLER="$SKILL_DIR/tools/install_cdio_live_skills.py"
+if [ -f "$LIVE_INSTALLER" ]; then
+  PY="$(command -v python3 || command -v python || true)"
+  if [ -n "$PY" ]; then
+    echo "── CDIO live skills ──"
+    "$PY" "$LIVE_INSTALLER" || echo "⚠️  CDIO live skills: at least one FAIL, see above. Nothing was overwritten."
+  else
+    echo "⚠️  python not on PATH — CDIO live skills (impeccable, ui-ux-pro-max, anydesign) not installed."
+  fi
+fi
+
 echo ""
 echo "Done! The AI will now:"
 echo "  • Plan before acting (Anti-Monolith)"

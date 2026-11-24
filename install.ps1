@@ -284,6 +284,27 @@ if ((Test-Path $VendorDir) -and (Test-Path $GateScript)) {
     }
 }
 
+# 11. CDIO-13 live skills (impeccable, ui-ux-pro-max, anydesign) into ~/.claude/skills.
+# Never overwrites an installed skill and skips one a plugin already provides.
+$LiveInstaller = Join-Path $SkillDir "tools\install_cdio_live_skills.py"
+if (Test-Path $LiveInstaller) {
+    # Probe that python really runs: the Microsoft Store stub resolves but exits 9009.
+    $pyOk = $false
+    if (Get-Command python -ErrorAction SilentlyContinue) {
+        & python -c "import sys" 2>$null
+        $pyOk = ($LASTEXITCODE -eq 0)
+    }
+    if ($pyOk) {
+        Write-Host "-- CDIO live skills --"
+        & python $LiveInstaller
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "[WARN] CDIO live skills: at least one FAIL, see above. Nothing was overwritten." -ForegroundColor Yellow
+        }
+    } else {
+        Write-Host "[WARN] python not on PATH - CDIO live skills (impeccable, ui-ux-pro-max, anydesign) not installed. Re-run install.ps1 after installing Python 3." -ForegroundColor Yellow
+    }
+}
+
 # --- session-continuity module (Lazarus v4) ---
 Write-Host "session-continuity: run modules/session-continuity/wire-claude-settings.ps1 and install-cursor-profiles.ps1 as the signed-in user to enable tab continuity."
 
