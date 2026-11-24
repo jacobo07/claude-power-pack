@@ -440,6 +440,17 @@ def check_palette_cliche(colors, *, background=None,
     """Fail the clichéd palettes the Anti-Slop Kit names: a purple-family accent over
     a near-white or near-black ground, and the teal `#16d5e6` fingerprint."""
     vals = [str(c).strip() for c in (colors or []) if str(c).strip()]
+    if not vals:
+        # Zero colours read is not "no cliché found": the check looked at nothing and
+        # could not have returned the other answer. Measured 2026-11-24 (D44.5): a
+        # DESIGN.md with its palette in a markdown table got `0 color(s), no clichéd
+        # palette detected` -> pass, APPROVE 92. Same shape as check_font_stack's
+        # empty case, and the same severity.
+        return Verdict(criterion=criterion, dimension="visual", status="fail",
+                       severity="major", observed="no colour tokens read (0 hex values "
+                                                  "in DESIGN.md front-matter)",
+                       recommendation="declare the palette as hex tokens in the DESIGN.md "
+                                      "front-matter; the gate reads nothing outside it")
     hits = []
 
     for c in vals:

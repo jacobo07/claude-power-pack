@@ -467,6 +467,17 @@ Five coherence contradictions plus an undeclared font stack.
     else:
         _fail("V-DESIGN-UNIT-PALETTE", "palette check does not discriminate")
 
+    # D44.5: a check that read zero colours must not report "no cliché" -- it could not
+    # have seen one. Both poles: empty fails major, one honest colour still passes.
+    empty, one = check_palette_cliche([]), check_palette_cliche(["#c96442"])
+    if empty.status == "fail" and empty.severity == "major" and empty.is_valid() \
+            and check_palette_cliche(None).status == "fail" and one.status == "pass":
+        _ok("V-DESIGN-PALETTE-NOT-VACUOUS",
+            "zero colours read fails major; one non-cliché colour passes")
+    else:
+        _fail("V-DESIGN-PALETTE-NOT-VACUOUS",
+              f"empty palette -> {empty.status}/{empty.severity}: {empty.observed}")
+
     total = PASSES + FAILS
     print(f"\nDESIGN_PASS={PASSES}/{total}  threshold={total}/{total}")
     return 0 if FAILS == 0 else 1
