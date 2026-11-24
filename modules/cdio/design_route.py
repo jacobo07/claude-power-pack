@@ -42,7 +42,12 @@ def _apply_overrides(kinds: list, routes: dict) -> list:
 def classify(prompt: str, routes: dict) -> list:
     """Kinds named by a prompt, in table order, overrides applied. [] = not visual work by its words."""
     text = prompt or ""
-    kinds = [k for k, spec in routes["surfaces"].items() if spec["_rx"].search(text)]
+    # A surface word counts only where it reads as a request (T3-CT W3, FP-DESIGN-ROUTE-WORD-IN-PASTED-LIST): not
+    # quoted, not inside talk about routing, not a bare item of a list of non-visual things. A list of visual
+    # surfaces ("landing; pricing page; dashboard") is still a request: same_kind is every surface's pattern.
+    from modules.gsd_x.prompt_origin import live_matches
+    any_surface = re.compile("|".join("(?:%s)" % s["prompt"] for s in routes["surfaces"].values()), re.I)
+    kinds = [k for k, spec in routes["surfaces"].items() if live_matches(spec["_rx"], text, any_surface)]
     return _apply_overrides(kinds, routes)
 
 
