@@ -5,6 +5,17 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**2026-11-24 (pane 0bed7af7). Owner "y" = T3-CT CLOSED (context-tax UPS levers).**
+- Shipped, all live at commit, nothing pushed: W5 PP reminder v4 `76ca3107`+`3c929760` (~2.4M/day), W5b R6
+  correction-guard `62afbee2` (~1.0M/day), W5c tier note `ecd0224a` (~0.6M/day), W5d AKOS `0c38fce4`
+  (~0.6-0.7M/day), W5e spec re-send `e7b39064` (~0.24M/day). Total ~4.8M tok/day, DERIVED from 14 d transcript
+  counts; no live A/B. Census figures overstated three levers because each counted a whole injected family.
+- Shared kill switch for every transcript dedupe: `CPP_OFFER_DEDUPE=0`. Rollback for the two hooks outside git:
+  `~/.claude/backups/t3-w5-20261124T135919/restore.ps1`; everything else is `git revert`.
+- Gates: V-PPR 25, V-R6 29, V-TD 15, V-AKD 15, V-SPD 8, AKOS integration 11.
+- Open debt, not blocking: a live before/after token measurement; V-GSDX one unexplained 14/15; V-TD LOW-2 cases
+  (mid-row seek, boundary outside the tail). No measured candidate lever remains.
+
 **2026-11-24 (pane 0bed7af7). Owner "go ahead" = measure, then build, the JIT spec re-send lever. T3-CT W5e.**
 - MEASURED, 14 d (scratchpad spec_count.py / spec_rent.py): 240 ACTIVE PROJECT SPEC blocks in 97 sessions, ~4.5 KB
   each. 36 were the same body re-sent by the 2 h state TTL with no compact since: ~3.4M tokens of rent, ~0.24M/day.
