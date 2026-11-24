@@ -1653,47 +1653,55 @@ def _akos_mark(sid: str) -> None:
 
 
 _AKOS_MARK = "## AKOS Knowledge (domain-matched"
-_AKOS_TAIL_BYTES = 8 * 1024 * 1024
+_ON_RECORD_TAIL_BYTES = 8 * 1024 * 1024
+_AKOS_TAIL_BYTES = _ON_RECORD_TAIL_BYTES
 
 
-def _akos_on_record(data: dict):
-    """T3-CT W5d: True if an AKOS block was DELIVERED into this session (a hook_additional_context transcript row)
+def _delivered_on_record(data: dict, needle: str, payload: str | None = None):
+    """True if a block carrying `needle` was DELIVERED into this session (a hook_additional_context transcript row)
     after the last compact boundary, so the copy is still in context; False if not; None if unobservable.
-    The 2 h TTL alone re-sent the block into live sessions: 48 of 167 deliveries in 14 days had a copy on
-    record and no compact since. Only consulted when the TTL has expired (~once per 2 h).
-    Reads BACKWARDS over the last _AKOS_TAIL_BYTES only: a full forward scan took 3.1 s on a real 92 MB transcript,
-    past a UserPromptSubmit deadline. The first decisive row from the end wins (an AKOS row -> True, a compact
-    boundary -> False); neither inside the window, with the file larger than it -> None. False/None keep the old TTL
-    behaviour, so this can only remove a send, never add one.
+    With `payload`, the most recent delivered copy must also contain it verbatim (an edited block is a new block).
+    Reads BACKWARDS over the last _ON_RECORD_TAIL_BYTES only: a full forward scan took 3.1 s on a real 92 MB
+    transcript, past a UserPromptSubmit deadline. The first decisive row from the end wins (a delivered row with
+    the needle -> payload check, a compact boundary -> False); neither inside the window, with the file larger
+    than it -> None. Callers send on False/None, so this can only remove a send, never add one.
     Kill switch: CPP_OFFER_DEDUPE=0 (shared with modules/gsd_x/cli.py). Never raises."""
     try:
         if os.environ.get("CPP_OFFER_DEDUPE", "").strip().lower() in ("0", "off", "false"):
             return None
         tp = str((data or {}).get("transcript_path") or (data or {}).get("transcriptPath") or "")
-        if not tp or not os.path.isfile(tp):
+        if not tp or not os.path.isfile(tp) or not needle:
             return None
         size = os.path.getsize(tp)
         with open(tp, "rb") as fh:
-            if size > _AKOS_TAIL_BYTES:
-                fh.seek(size - _AKOS_TAIL_BYTES)
+            if size > _ON_RECORD_TAIL_BYTES:
+                fh.seek(size - _ON_RECORD_TAIL_BYTES)
             lines = fh.read().decode("utf-8", errors="replace").splitlines()
-        whole = size <= _AKOS_TAIL_BYTES
+        whole = size <= _ON_RECORD_TAIL_BYTES
         if not whole and lines:
             lines = lines[1:]                       # first line is cut by the seek
         for line in reversed(lines):
             if '"compact_boundary"' in line:
                 return False
-            if _AKOS_MARK in line and "hook_additional_context" in line:
+            if "hook_additional_context" in line and (needle in line or needle.replace("\\", "\\\\") in line):
                 try:
                     a = json.loads(line).get("attachment") or {}
                 except ValueError:
                     continue
-                if a.get("type") == "hook_additional_context" and any(
-                        _AKOS_MARK in str(c) for c in (a.get("content") or [])):
-                    return True
+                if a.get("type") != "hook_additional_context":
+                    continue
+                hits = [str(c) for c in (a.get("content") or []) if needle in str(c)]
+                if hits:
+                    return payload is None or any(payload in c for c in hits)
         return False if whole else None
     except Exception:
         return None
+
+
+def _akos_on_record(data: dict):
+    """T3-CT W5d: the 2 h TTL alone re-sent the AKOS block into live sessions: 48 of 167 deliveries in 14 days had
+    a copy on record and no compact since. Only consulted when the TTL has expired (~once per 2 h)."""
+    return _delivered_on_record(data, _AKOS_MARK)
 
 
 def _akos_knowledge_inject(fn):
@@ -1835,18 +1843,26 @@ def run(data) -> dict:
                 spec_size = SPEC_CAP_BYTES
             else:
                 spec_size = len(spec_bytes)
-            blocks.append(
-                f"=== ACTIVE PROJECT SPEC: {rel} (priority context, "
-                f"PASO -1 of the Apex Onboarding Standard) ===\n"
-                f"{spec_body}"
-            )
-            total += spec_size
-            spec_injected_size = spec_size
-            tele.append({"module": "__spec__", "tier": "active",
-                         "bytes": spec_size, "budget": BUDGET_BYTES,
-                         "programmatic": programmatic,
-                         "spec_path": str(rel)})
-            _log(f"sid={sid} spec-injected {rel} ({spec_size} B)")
+            spec_head = (f"=== ACTIVE PROJECT SPEC: {rel} (priority context, "
+                         f"PASO -1 of the Apex Onboarding Standard) ===\n")
+            spec_block = spec_head + spec_body
+            # T3-CT W5e: the 2 h state TTL re-sent an unchanged spec into live sessions: 36 of 240 deliveries
+            # in 14 days had the same body on record with no compact since (~3.4M tokens of rent). The
+            # transcript is the truth for "still in context"; only the exact same block counts.
+            # The needle drops the trailing newline: the raw JSONL row carries it escaped, so it would never match.
+            if _delivered_on_record(data, spec_head.rstrip("\n"), spec_block) is True:
+                spec_pointer = (f"Active project spec {rel} unchanged since it was injected "
+                                f"earlier this session; re-read the file if it is no longer in context.")
+                _log(f"sid={sid} spec-on-record {rel} ({spec_size} B not re-sent)")
+            else:
+                blocks.append(spec_block)
+                total += spec_size
+                spec_injected_size = spec_size
+                tele.append({"module": "__spec__", "tier": "active",
+                             "bytes": spec_size, "budget": BUDGET_BYTES,
+                             "programmatic": programmatic,
+                             "spec_path": str(rel)})
+                _log(f"sid={sid} spec-injected {rel} ({spec_size} B)")
 
         for m in mods:
             if m in state:

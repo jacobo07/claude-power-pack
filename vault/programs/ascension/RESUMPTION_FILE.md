@@ -5,6 +5,15 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**2026-11-24 (pane 0bed7af7). Owner "go ahead" = measure, then build, the JIT spec re-send lever. T3-CT W5e.**
+- MEASURED, 14 d (scratchpad spec_count.py / spec_rent.py): 240 ACTIVE PROJECT SPEC blocks in 97 sessions, ~4.5 KB
+  each. 36 were the same body re-sent by the 2 h state TTL with no compact since: ~3.4M tokens of rent, ~0.24M/day.
+  24 more re-sends had a changed body (correct). Saving DERIVED.
+- `tools/jit_skill_loader.py`: `_akos_on_record` generalised to `_delivered_on_record(data, needle, payload)`; the
+  spec branch sends the one-line pointer when the exact same block is the latest delivered copy. Real transcripts:
+  verbatim landing -> True, spec edited since -> False, 16-72 ms.
+- Gate `tools/test_spec_dedupe.py` V-SPD 8/8 (stubbed control 3 FAIL). V-AKD 15/15, AKOS integration 11/11.
+
 **2026-11-24 (pane 0bed7af7). Owner "go ahead" = AKOS lever. T3-CT W5d AKOS re-send + duplicate-unit dedupe.**
 - MEASURED, 14 d: 167 AKOS blocks in 72 sessions, ~1,275 chars each. 48 (29%) were re-sent by the 2 h TTL while a copy
   was on record with no compact since. 208 of 787 unit lines repeated a title already shown (short lines, ~5% of the
