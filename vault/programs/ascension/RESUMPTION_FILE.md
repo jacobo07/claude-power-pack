@@ -5,6 +5,20 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**2026-11-24 (pane 0bed7af7). Owner "authority" = ExecutionOS tier lever. T3-CT W5c tier-note dedupe.**
+- `modules/gsd_x/cli.py`: advisory(v, payload). When the LATEST tier note delivered in this session (a
+  hook_additional_context row after the last compact_boundary, last 4 MB of the transcript) has the same verdict, a
+  one-line "unchanged" form is sent. Otherwise the full note goes out, and UNKNOWN also gets the full note. Kill
+  switch: CPP_OFFER_DEDUPE=0.
+- Real bytes falsified the first parse: the PP reminder ladder line shares the prefix. Now only TIER_KEYS verdicts
+  count (pinned).
+- Gate `tools/test_tier_dedupe.py` V-TD 15/15. V-OD 0 failed. V-GSDX 15/15 in 4 of 5 runs; one run gave 14/15 and the
+  failing check was not captured (FLAKE, unidentified).
+- PREMISE CORRECTION (MEASURED, 14 d): 815 tier notes delivered in 268 sessions (FORENSIC 460 / DEEP 243 / STANDARD
+  91 / NOT MEASURED 21). Only 251 (31%) repeat the previous verdict. The census "3.4M" was the whole tier family.
+  This lever saves ~0.6M tok/day (DERIVED), not 3.4M.
+- Scan cost on real transcripts: 8-48 ms (40 MB file 43 ms).
+
 **2026-11-24 (pane 0bed7af7). Owner "go ahead" = authority raised for the R6 lever. T3-CT W5b R6 fix, LIVE.**
 - The premise "R6 false fire on /kresume" was FALSIFIED. Per the hook's own log (14 d, 220 injections), 201 came from
   `\b(para|detente|stop)...\b` matching the Spanish PREPOSITION "para" and 19 from a bare "no es". /kresume ~0.

@@ -216,8 +216,85 @@ def family_block(prompt: str, payload: dict, families=None, root=None) -> str:
         return ""
 
 
-def advisory(v: "tier.TierVerdict") -> str:
+# T3-CT W5c: the tier note recurs on every non-floor prompt (~300 chars, census 14 d: ~3.4M tok/day of UPS rent).
+# When the LATEST tier note already delivered into this session (a hook_additional_context row in the transcript,
+# after the last compact boundary) states the same verdict, a one-line form replaces the full note. A changed
+# verdict, a compact since, or a transcript that cannot be read (UNKNOWN) gets the full note as before. The tier
+# recurs late in long sessions, so this reads the transcript TAIL. Kill switch: CPP_OFFER_DEDUPE=0 (shared).
+TIER_PREFIX = "ExecutionOS Lite tier: "
+TIER_TAIL_BYTES = 4 * 1024 * 1024
+
+
+TIER_KEYS = ("LIGHT", "STANDARD", "DEEP", "FORENSIC", "NOT MEASURED")
+
+
+def _tier_key(text: str) -> str:
+    """'DEEP' from 'ExecutionOS Lite tier: DEEP — ...', 'NOT MEASURED' from the abstain form; '' if absent.
+    The LAST occurrence holding a real verdict wins. Other text shares the prefix: power-pack-reminder.js spells the
+    ladder as 'ExecutionOS Lite tier: LIGHT (lookup/fix) | ...' (found on real transcripts), which is not a verdict."""
+    key, i = "", text.find(TIER_PREFIX)
+    while i >= 0:
+        rest = text[i + len(TIER_PREFIX):]
+        for stop in (" —", ".", "\n"):
+            j = rest.find(stop)
+            if j >= 0:
+                rest = rest[:j]
+        if rest.strip() in TIER_KEYS:
+            key = rest.strip()
+        i = text.find(TIER_PREFIX, i + 1)
+    return key
+
+
+def _last_tier_on_record(payload: dict):
+    """The verdict key of the latest tier note delivered since the last compact; '' if none is on record;
+    None when that cannot be observed. Never raises."""
+    try:
+        import os
+        if os.environ.get(DEDUPE_SWITCH, "").strip().lower() in ("0", "off", "false"):
+            return None
+        tp = str(payload.get("transcript_path") or payload.get("transcriptPath") or "")
+        if not tp or not os.path.isfile(tp):
+            return None
+        size = os.path.getsize(tp)
+        with open(tp, "rb") as fh:
+            if size > TIER_TAIL_BYTES:
+                fh.seek(size - TIER_TAIL_BYTES)
+            data = fh.read().decode("utf-8", errors="replace")
+        lines = data.splitlines()
+        whole = size <= TIER_TAIL_BYTES
+        if not whole and lines:
+            lines = lines[1:]                           # first line is cut by the seek
+        key, seen = "", False
+        for line in lines:
+            if '"compact_boundary"' in line:
+                key, seen = "", True
+            elif TIER_PREFIX in line and "hook_additional_context" in line:
+                try:
+                    a = (json.loads(line).get("attachment") or {})
+                except ValueError:
+                    continue
+                if a.get("type") != "hook_additional_context":
+                    continue
+                for c in (a.get("content") or []):
+                    k = _tier_key(str(c))
+                    if k:
+                        key, seen = k, True
+        if not seen and not whole:
+            return None                                 # did not see the whole session: cannot claim absence
+        return key
+    except Exception:                                   # noqa: BLE001
+        return None
+
+
+def advisory(v: "tier.TierVerdict", payload: dict | None = None) -> str:
     """The text the model sees. Empty when there is nothing worth saying."""
+    if not v.by_floor and payload:
+        key = "NOT MEASURED" if v.abstained else str(v.tier)
+        if _last_tier_on_record(payload) == key:
+            # Same TIER, possibly other drivers (review LOW-1): name this prompt's drivers so none is hidden.
+            now = ", ".join(cid for cid, _ in v.drivers[:4])
+            return (f"{TIER_PREFIX}{key} — same tier as stated earlier in this session"
+                    + (f" (drivers now: {now})" if now else "") + "; that note applies to this prompt.")
     if v.abstained:
         return (
             "ExecutionOS Lite tier: NOT MEASURED. Capability contracts matched "
@@ -283,7 +360,7 @@ def main() -> int:
     # that said "hero" armed the web_surface gate on a tooling repo (2026-11-22). Advisory blocks keep the full text.
     from modules.gsd_x.prompt_origin import owner_text
     owner = owner_text(prompt)
-    parts = [advisory(v), inherited_block(pl), family_block(owner, pl) if owner else ""]
+    parts = [advisory(v, pl), inherited_block(pl), family_block(owner, pl) if owner else ""]
     try:
         from modules.gsd_x.recall import recall_block
         parts.append(recall_block(prompt, pl))
