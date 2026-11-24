@@ -5,6 +5,35 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**2026-11-24 (pane b91135b9, /kresume of a6fa1f65). T3-CT W4 STOPPED BEFORE BUILD: premise falsified. Owner decision.**
+- CCR main-lean canary is DEFAULT-ON since 2026-10-31 (Owner D1; `mods/cpp-cognitive-runtime/hooks/policy.ts:541`): skill
+  and agent listings go names-only on the wire, MCP instructions become headings. This pane's own context shows it
+  (names only, plus exactly the 8 SUCCESSOR_KEEP_SKILLS with descriptions, policy.ts:642).
+- W2 priced the lever from transcript attachment chars, which are recorded BEFORE the rewrite (this pane: skill_listing
+  43,439, agent_listing_delta 35,307 chars in the jsonl, though I received names only). So W2's 23.4k/call / ~60M/day is
+  mostly already banked. Measured call-1 here: 72,203 (37,109 create + 35,094 read).
+- What is left of the lever (ESTIMATE from the rendered context): ~5k tok/call, of which the biggest movable piece is the
+  deferred MCP names (~150 lines). `collapseDeferredNames` already exists in SHADOW (`CCR_DEFERRED_NAMES=enforce` opt-in,
+  policy.ts:588-617), and its own comment requires an n=10 ON/OFF quality bench before enforce.
+- W4 spend: ~26 calls, no edits. Options: (a) W4 = bench + enforce deferred-names; (b) W4 = UPS hook context (W2 #2);
+  (c) skip W4 and go to prior T3 remainder.
+- Owner "rec" -> recommended (b); Owner "go ahead". **W4(b) BUILT, LIVE in the main checkout (uncommitted until review).**
+  - UPS census (scratchpad ups_census.py; 14 d, 2,043 transcripts, 142,622 main calls; rent = chars x later calls to
+    the next compact, chars/3.6, LOW bound): total ~29.0M tok/day. Top: Tower baseline 6.39M (531 blocks / 214 sessions,
+    avg 3,152 chars), Recall 4.01M (per-prompt BM25, varies: not deduped), full PP reminder 3.82M, AKOS 2.17M,
+    ExecutionOS tier (FORENSIC 2.04 + DEEP 1.01 + STANDARD 0.35), JIT activation 1.78M, R6 correction 0.99M.
+  - Fix at the owner `modules/gsd_x/cli.py`: `_delivered(payload, marker)` reads the host transcript; a block already on
+    record as a hook_additional_context attachment is not re-offered (Tower + family blocks). Quoted text in a tool
+    result is not delivery. No/unreadable transcript or >8 MB scan = UNKNOWN -> old MAX_OFFERS=3. Kill `CPP_OFFER_DEDUPE=0`.
+  - Gate `tools/test_offer_dedupe.py` V-OD 13/13 (both poles, kill switch, cap, family, source mutant killed);
+    V-FINJ 24/24, V-ASC-BASE 32/32. Real bytes: this pane's transcript -> delivered=True, block suppressed, 45 ms.
+  - Saving DERIVED, not measured: ~317 of 531 Tower copies removed, ~3M tok/day. The N=4 A/B did not fit (pane at 6.24M
+    / 52 calls at the review); quality risk is low (the model still gets one identical copy), but it is UNMEASURED.
+  - Backup + restore: `~/.claude/backups/t3-w4-20261124T143201/restore.ps1`.
+  - Live proof pending: the Owner's next prompt in pane b91135b9 is Tower offer #3 and must arrive WITHOUT the block.
+  - NEXT levers (same census): full PP reminder 3.8M (one-shot per session, overlaps SessionStart), AKOS 2.2M,
+    ExecutionOS tier 3.4M, R6 false fire on `/kresume` (0.99M). Then (a) deferred-names bench.
+
 **2026-11-24 (pane a6fa1f65). Owner "raise": T3-CT hard authority 39M -> 48M**, recorded in the plan (throughput
 worktree, `vault/plans/ascension-T3-cognitive-traffic-amendment-20261123.md`). ~34.9M spent; W4 5.8 + prior T3 5.0 +
 closeout 1.5 = 12.3M at P80. Per-wave stop unchanged (W4 P50 4.5M, stop 9M, ~30 calls).

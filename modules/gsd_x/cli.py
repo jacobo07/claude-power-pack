@@ -37,6 +37,45 @@ from modules.gsd_x import heartbeat, tier  # noqa: E402
 # abandoned run cost the whole session its inheritance.
 MAX_OFFERS = 3
 
+# T3-CT W4(b): the child CAN observe arrival after the fact. The host writes every delivered block into the session
+# transcript as a `hook_additional_context` attachment, and the payload names that file. So a later offer checks the
+# transcript first, and stops once an earlier copy is on record. Measured 2026-11-24 (14 d, 2,043 transcripts): the Tower
+# block averaged 3,152 chars, was re-sent identical up to 3x per session, and ranked first in UserPromptSubmit rent
+# (~6.4M tok/day, chars/3.6). Only a real attachment row counts: a tool result quoting the same text is NOT delivery.
+# No transcript, or an unreadable one, is UNKNOWN and keeps the MAX_OFFERS behaviour. Kill switch CPP_OFFER_DEDUPE=0.
+TOWER_MARK = "Tower baseline -- lessons INHERITED"
+DEDUPE_SWITCH = "CPP_OFFER_DEDUPE"
+DEDUPE_SCAN_BYTES = 8 * 1024 * 1024  # offers happen on a session's first prompts, so the record sits near the head
+
+
+def _delivered(payload: dict, marker: str):
+    """True if an earlier copy of `marker` was delivered into this session, False if the transcript has none,
+    None when that cannot be observed (switch off, no transcript, unreadable). Never raises."""
+    try:
+        import os
+        if os.environ.get(DEDUPE_SWITCH, "").strip().lower() in ("0", "off", "false"):
+            return None
+        tp = str(payload.get("transcript_path") or payload.get("transcriptPath") or "")
+        if not tp or not os.path.isfile(tp):
+            return None
+        read = 0
+        with open(tp, "r", encoding="utf-8", errors="replace") as fh:
+            for line in fh:
+                read += len(line)
+                if marker in line and "hook_additional_context" in line:
+                    try:
+                        a = (json.loads(line).get("attachment") or {})
+                    except ValueError:
+                        a = {}
+                    if a.get("type") == "hook_additional_context" and any(
+                            marker in str(c) for c in (a.get("content") or [])):
+                        return True
+                if read >= DEDUPE_SCAN_BYTES:
+                    return None  # did not see the whole region: cannot claim absence
+        return False
+    except Exception:                                   # noqa: BLE001
+        return None
+
 
 def _tower_dir() -> Path:
     # Honours CPP_TOWER_STATE_DIR like its reader tools/family_donegate_stop.py: a writer and reader that disagree on
@@ -72,7 +111,7 @@ def inherited_block(payload: dict) -> str:
             c if c.isalnum() or c == "-" else "_" for c in sid))
         counter.parent.mkdir(parents=True, exist_ok=True)
         done = int(counter.read_text().strip() or 0) if counter.exists() else 0
-        if done >= MAX_OFFERS:
+        if done >= MAX_OFFERS or _delivered(payload, TOWER_MARK):
             return ""
         state = capsule.read(repo).get("state", "UNKNOWN")
         items = capsule.lessons(repo)
@@ -128,7 +167,7 @@ def family_block(prompt: str, payload: dict, families=None, root=None) -> str:
                 counter = _offer_counter(sid, "family-" + fid)
                 counter.parent.mkdir(parents=True, exist_ok=True)
                 done = int(counter.read_text().strip() or 0) if counter.exists() else 0
-                if done >= MAX_OFFERS:
+                if done >= MAX_OFFERS or _delivered(payload, "Family baseline %s/B" % fid):
                     continue
                 counter.write_text(str(done + 1))
             n = gens[-1]
