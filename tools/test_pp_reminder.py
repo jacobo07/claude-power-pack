@@ -41,7 +41,7 @@ DROP = {
     "Mistakes Registry": "mistakes-global.md",
     "Session Logging": None,  # dropped because the target does not exist
 }
-MAX_FULL_CHARS = 1100  # old v3 full block was 2,374 chars
+MAX_FULL_CHARS = 1100  # old v3 full block measured 2,073 chars
 
 fails = 0
 
