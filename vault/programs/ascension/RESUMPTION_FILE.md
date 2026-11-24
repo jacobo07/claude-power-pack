@@ -5,6 +5,19 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**2026-11-24 (pane 0bed7af7, /kresume of b91135b9). Owner pick "PP reminder 3.8M". T3-CT W5 DONE, LIVE.**
+- `~/.claude/hooks/power-pack-reminder.js` v4. The once-per-session full block went from 2,073 to 760 chars (-63%). It
+  keeps only what the global CLAUDE.md does not already deliver: the skill-invoke line, the tier ladder (the spelling
+  test_gsd_x V4 pins), Constitution Core 5 and SUPREMACY MODE. Dropped: GAL, CARL, overlay, USAP, intent compiler,
+  mistakes, gates, token austerity (all duplicates), plus Session Logging (memory/sessions/ does not exist).
+- Gate `tools/test_pp_reminder.py` V-PPR 25/25 drives the real hook. Each drop is re-justified against CLAUDE.md, and
+  the old v3 control goes red with 10 FAIL. V-GSDX-NO-NEW-VOCAB still passes. The live dispatcher
+  (`--event=UserPromptSubmit-chain`) emits v4.
+- Saving DERIVED: ~0.63 x 3.82M = ~2.4M tok/day. Not measured. Backup + restore: `~/.claude/backups/t3-w5-20261124T135919/restore.ps1`.
+- The hook is outside git (`~/.claude/hooks`). Only the gate is committed.
+- NEXT: R6 false fire on /kresume (0.99M), then the ExecutionOS tier (3.4M) or AKOS (2.2M), then (a) the deferred-names
+  bench. Budget: about 43M+ of 48M spent. Next lever needs Owner authority or the closeout.
+
 **2026-11-24 (pane b91135b9, /kresume of a6fa1f65). T3-CT W4 STOPPED BEFORE BUILD: premise falsified. Owner decision.**
 - CCR main-lean canary is DEFAULT-ON since 2026-10-31 (Owner D1; `mods/cpp-cognitive-runtime/hooks/policy.ts:541`): skill
   and agent listings go names-only on the wire, MCP instructions become headings. This pane's own context shows it
