@@ -204,10 +204,22 @@ def select_units(units: list[AkosUnit], target_domains: list[str], *,
         for u in units:
             by_domain.setdefault(u.domain, []).append(u)
         out: list[AkosUnit] = []
+        # The brief repeats a source (once with its quote, once title-only): 208 of 787 delivered unit lines
+        # in 14 days were a title already shown (T3-CT W5d census, 2026-11-24). Keep the first, which is the
+        # one that carries the snippet in document order, and give the slot to the next distinct unit.
+        seen: set = set()
         for dom in target_domains:
             key = normalize_domain(dom)
-            for u in by_domain.get(key, [])[:max(0, per_domain)]:
+            taken = 0
+            for u in by_domain.get(key, []):
+                if taken >= max(0, per_domain):
+                    break
+                tkey = (u.domain, _clean_title(u.title).lower())
+                if tkey in seen:
+                    continue
+                seen.add(tkey)
                 out.append(u)
+                taken += 1
                 if len(out) >= max_units:
                     return out
         return out

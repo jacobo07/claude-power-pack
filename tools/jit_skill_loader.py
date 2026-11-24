@@ -1652,6 +1652,50 @@ def _akos_mark(sid: str) -> None:
         pass
 
 
+_AKOS_MARK = "## AKOS Knowledge (domain-matched"
+_AKOS_TAIL_BYTES = 8 * 1024 * 1024
+
+
+def _akos_on_record(data: dict):
+    """T3-CT W5d: True if an AKOS block was DELIVERED into this session (a hook_additional_context transcript row)
+    after the last compact boundary, so the copy is still in context; False if not; None if unobservable.
+    The 2 h TTL alone re-sent the block into live sessions: 48 of 167 deliveries in 14 days had a copy on
+    record and no compact since. Only consulted when the TTL has expired (~once per 2 h).
+    Reads BACKWARDS over the last _AKOS_TAIL_BYTES only: a full forward scan took 3.1 s on a real 92 MB transcript,
+    past a UserPromptSubmit deadline. The first decisive row from the end wins (an AKOS row -> True, a compact
+    boundary -> False); neither inside the window, with the file larger than it -> None. False/None keep the old TTL
+    behaviour, so this can only remove a send, never add one.
+    Kill switch: CPP_OFFER_DEDUPE=0 (shared with modules/gsd_x/cli.py). Never raises."""
+    try:
+        if os.environ.get("CPP_OFFER_DEDUPE", "").strip().lower() in ("0", "off", "false"):
+            return None
+        tp = str((data or {}).get("transcript_path") or (data or {}).get("transcriptPath") or "")
+        if not tp or not os.path.isfile(tp):
+            return None
+        size = os.path.getsize(tp)
+        with open(tp, "rb") as fh:
+            if size > _AKOS_TAIL_BYTES:
+                fh.seek(size - _AKOS_TAIL_BYTES)
+            lines = fh.read().decode("utf-8", errors="replace").splitlines()
+        whole = size <= _AKOS_TAIL_BYTES
+        if not whole and lines:
+            lines = lines[1:]                       # first line is cut by the seek
+        for line in reversed(lines):
+            if '"compact_boundary"' in line:
+                return False
+            if _AKOS_MARK in line and "hook_additional_context" in line:
+                try:
+                    a = json.loads(line).get("attachment") or {}
+                except ValueError:
+                    continue
+                if a.get("type") == "hook_additional_context" and any(
+                        _AKOS_MARK in str(c) for c in (a.get("content") or [])):
+                    return True
+        return False if whole else None
+    except Exception:
+        return None
+
+
 def _akos_knowledge_inject(fn):
     """Append domain-matched AKOS knowledge units to additionalContext,
     once per session. Advisory; never blocks. Fail-open. Also records a
@@ -1671,6 +1715,9 @@ def _akos_knowledge_inject(fn):
             sid = _sid(data_d)
             if _akos_recent(sid):
                 return result           # throttle: 1 injection per session
+            if _akos_on_record(data_d) is True:
+                _akos_mark(sid)         # still in context (no compact since): refresh the TTL, send nothing
+                return result
             cwd = data_d.get("cwd") or os.getcwd()
             from modules.akos_knowledge.akos import units_for_cwd
             brief, domains, units = units_for_cwd(cwd)

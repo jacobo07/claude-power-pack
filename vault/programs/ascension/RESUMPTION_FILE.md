@@ -5,6 +5,16 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**2026-11-24 (pane 0bed7af7). Owner "go ahead" = AKOS lever. T3-CT W5d AKOS re-send + duplicate-unit dedupe.**
+- MEASURED, 14 d: 167 AKOS blocks in 72 sessions, ~1,275 chars each. 48 (29%) were re-sent by the 2 h TTL while a copy
+  was on record with no compact since. 208 of 787 unit lines repeated a title already shown (short lines, ~5% of the
+  chars). Saving ~0.6-0.7M tok/day (DERIVED), not 2.2M.
+- `tools/jit_skill_loader.py` `_akos_on_record()`: when the TTL has expired, a block on record means refresh the mark
+  and send nothing. It reads BACKWARDS over the last 8 MB. The first forward-scan draft took 3.1 s on a real 92 MB
+  transcript, past the UPS deadline; it now takes 149 ms. False/None keep the TTL, so it only removes sends.
+- `modules/akos_knowledge/akos.py` select_units: duplicate (domain, title) skipped, and the slot is backfilled.
+- Gate `tools/test_akos_dedupe.py` V-AKD 15/15, including the real wrapper on the PP brief. test_akos_integration 11/11.
+
 **2026-11-24 (pane 0bed7af7). Owner "authority" = ExecutionOS tier lever. T3-CT W5c tier-note dedupe.**
 - `modules/gsd_x/cli.py`: advisory(v, payload). When the LATEST tier note delivered in this session (a
   hook_additional_context row after the last compact_boundary, last 4 MB of the transcript) has the same verdict, a
