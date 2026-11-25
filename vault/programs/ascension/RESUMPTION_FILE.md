@@ -5,6 +5,84 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**2026-11-25 22:33Z (pane 5f1414ed). Owner "go ahead, hazlas todas". AUTOPILOT SELF-RECOVERY ROUND 2 DEPLOYED** (spec
+PP `vault/specs/ascension-autopilot-self-recovery-2.md`; backups `*.bak-5f14-sr2-20261125T223305Z` of autopilot.py,
+test_autopilot.py, planner_prompt.md, state.json; patches `/tmp/patch_ap2_5f14.py`, `/tmp/patch_ap3_5f14.py`).
+- Measured: KSR 00:50Z / MKW 06:00Z "names no path" holds named a product commit sha (5cb05abd, 289143e1) that adds the
+  checkpoint; gsd_mission auto-pivoted 4/11 min later, so missions ran on while lanes sat PARKED: KSR BLOCKED on an
+  Owner decision (cohort-exclusion clause; pool count 0 < floor 100) then HALTED on age 16:50Z; MKW "launch held: cwd
+  diverged" 15 h. All gsd_mission notices on GEX44 = incident_notify_failed (no channel).
+- Built: checkpoint_from_sha + product-HEAD fallback + 30 min grace; held launch >= 2 h -> breaker_replan(cause held);
+  breaker re-plan resumes its kept plan after a policy refusal (round-1 gap); idle watchdog (3 h, one notice);
+  disk floor 20G (no lane ticked) + own /tmp/ap-(dry|test)-* sweep (12,382 leaked dirs removed; gate leak fixed);
+  alerts.json every tick + laptop task PP-Ascension-Alerts (Gmail, `~/.claude/scripts/ascension_alerts_notify.py`);
+  planner template line for new-profile phases. Gate: PASS 415/415, 181/181 mutants (same 2 crash-kills).
+- MKW unparked 22:33Z for the held-launch re-plan. KSR left PARKED: its Owner decision is still open.
+- Found after deploy: WIIPARTY parked 21:36Z ERROR JSONDecodeError right after judging S357W AGREE (56 CERTIFIED):
+  `match/WIIPARTY.json` 0 bytes since 06:16Z (disk full mid-write). Round 2b: atomic snapshot write + corrupt snapshot
+  quarantined and re-seeded from HEAD (nothing claimed). Deployed 22:51Z (PASS 416/416, 182/182; backups
+  `*.bak-5f14-sr2b-*`); WIIPARTY set WAITING (its mission HALTED: WAITING skips continue_halted so the branch
+  checkpoint is judged). Live 22:56Z: snapshot quarantined + re-seeded, S357W settled, S361W armed (m-7809656e0d25).
+- Round 2c (23:03Z, PASS 417/417, 182/182, backups `*.bak-5f14-sr2c-*`): held_too_long also takes PREPARED. MKW's
+  aged-out mission was auto-renewed 22:02Z as m-905388a9fcc8, PREPARED on the same "launch held: cwd diverged";
+  the held re-plan fires 2 h after its updated_at (~00:05Z).
+- Laptop task PP-Ascension-Alerts registered (first run 23:05:57Z, every 15 min).
+- Open: KSR Owner decision (cohort-exclusion clause); FIFA research cap (Owner); TENNIS/MKWLIB honest stalls.
+
+**2026-11-25 20:40Z (pane 5f1414ed). Owner "yes y anadele permisos al autopilot para que esto no pase mas". AUTOPILOT
+SELF-RECOVERY DEPLOYED on GEX44** (`~/agora/ascension-autopilot`, not a git repo; backups `*.bak-5f14-breaker-20261125T203036Z`
+of autopilot.py, test_autopilot.py, state.json; patch script `/tmp/patch_ap_5f14.py`).
+- Cause 1 (WIIPARTY S347W 14:51Z, WSR S310R since 11-23): cost-breaker hold, top-up refused (no progress) -> lane_tick
+  returned forever, lane RUNNING with no worker. Now `breaker_replan`: closes the generation via plan_and_arm from
+  `planned_from` (no re-judge), directive "change route"; once per hold, BREAKER_REPLAN_MAX=2 in a row (a judged
+  checkpoint resets), then PARKED park_kind=breaker. cost_topup returns "REFUSED" (`topup_refused` key).
+- Cause 2 (FIFATC S339C): 11:58Z tick died on ENOSPC after saving judged_for; the except's save failed too -> RUNNING
+  + judged forever. Now `tick_lane` writes `tick_open` per lane; a mark found next tick -> `recover_interrupted_tick`
+  clears judged_for (ledger `tick_recovered`).
+- Gate test_autopilot.py: baseline PASS 390, 163/163 mutants; patched PASS 398, 166/166 (8 new V-AP-BREAKER-*/
+  V-AP-TICK-*, 3 new mutants). Same 2 crash-kills in both (pre-existing).
+- Live 20:35-20:40Z: WIIPARTY breaker re-plan 1/2 -> S357W m-4b5da00887cc (5M), WSR -> S358R m-2ac3927e46f5 (9.5M),
+  both launched + worker_acked; FIFATC tick_recovered -> re-judging evidence/f36/pivot_residual_epoch5.md.
+- FIFA stays PARKED (Owner): research 337.5M cap exhausted again by 18:44Z (5 gens, ~22M in ~90 min).
+
+**2026-11-25 12:38Z (pane 5f1414ed). GEX44 DISK FULL incident, recovered by someone else.**
+- `/` (md2, 1.8T) hit 100% at ~06:16Z: autopilot `Errno 28` in save_state (WIIPARTY 06:16, FIFATC 06:40/06:45/11:58).
+  state.json survived (tmp+rename); gsd-autorun-ledger.jsonl has 7 truncated lines (last 50074). Readers tolerate
+  them (launches + acks continue); NOT repaired: a rewrite would race live appenders.
+- By 12:36Z: 98G free (95%), freed by an unknown actor (not this pane; Owner-authorised `uv cache prune` found no
+  cache, freed 0). Filler NOT identified. Big holders: missions/ssmp-scratch 117G, .cache/huggingface 85G, kme-runtime 50G.
+- 13:12Z: 236G free (86%). Lead suspect (NOT proven, the filler was already deleted): TENNIS
+  `tools/s337t_exemplar.py build --jobs 6` (worktree s337t). Each worker does `mkdtemp(prefix="s337t-w-")`, sets
+  `tempfile.tempdir`, and cleans up only via atexit, so a killed or ENOSPC-crashed build leaks it. The S337T worker
+  (21f60292, 06:33Z handoff) saw /tmp at ~150G. 10 leaked `/tmp/s337t-w-*` dirs remain (~11.4G, last touched
+  12:44Z, no exemplar process). Not deleted: no authority for another session's data, and not urgent at 236G.
+- 16:20Z Owner "go ahead with both": removed 20 orphan /tmp/s337t-w-* (no exemplar process, none open; 218G -> 247G
+  free). Root cause PROVEN: Pool workers exit via os._exit, so _init's atexit never ran; EVERY build leaked one dir
+  per worker, not only crashes. Fix TENNIS `c011b2fc` (mission/tennis-all-match, tools/s337t_exemplar.py: parent-owned
+  /tmp/s337t-run-* removed in finally). build(2, limit=6): old leaked 2, new 0; test_s337t_exemplar rc 0, N1-N5 caught.
+  Backup /tmp/s337t_exemplar.py.bak-5f14. s333t_exemplar is main-process atexit (fires on normal exit), unchanged.
+- 17:12Z Owner "increase budget" (after first picking "keep parked"): weekly reset passed, governor ALLOW 0.0%. Under
+  cron.lock: FIFA research_cap 312,500,000 -> 337,500,000 (spent 312.4M), PARKED/evo -> WAITING, pending_plan.bad
+  cleared + directive naming the S26C conditions; ledger `owner_research_raise`; backup
+  `state.json.bak-5f14-fifacap-20261125T171234Z`. 17:17Z plan 1 (S352F) S26C-refused again; 17:20Z plan 2 passed,
+  FIFA armed S352F m-b080cf0c9529 (10M); launched + worker_acked 17:24:53Z. S323F released 2.53M unspent.
+- Autopilot ticking again (12:35Z locks); TENNIS S340T, WIIPARTY S341W (12M, acked 12:36Z), FIFATC S339C, WSR S310R
+  RUNNING; FIFA/KSR/MKW/MKWLIB PARKED. FIFA still waits on the research-cap decision.
+
+**2026-11-25 ~01:02Z (pane 5f1414ed, /kresume of 0bed7af7). Lane check, read-only on GEX44.**
+- FIFATC 30M receipt: ledger `owner_topup` S328C m-a202034ed612, +20,000,000 -> authority 30,000,000, why "Owner '30M'
+  2026-11-25T00:51:11Z (laptop pane 0bed7af7, receipt turn f115bbbc)". FIFATC RUNNING.
+- WIIPARTY ARMED and WORKING: S330W m-ef728e7bfe70 (22M, lever wp_game_handsource_smallest, EXPLOIT) armed 00:47:48Z;
+  worker_acked epoch 1 (189f936a) and epoch 2 (bd843fd0, CONTEXT_ROTATION 01:00:15Z); breaker GOOD_PROGRESS at 5.30M.
+- CORRECTION to the slim-asc diagnosis: `worker_marker_refused` ("resume command must start with '/'") fires on EVERY
+  lane's worker (TENNIS, KSR, FIFATC, MKWLIB, WIIPARTY) and those all ack. It is harmless on the normal profile; only
+  the slim-asc fence made it fatal. Noise, not a fault (unfixed).
+- FIFA did NOT self-unpark: PARKED park_kind=evo, pending plan S327F bad = "EVO RESEARCH: lane research budget
+  312,500,000 would be exceeded" (research_spent 312,400,000). Only the Owner can raise `research_cap` or move FIFA off
+  RESEARCH; the two S26C policy refusals before it are moot until then.
+- Governor: `check --action arm` = ALLOW+OVERRIDE, weekly lower bound 108.7% (was 107.2% at 23:13Z). Override ends
+  2026-11-25T17:00Z.
+
 **2026-11-24 23:13Z (pane 0bed7af7). Owner "yes, unpark and unstop all" (+ yes to a weekly-budget override).**
 - GEX44 governor override `~/.claude/state/account-governor-override.json` until 2026-11-25T17:00:00Z (weekly reset);
   `check --action arm` = ALLOW+OVERRIDE at lower bound 107.2%. Backup `account-governor-override.json.bak-0bed-20261124T231356Z`.
