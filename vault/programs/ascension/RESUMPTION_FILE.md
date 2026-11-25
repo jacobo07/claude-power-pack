@@ -20,6 +20,12 @@
 - 00:10Z: RUNNING FIFA S323F, MKWLIB S324L, MKW, WSR; KSR re-planning (policy refusal plan 1); TENNIS waiting its turn.
   Re-PARKED "ended HALTED without a checkpoint hold": FIFATC m-c0a4fc946f11 = CAPITAL_EXHAUSTED (860k of 3M mission
   authority, new authority is the Owner's); WIIPARTY m-bdf5c3edcc06 = "3 launches never acknowledged" (undiagnosed).
+- 00:31Z Owner "y": FIFATC lanes.json bootstrap_checkpoint -> evidence/f30/checkpoint_s317c.md, mission None (backup
+  `*.bak-0bed-fifatc-20261125T002050Z`). WIIPARTY cause: only lane with `worker_profile: slim-asc` (2e3b pilot); slim
+  fence refused prose packets ("MarkerError: resume command must start with '/'"). 00:38Z Owner "y": key deleted (pilot
+  ended), bootstrap -> s307w/residual_pivot_s307w.md, WAITING (backup `*.bak-0bed-wpslim-20261125T003828Z`).
+- 00:38Z: RUNNING TENNIS S325T (10M), KSR S326K (9M, new lever ksr_operator_composition_nearmiss), FIFATC S328C (10M,
+  planner's size, not 3M), MKWLIB S327L, MKW, WSR. FIFA PARKED after 2 policy refusals on S327F; WIIPARTY next tick.
 
 **2026-11-24 (pane 0bed7af7). Owner "y" = T3-CT CLOSED (context-tax UPS levers).**
 - Shipped, all live at commit, nothing pushed: W5 PP reminder v4 `76ca3107`+`3c929760` (~2.4M/day), W5b R6
