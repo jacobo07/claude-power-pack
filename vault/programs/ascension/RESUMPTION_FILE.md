@@ -5,6 +5,22 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**2026-11-24 23:13Z (pane 0bed7af7). Owner "yes, unpark and unstop all" (+ yes to a weekly-budget override).**
+- GEX44 governor override `~/.claude/state/account-governor-override.json` until 2026-11-25T17:00:00Z (weekly reset);
+  `check --action arm` = ALLOW+OVERRIDE at lower bound 107.2%. Backup `account-governor-override.json.bak-0bed-20261124T231356Z`.
+- Under cron.lock: FIFA, FIFATC, KSR(STOPPED), MKWLIB, TENNIS, WIIPARTY -> WAITING, judged_for/park_kind None,
+  pivot/synth_streak 0; ledger `owner_resume` x6; backup `state.json.bak-0bed-unpark-20261124T231356Z`.
+- First tick (23:15Z, still running at 23:28Z): KSR re-judged -> PLANNER_STOP (plateau CALL_ARITY_COMPLETION) = STOPPED
+  again; TENNIS re-PARKED kind=branch (worker cwd behind work_dir with uncommitted changes); FIFA judge DISAGREE ->
+  lever fifa_rso_exact_cert_v1 designed, plan 1 policy-refused, re-planning. FIFATC/MKWLIB/WIIPARTY not yet reached.
+- 00:04Z Owner "1. commitea 2. y": TENNIS cwd ff 366e2e85->4b4cafac (worktree-s315t) + bookkeeping commit `734b8f9f`
+  (receipt_registry S300T 48 = sha of committed receipts_s300t.jsonl; untracked evidence/docs; `.claude/worktrees/` and
+  `.pp-capabilities` in .git/info/exclude); cwd tracked-clean, now "ahead". TENNIS WAITING; KSR WAITING with
+  owner_resume=design. Backup `state.json.bak-0bed-tk-20261125T000418Z`.
+- 00:10Z: RUNNING FIFA S323F, MKWLIB S324L, MKW, WSR; KSR re-planning (policy refusal plan 1); TENNIS waiting its turn.
+  Re-PARKED "ended HALTED without a checkpoint hold": FIFATC m-c0a4fc946f11 = CAPITAL_EXHAUSTED (860k of 3M mission
+  authority, new authority is the Owner's); WIIPARTY m-bdf5c3edcc06 = "3 launches never acknowledged" (undiagnosed).
+
 **2026-11-24 (pane 0bed7af7). Owner "y" = T3-CT CLOSED (context-tax UPS levers).**
 - Shipped, all live at commit, nothing pushed: W5 PP reminder v4 `76ca3107`+`3c929760` (~2.4M/day), W5b R6
   correction-guard `62afbee2` (~1.0M/day), W5c tier note `ecd0224a` (~0.6M/day), W5d AKOS `0c38fce4`
