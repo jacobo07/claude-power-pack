@@ -5,6 +5,13 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**2026-11-26 12:30Z (pane 5f1414ed). Owner "go ahead y subele la autonomia". ROUND 4/4b: STRANDED WORK COMES HOME.**
+- The autopilot now merges a generation's work stranded in an older worktree into the product: scaffold-only product
+  side and no shared path; details in spec §Round 4.
+- MKW: edfc5588, then S382M armed. FIFATC: d8dbbd8, then S383C armed.
+- 4 lanes running: KSR S381K, MKW S382M, FIFATC S383C, WIIPARTY S380W.
+- Still parked, honest stalls: WSR (pool 0 < 20, designs exhausted), FIFA (research cap, Owner), TENNIS, MKWLIB.
+
 **2026-11-26 09:40Z (pane 5f1414ed). Owner "autorizo y deberia tener la capacidad". ROUND 3: OWNER ANSWERS DEPLOYED.**
 - KSR's cohort-exclusion clause was AUTHORIZED. The new capability is the answer channel: `autopilot.py answer <LANE>`,
   or on the laptop `ascension_alerts_notify.py answer <LANE> "<text>"`. alerts.json now has question entries.

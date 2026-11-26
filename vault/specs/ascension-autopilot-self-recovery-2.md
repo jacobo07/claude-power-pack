@@ -82,3 +82,36 @@ was a hand-run `gsd_mission.py decide`, which a terminal mission refuses. Nothin
 - Deployed 2026-11-26T09:30:32Z (backups `*.bak-5f14-sr3-20261126T093032Z`).
 - First use: KSR ruling 087b57b8. Tick 09:35Z: unparked and S329K judged. 09:37Z: S374K armed as m-7b0319e33ed3,
   with Phase 1 citing the ruling. 09:40Z: the decision was delivered to the mission.
+
+## Round 4: stranded generation work (Owner 2026-11-26 "go ahead y subele la autonomia")
+Cause: a generation's worker did its work in the PREVIOUS generation's worktree, and the product kept only its
+scaffold.
+- FIFATC S364C, in worktree-s359c: phases 1-3, held-out 55/60 SUPPORTED, provisional checkpoint. `gsd_mission`
+  measured the product, saw "3.9M processed since the work tree last changed", cut it on cost and settled it HALTED.
+  The lane parked.
+- MKW S369M, in worktree-s362m: its relaunch was held "cwd diverged", and the round-2 held re-plans re-created the
+  divergence.
+
+What `reconcile_stranded` merges, and when:
+- It acts only on commits whose subject starts with the lane's current generation, on a worktree branch the product
+  lacks, in a worktree that is not the generation's own.
+- It merges them `--no-ff` into the product only when all of these hold: the product side since the merge base is
+  scaffold alone (`.planning/` plus the packet dir), the two sides share no path, and no uncommitted product change
+  touches the merged paths. The worktree is then fast-forwarded to the merge.
+- Anything else is a `skip:` notice, and nothing moves.
+- It runs from tick_lane, before lane_tick, when the mission is terminal or held on cwd alignment. CLI:
+  `autopilot.py reconcile <LANE> [--apply]`.
+
+Round 4b: a merge home sets `held_grace_until = now + HELD_REPLAN_S`. Reason: MKW was re-planned at 12:15Z, one tick
+after its merge, from the old kept judgment, so S382M was armed instead of S369M being relaunched.
+
+Gate: 433/433, 197/197 mutants killed. Deployed 12:14:28Z (backups `*.bak-5f14-sr4-*`), then 4b at 12:30:00Z
+(`*.bak-5f14-sr4b-*`).
+
+Live, 12:14Z:
+- MKW: merged as edfc5588 (41 paths).
+- FIFATC: merged as d8dbbd8 (76 paths). S364C was then judged; its checkpoint is not final, so it is continued once,
+  and S383C was armed as m-afb62e6a2d35.
+
+Not granted, unchanged: no budget, cap, certifier or policy change, no history rewrite, and Owner questions stay the
+Owner's.
