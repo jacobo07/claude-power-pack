@@ -1721,3 +1721,11 @@ Origin: absorption of Sanjai Builds' "The WEB Pack" PDF as CDIO-13 (`vault/specs
 4. **Live-skill opt-in**: DONE 2026-11-24 (Owner: "Add gsap-skills (8)"): 11 live skills now.
 5. **NEW, `tools/design_gate.py` passes vacuously**: on the demo's first DESIGN.md (palette in a markdown table, no `fontFamily:` lines) it returned APPROVE 92 with `palette-cliche: 0 color(s), no clichéd palette detected`. A gate that read zero tokens must not report a pass (instrument-before-claim): it should ABSTAIN or fail `palette-cliche` when no colour was read. Not fixed in this tranche.
 Status: items 1-4 DONE except the two named opens; item 5 QUEUED.
+
+## D45 -- `gsd_mission.py decide` promises a launch card that never carries the decision (Owner 2026-11-26: "añade eso al backlog del power pack")
+Origin: pane 8405e5f1, avatar mission m-d4411109088b on GEX44. Measured 2026-11-26:
+1. The mission sat RUNNING but parked on a CHECKPOINT_COMPLETE for 158,320 s (~44 h), reason `wait: worker stopped (stopped; pid gone), lease released`. "RUNNING" hid an idle mission (same class as the false-RUNNING of 2026-11-22).
+2. `decide --text "<Owner option (b)>"` answered `DECISION RECORDED id=D3 woke=False why=owner not live: the next launch card carries the decision`. After `checkpoint --clear`, the sweep launched worker e16, whose first user turn was 750 chars = `resume_command` only: no D3 text, no directive 17 (checked in its transcript: no "2026-11-26", no "FULL-BODY"). The worker re-read STATE.md, re-asked the same question and the mission went BLOCKED (OWNER_BOUNDARY).
+3. Workaround that worked: append the decision to the worktree's STATE.md (commit 1c499e4), then `decide` again while BLOCKED -> `D4 woke=True why=resumed`, and the live session received it.
+Fix wanted: (a) the launch card of a relaunch carries every decision and directive recorded since the worker's last ack (or `decide` refuses to say it does); (b) a regression test where decide-while-parked + checkpoint clear launches a worker whose first prompt contains the decision text; (c) `status` shows a parked checkpoint as WAITING/CHECKPOINT, not RUNNING.
+Related: `decide` on a HALTED mission raises (terminal), and the only way on is a manual `renew_mission` call (no CLI verb); `checkpoint --clear` is refused once the worker has re-blocked. Status: QUEUED.
