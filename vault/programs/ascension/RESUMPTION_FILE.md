@@ -5,6 +5,31 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**2026-11-26 15:53Z (pane a90ef78f). Owner "go ahead" + "yes": ROUND 6 RESEARCH CREDIT LIVE, incl. retro.**
+- autopilot.py: book_research (remembers each RESEARCH gen's booking, newest 12) + credit_research (settled unspent
+  reservation -> research_spent down, bounded by the booking, idempotent, ledger `research_credit`). Wired at close,
+  terminal settle and stranded sweep. Patched + gated on GEX44 staging `/tmp/ap-r6-stage-a90e` (laptop RAM 0.6 GB).
+- Gate 446/446, mutants 203/203 (2 new; same 2 crash-kills). Runs 1-2 hung (rc 124): MY test looped
+  range(RESEARCH_BOOKED_KEEP+3) under the 10**6 mutant; fixed to a fixed 15. The deploy refused while not green.
+- Deploy 15:52:45Z under both locks. Backups `*.bak-a90e-credit-20261126T155245Z` (autopilot, test, state.json);
+  sha16 autopilot 329a12ea, test d9eac1cb. Retro credit once (marker state.research_retro_credit): 532,605,400 total.
+  - FIFA 361.5M -> 260.9M
+  - FIFATC 115.5M -> 67.2M
+  - KSR 206.5M -> 137.5M
+  - MKW 183.0M -> 139.7M
+  - MKWLIB 171.3M -> 134.7M
+  - TENNIS 415.0M -> 304.9M
+  - WIIPARTY 231.4M -> 171.0M
+  - WSR 177.7M -> 113.5M
+  - Seeded bookings: FIFA S392F 7M, WSR S403R 6.7M.
+- WSR ESCAPE CYCLE (round 5) observed: S395R (wsr_strategy_escape_1) judged AGREE, INFORMATION -> continue.
+  - S1 SIGNATURE_IDENTIFICATION on the 32,853 unnamed fns: control 154/154, 134 unique, 74 after exclusion (>= 20).
+  - S2 CALLGRAPH_PROPAGATION: 7.
+  - LIMITS: name identifications only, no objdiff/link oracle, 0 certs.
+  - S398R ran HALTED with 43 commits; now S403R. Still open: certificates, generalisation and capability reuse.
+- DEBT: the generation wrote `STRATEGY: S1 FAMILY: ...`, not the template's `family <F>`, and no FUNNEL/REOPEN lines.
+  escape_problems would refuse that checkpoint at a future escape review. Accept both forms, or tighten the directive.
+
 **2026-11-26 14:04Z (pane a90ef78f, /kresume of 5f1414ed). FIFA +25M + lifter; WSR ruling; ROUND 5 STRATEGY ESCAPE LIVE.**
 - FIFA: Owner "+25M, lifter yes". Under both locks: research_cap 337.5M -> 362.5M (ledger owner_research_raise; backup
   `state.json.bak-a90e-fifacap-20261126T132209Z`). Answer 118b4d70 authorises checkpoint_s356f_wave3 option (a), the
