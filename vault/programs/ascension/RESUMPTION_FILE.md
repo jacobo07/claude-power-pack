@@ -5,6 +5,19 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**2026-11-26 09:40Z (pane 5f1414ed). Owner "autorizo y deberia tener la capacidad". ROUND 3: OWNER ANSWERS DEPLOYED.**
+- KSR's cohort-exclusion clause was AUTHORIZED. The new capability is the answer channel: `autopilot.py answer <LANE>`,
+  or on the laptop `ascension_alerts_notify.py answer <LANE> "<text>"`. alerts.json now has question entries.
+  Details: spec §Round 3.
+- KSR ruling 087b57b8 put S374K (m-7b0319e33ed3) to work on the census-minus-receipts/held-out/control pool.
+- Overnight lane states:
+  - WIIPARTY recovered by itself: S373W running.
+  - MKW parked after 2 held re-plans. Each new mission reuses worktree `s362m`, while its scaffold commit lands on
+    `lane/mkw`, so cwd and work_dir diverge again. That is a gsd_mission topology issue, and re-planning cannot fix it.
+  - FIFATC parked: its mission HALTED without a hold.
+  - WSR parked: judge INCONCLUSIVE, the S371R freeze tool refuses to re-run.
+  - FIFA, TENNIS and MKWLIB stay as before.
+
 **2026-11-25 22:33Z (pane 5f1414ed). Owner "go ahead, hazlas todas". AUTOPILOT SELF-RECOVERY ROUND 2 DEPLOYED** (spec
 PP `vault/specs/ascension-autopilot-self-recovery-2.md`; backups `*.bak-5f14-sr2-20261125T223305Z` of autopilot.py,
 test_autopilot.py, planner_prompt.md, state.json; patches `/tmp/patch_ap2_5f14.py`, `/tmp/patch_ap3_5f14.py`).

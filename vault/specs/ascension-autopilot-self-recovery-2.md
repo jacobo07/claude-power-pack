@@ -62,3 +62,23 @@ alerts.json. The laptop task's first run sends one email.
 ## Rollback
 Copy the `.bak-5f14-sr2-*` files back (autopilot.py, test_autopilot.py, planner_prompt.md, state.json), then run
 `Unregister-ScheduledTask PP-Ascension-Alerts`. Kill switches: `AP_DISK_FLOOR_GB=0` disables the floor.
+
+## Round 3: Owner answers (Owner 2026-11-26 "autorizo y deberia tener la capacidad", KSR cohort-exclusion clause)
+Cause: KSR's mission asked an Owner decision (DECISION_REQUEST), blocked, and died on age 16 h later. The only way in
+was a hand-run `gsd_mission.py decide`, which a terminal mission refuses. Nothing showed the question to the Owner.
+- `autopilot.py answer <LANE> <text | ->` appends one line to `answers.jsonl` (no lock needed). Laptop:
+  `ascension_alerts_notify.py answer <LANE> "<ruling>"` does the same over ssh, with the text on stdin.
+- Each tick takes new complete lines (`answers_seen` offset): the ruling is kept on the lane (newest 5), and a
+  PARKED/STOPPED lane goes WAITING with its judgment cleared. The Owner answering is the only thing that unparks it.
+- `planner_prompt()` appends "OWNER RULINGS (binding)" for the lane. `deliver_rulings` sends each ruling once to the
+  lane's live mission as gsd_mission decision `AP-<id>`. It skips terminal missions and stops after 3 refusals per
+  mission, with one notice.
+- alerts.json has a `question` entry for a mission whose DECISION_REQUEST no ruling has answered since it was asked,
+  with the answer command. The email lists that command.
+- Not granted: the autopilot never answers a question itself. Truth-contract, held-out, capital and scope rulings stay
+  the Owner's.
+- Gate: 425/425 and 190/190 mutants killed. 8 new mutants: answer_ignored/retaken/keeps_park,
+  ruling_not_in_prompt/redelivered/delivered_dry, question_alert_off/never_quiet.
+- Deployed 2026-11-26T09:30:32Z (backups `*.bak-5f14-sr3-20261126T093032Z`).
+- First use: KSR ruling 087b57b8. Tick 09:35Z: unparked and S329K judged. 09:37Z: S374K armed as m-7b0319e33ed3,
+  with Phase 1 citing the ruling. 09:40Z: the decision was delivered to the mission.
