@@ -1317,7 +1317,15 @@ def run_all(ap):
     H["lanes"] = {"L": {"status": "RUNNING", "gen": "S92L", "base": "b0", "blank": 0, "arm_fails": 0,
                         "mission": "m-aaaaaaaaaaaa", "planned_from": {"checkpoint": str(tmp / "ck.md"),
                                                                      "verdict": {"verdict": "AGREE"}}}}
-    watch_run(held_s=3 * 3600, st=H)
+    # round 8: the held path tries alignment and the FINAL checkpoint before the re-plan (wired, not only defined)
+    wired8, keep_al8, keep_fc8 = [], ap.held_align, ap.held_final_checkpoint
+    ap.held_align = lambda st, lane, ls, mid, rec, dry: wired8.append(("align", mid)) or ""
+    ap.held_final_checkpoint = lambda lane, ls: wired8.append(("final", ls.get("gen"))) or ""
+    try:
+        watch_run(held_s=3 * 3600, st=H)
+    finally:
+        ap.held_align, ap.held_final_checkpoint = keep_al8, keep_fc8
+    check("V-AP-HELD-REPAIR-WIRED", wired8 == [("align", "m-aaaaaaaaaaaa"), ("final", "S92L")])
     check("V-AP-HELD-REPLANS", len(hseen) == 1 and "LAUNCH HELD" in hseen[0][2] and hseen[0][1] == str(tmp / "ck.md")
           and H["lanes"]["L"].get("breaker_replans") == 1
           and any(r["kind"] == "breaker_replan" and r.get("cause") == "held" for r in ledger()))
@@ -2436,6 +2444,98 @@ def run_all(ap):
         check("V-AP-STRANDED-DUE", ap.stranded_due(_halt) and ap.stranded_due(
             {"state": "RUNNING", "reason": "launch held: cwd not aligned with work_dir (diverged): x"})
               and not ap.stranded_due({"state": "RUNNING", "reason": "running"}) and not ap.stranded_due({}))
+        # round 8 (Owner 2026-11-26 "aumenta autonomia para que esto se hubiera solucionado solo", pane 31498a3e):
+        # FIFA S392F held 'diverged' 7 h with its FINAL checkpoint written; FIFATC S383C held 'behind_dirty' 9.5 h
+        _t8 = __import__("time").time()
+        DIV8 = "launch held: cwd not aligned with work_dir (diverged): cwd a and work_dir b have diverged"
+        BD8 = "launch held: cwd not aligned with work_dir (behind_dirty): cwd a is behind work_dir b"
+        hs8, hl8 = {"lanes": {}}, {"status": "RUNNING", "gen": "S9H", "mission": "m-held0000001"}
+        r8 = {"state": "RUNNING", "reason": DIV8, "updated_at": _t8 - 60}
+        a1 = ap.held_age(hs8, hl8, "m-held0000001", r8, _t8)
+        r8b = dict(r8, updated_at=_t8 + 3 * 3600 - 30)  # gsd_mission touched the record again
+        a2 = ap.held_age(hs8, hl8, "m-held0000001", r8b, _t8 + 3 * 3600)
+        check("V-AP-HELD-AGE-OWN-CLOCK", 50 <= a1 <= 70 and a2 >= 3 * 3600
+              and ap.held_too_long(r8b, _t8 + 3 * 3600, age=a2) and not ap.held_too_long(r8b, _t8 + 3 * 3600))
+        ap.held_age(hs8, hl8, "m-held0000001", dict(r8, reason="running"), _t8)
+        check("V-AP-HELD-AGE-CLEARS", "held_seen" not in hl8)
+        qf8 = tmp / "home" / "owner_queue.md"
+
+        def q8():
+            return qf8.read_text() if qf8.exists() else ""
+
+        def _held_repo(tag, path="f.txt"):
+            pr = mkrepo(f"evo_held_{tag}")
+            (pr / "g.txt").write_text("g\n"); git(pr, "add", "-A"); git(pr, "commit", "-q", "-m", "g")
+            b = git(pr, "rev-parse", "HEAD")
+            wt = tmp / f"evo_heldwt_{tag}"
+            git(pr, "worktree", "add", "-q", "-b", f"worktree-s9h-{tag}", str(wt))
+            (wt / path).write_text("work\n"); git(wt, "add", "-A"); git(wt, "commit", "-q", "-m", "S9H work")
+            return pr, wt, b, git(wt, "rev-parse", "HEAD")
+
+        def _held_run(pr, wt, b, reason=BD8, ls=None):
+            ls = ls or {"status": "RUNNING", "gen": "S9H", "base": b, "mission": "m-held0000002",
+                        "held_seen": {"key": "m-held0000002:" + reason.split(":")[1].strip(), "since": 1.0}}
+            out = ap.held_align({"lanes": {}}, {"name": "HL", "product": str(pr)}, ls, "m-held0000002",
+                                {"state": "RUNNING", "reason": reason, "work_dir": str(wt)}, False)
+            return out, ls
+        qf8.unlink(missing_ok=True)
+        pr, wt, b, h = _held_repo("ff")
+        (pr / "g.txt").write_text("dirty, untouched by the branch\n")
+        out, _ = _held_run(pr, wt, b)
+        check("V-AP-HELD-ALIGN-FF-KEEPS-DIRTY", out == "ff" and git(pr, "rev-parse", "HEAD") == h
+              and (pr / "g.txt").read_text().startswith("dirty") and (pr / "f.txt").exists()
+              and any(r["kind"] == "held_align" and r.get("how") == "ff" for r in ledger()))
+        pr, wt, b, h = _held_repo("ov", path="g.txt")
+        (pr / "g.txt").write_text("dirty on the branch's own path\n")
+        p0 = git(pr, "rev-parse", "HEAD")
+        out, lso = _held_run(pr, wt, b)
+        out_again, _ = _held_run(pr, wt, b, ls=lso)
+        told = q8().count("uncommitted product changes touch")
+        kept = (pr / "g.txt").read_text() == "dirty on the branch's own path\n" and git(pr, "rev-parse", "HEAD") == p0
+        (pr / "g.txt").write_text("g\n")  # the obstacle is gone: a later tick aligns
+        out_later, _ = _held_run(pr, wt, b, ls=lso)
+        check("V-AP-HELD-ALIGN-FF-REFUSES-OVERLAP", out == "" and out_again == "" and told == 1 and kept
+              and out_later == "ff" and git(pr, "rev-parse", "HEAD") == h)
+        pr, wt, b, h = _held_repo("mg")
+        (pr / "h.txt").write_text("product side\n"); git(pr, "add", "-A"); git(pr, "commit", "-q", "-m", "product side")
+        out, _ = _held_run(pr, wt, b, reason=DIV8)
+        ph = git(pr, "rev-parse", "HEAD")
+        check("V-AP-HELD-ALIGN-MERGE-NO-SHARED", out == "merge"
+              and len(git(pr, "rev-list", "--parents", "-n", "1", "HEAD").split()) == 3
+              and git(wt, "rev-parse", "HEAD") == ph and (pr / "f.txt").exists() and (pr / "h.txt").exists())
+        pr, wt, b, h = _held_repo("sh", path="g.txt")
+        (pr / "g.txt").write_text("the product edits it too\n"); git(pr, "commit", "-q", "-am", "p")
+        p0 = git(pr, "rev-parse", "HEAD")
+        out, _ = _held_run(pr, wt, b, reason=DIV8)
+        check("V-AP-HELD-ALIGN-MERGE-REFUSES-SHARED", out == "" and git(pr, "rev-parse", "HEAD") == p0
+              and "both change" in q8())
+        pr, wt, b, h = _held_repo("fx")
+        fx = mkrepo("evo_held_foreign")
+        (fx / "z.txt").write_text("z\n"); git(fx, "add", "-A"); git(fx, "commit", "-q", "-m", "z")
+        p0 = git(pr, "rev-parse", "HEAD")
+        out, _ = _held_run(pr, fx, b)
+        check("V-AP-HELD-ALIGN-FOREIGN-TREE", out == "" and git(pr, "rev-parse", "HEAD") == p0)
+        pf8 = mkrepo("evo_held_final")
+        bf8 = git(pf8, "rev-parse", "HEAD")
+        (pf8 / "ev").mkdir()
+        (pf8 / "ev" / "checkpoint_s9h.md").write_text("CHECKPOINT_FINAL: false\n\nlater\nCHECKPOINT_FINAL: true\n")
+        git(pf8, "add", "-A"); git(pf8, "commit", "-q", "-m", "S9H closeout")
+        f1 = ap.held_final_checkpoint({"product": str(pf8)}, {"gen": "S9H", "base": bf8})
+        f_other = ap.held_final_checkpoint({"product": str(pf8)}, {"gen": "S8H", "base": bf8})
+        (pf8 / "ev" / "checkpoint_s9h.md").write_text("CHECKPOINT_FINAL: false\n"); git(pf8, "commit", "-q", "-am", "r")
+        f2 = ap.held_final_checkpoint({"product": str(pf8)}, {"gen": "S9H", "base": bf8})
+        check("V-AP-HELD-FINAL-CHECKPOINT", f1 == "ev/checkpoint_s9h.md" and f_other == "" and f2 == "")
+        keep_m8 = ap.mission
+        ap.mission = lambda mid: {"state": "RUNNING", "reason": DIV8}
+        try:
+            al_old = ap.build_alerts({"lanes": {"HL": {"status": "RUNNING", "mission": "m-held0000003", "held_seen": {
+                "key": "m-held0000003:cwd", "since": _t8 - 3600}}}})
+            al_new = ap.build_alerts({"lanes": {"HL": {"status": "RUNNING", "mission": "m-held0000003", "held_seen": {
+                "key": "m-held0000003:cwd", "since": _t8 - 60}}}})
+        finally:
+            ap.mission = keep_m8
+        check("V-AP-HELD-ALERTS", any(a["level"] == "held" and "HELD m-held0000003" in a["text"] for a in al_old)
+              and not any(a["level"] == "held" for a in al_new))
     finally:
         ap.sh = keep_sh8
     # F4b (2026-11-16, S71F/S69T): a continuation fast-forwards the product to the halted branch head before arming;
@@ -2841,9 +2941,16 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "evo_branches_ignored": _evo_mut(_branch_heads=lambda p: []),
          "held_notice_never": lambda m: setattr(m, "HELD_NOTICE_S", 10 ** 9),
          "held_notice_immediate": lambda m: setattr(m, "HELD_NOTICE_S", 0),
-         "running_watch_off": lambda m: setattr(m, "running_watch", lambda *a: None),
-         "running_watch_repeats": lambda m: setattr(m, "running_watch", (lambda real: lambda st, lane, ls, *a: (
-             ls.pop("age_ext_for", None), ls.pop("held_notice", None), real(st, lane, ls, *a))[2])(m.running_watch)),
+         "running_watch_off": lambda m: setattr(m, "running_watch", lambda *a, **k: None),
+         "running_watch_repeats": lambda m: setattr(m, "running_watch", (lambda real: lambda st, lane, ls, *a, **k: (
+             ls.pop("age_ext_for", None), ls.pop("held_notice", None), real(st, lane, ls, *a, **k))[2])(m.running_watch)),
+         "held_age_trusts_updated_at": lambda m: setattr(m, "held_age", lambda st, ls, mid, rec, now=None: 0.0),
+         "held_align_never": lambda m: setattr(m, "held_align", lambda *a, **k: ""),
+         "held_align_ignores_dirty": lambda m: setattr(m, "_diff_paths", lambda product, a, b: []),
+         "held_final_ignores_decl": lambda m: setattr(m, "_declares_final", lambda product, ref, path: True),
+         "held_repair_never": lambda m: setattr(m, "HELD_REPAIR_S", 10 ** 9),
+         "held_alert_off": lambda m: setattr(m, "build_alerts", (lambda real: lambda st: [
+             a for a in real(st) if a.get("level") != "held"])(m.build_alerts)),
          "age_defer_off": lambda m: setattr(m, "AGE_DEFER_SPENT", 99.0),
          "age_defer_always": lambda m: setattr(m, "AGE_DEFER_SPENT", 0.0),
          "evo_repair_key_free_text": _evo_mut(instrument_key=lambda n: n),

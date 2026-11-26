@@ -5,6 +5,24 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**2026-11-26 22:25Z (pane 31498a3e). ROUND 8 LIVE: held launches repair themselves** (Owner "aumenta autonomia para
+que esto se hubiera solucionado solo"). At 21:51Z all 8 lanes read RUNNING with 0 live workers.
+- FIFA S392F was held 'diverged' 7 h with its FINAL checkpoint written. FIFATC S383C was held 'behind_dirty' 9.5 h
+  over 1 untouched dirty file.
+- Cause: `held_too_long` measured from `updated_at`, which gsd_mission rewrites on every touch. The notice reached only
+  owner_queue.md.
+- Round 8 adds:
+  - its own `held_age`;
+  - `held_align` (ff over a disjoint dirty set, `--no-ff` merge with no shared paths; never reset);
+  - `held_final_checkpoint` (judge a held FINAL checkpoint);
+  - alert level `held`.
+- Gate PASS, 215/215 mutants. Deployed 22:22:12Z (autopilot ff7a9ee8, test a5589aa0; rollback
+  `*.bak-3149-heldrepair-20261126T222212Z`).
+- First tick, 22:25:02Z: FIFATC fast-forwarded f13a223f -> 61ced720 and FIFA's checkpoint went to the judge.
+- Spec `vault/specs/ascension-autopilot-held-launch-repair.md`.
+- Open: WIIPARTY S400W is BLOCKED on a host permission prompt and needs an Owner answer.
+- Open: no lane_tick test proves the held-final hold reaches the judge; only the wiring is tested.
+
 **2026-11-26 ~17:25Z (pane 31498a3e). ROUND 7 LIVE + Owner "unpark everything" (TENNIS +112.5M, MKW commit, KSR repoint).**
 - Round 7 (Owner "go ahead" + "a"): the escape admission now accepts the evidence in the form the generation wrote it.
   Families are read as `family F`, `FAMILY: F` or `<id> F:`. A `funnel.json` beside the residual counts as the funnel.

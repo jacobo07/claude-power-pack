@@ -1780,13 +1780,126 @@ BREAKER_REPLAN_MAX = 2
 HELD_REPLAN_S = 7200  # round 2 (Owner "hazlas todas"): MKW S338M sat 15 h on "launch held: cwd diverged"
 
 
-def held_too_long(rec: dict, now: float | None = None) -> bool:
+def held_too_long(rec: dict, now: float | None = None, age: float = 0.0) -> bool:
     """A RUNNING mission with no hold whose every relaunch has been held ('launch held: ...') for HELD_REPLAN_S.
     Round 2c (MKW 22:02Z): gsd_mission renewed the aged-out m-c32ebb609572 as m-905388a9fcc8, which sat PREPARED on the
-    same 'launch held: cwd diverged'; a renewal that never launched is the same stall."""
+    same 'launch held: cwd diverged'; a renewal that never launched is the same stall.
+    Round 8: `age` is held_age (the autopilot's own first sighting); updated_at alone is reset by every gsd_mission touch."""
     now = _now() if now is None else now
     return (rec.get("state") in ("RUNNING", "PREPARED") and str(rec.get("reason") or "").startswith("launch held")
-            and now - float(rec.get("updated_at") or now) >= HELD_REPLAN_S)
+            and max(float(age or 0), now - float(rec.get("updated_at") or now)) >= HELD_REPLAN_S)
+
+
+HELD_REPAIR_S = 600  # round 8: a held launch the autopilot can align mechanically is aligned after this long
+HELD_CAUSE_RE = re.compile(r"^launch held:\s*([^:]*)")
+
+
+def held_age(st: dict, ls: dict, mid: str, rec: dict, now: float | None = None) -> float:
+    """Round 8 (Owner 2026-11-26 "aumenta autonomia para que esto se hubiera solucionado solo", pane 31498a3e): seconds
+    since the autopilot FIRST saw this mission's launch held for this cause. gsd_mission rewrites updated_at on every
+    touch: FIFA m-fce673ebe202 was held 'diverged' from 14:57Z, yet read 30 min at 20:40Z, so the HELD_REPLAN_S re-plan
+    never fired. The sighting is kept per mission and cause in ls['held_seen'] and dropped when the hold ends."""
+    now = _now() if now is None else now
+    m = HELD_CAUSE_RE.match(str(rec.get("reason") or ""))
+    if not m or rec.get("state") not in ("RUNNING", "PREPARED"):
+        if ls.pop("held_seen", None) is not None:
+            save_state(st)
+        return 0.0
+    key = f"{mid}:{m.group(1).strip()[:100]}"
+    seen = ls.get("held_seen") if isinstance(ls.get("held_seen"), dict) else {}
+    if seen.get("key") != key:
+        seen = {"key": key, "since": min(now, float(rec.get("updated_at") or now))}
+        ls["held_seen"] = seen
+        save_state(st)
+    return max(0.0, now - float(seen.get("since") or now))
+
+
+def _declares_final(product: str, ref: str, path: str) -> bool:
+    """The checkpoint at `ref` ends its CHECKPOINT_FINAL declarations with true/yes (the last one counts, as judged)."""
+    rc, text = _git(product, "show", f"{ref}:{path}")
+    decls = list(FINAL_DECL_RE.finditer(text)) if rc == 0 else []
+    return bool(decls) and not NOT_FINAL_RE.match(decls[-1].group(0))
+
+
+def held_final_checkpoint(lane: dict, ls: dict) -> str:
+    """Round 8: the generation's own checkpoint committed on the product since its base, declaring itself final; '' when
+    none. Named after the generation (checkpoint_s392f.md for S392F), so an older generation's file is never taken."""
+    product, gen = lane.get("product"), str(ls.get("gen") or "").lower()
+    if not product or not gen or not Path(product).is_dir():
+        return ""
+    ck = checkpoint_from_branch(product, ls.get("base"), "HEAD")
+    return ck if ck and gen in Path(ck).name.lower() and _declares_final(product, "HEAD", ck) else ""
+
+
+def held_align(st: dict, lane: dict, ls: dict, mid: str, rec: dict, dry: bool) -> str:
+    """Round 8. A launch held 'cwd not aligned with work_dir' with the generation's work intact sat for hours, and the
+    re-plan meant to end it would have thrown that work away: FIFATC S383C (work tree 2 commits ahead, product dirty
+    only in evidence/f36/mutant_rc.json, which the branch never touches; held 'behind_dirty' 9.5 h); MKW S382M (hand
+    merge 690dd855). Every tick while the launch is held (a few git reads), the product is aligned with the work tree:
+      - product HEAD is an ancestor of the work-tree head and no uncommitted product change touches a path the branch
+        changes -> `merge --ff-only` (git keeps the uncommitted file; it refuses an overlap itself);
+      - the two sides diverged, share no changed path, and neither tree has tracked changes -> `merge --no-ff` of the
+        work-tree head into the product, then the work tree is fast-forwarded to that merge (cwd == work_dir).
+    A refusal is told once per mission, cause and reason; a later tick still aligns once the obstacle is gone.
+    Never a reset, rebase, checkout or stash; nothing is discarded. -> 'ff' | 'merge' | '' (nothing moved)."""
+    product, wd, ln = lane.get("product"), str(rec.get("work_dir") or ""), lane["name"]
+    key = (ls.get("held_seen") or {}).get("key")
+    if (not key or not str(rec.get("reason") or "").startswith("launch held: cwd")
+            or not product or not wd or not Path(wd).is_dir() or Path(wd).resolve() == Path(product).resolve()):
+        return ""
+
+    def owner_queue(lane_name: str, text: str) -> None:  # noqa: F811 -- the module's, told once per key and reason
+        tag = f"{key}:{text.split(':', 1)[-1][:60]}"
+        if ls.get("held_align_told") != tag:
+            ls["held_align_told"] = tag
+            save_state(st)
+            globals()["owner_queue"](lane_name, text)
+    cur, head = _sha(product, "HEAD"), _sha(wd, "HEAD")
+    if not (cur and head) or cur == head or not _sha(product, head):  # another repository's work tree: not ours
+        return ""
+    changed = _diff_paths(product, cur, head)
+    if changed is None:
+        return ""
+    if _git(product, "merge-base", "--is-ancestor", cur, head)[0] == 0:
+        rc, out = _git(product, "diff", "--name-only", "HEAD")
+        dirty = {p.strip() for p in out.splitlines() if p.strip()} if rc == 0 else {"<git diff failed>"}
+        if dirty & set(changed):
+            owner_queue(ln, f"held launch of {mid} not aligned: uncommitted product changes touch the branch's paths "
+                            f"{sorted(dirty & set(changed))[:3]}")
+            return ""
+        how, note = "ff", f"fast-forwarded the product {cur[:12]} -> {head[:12]} ({len(dirty)} uncommitted file(s) kept)"
+        if not dry:
+            rc, out = _git(product, "merge", "--ff-only", head)
+            if rc != 0:
+                owner_queue(ln, f"held launch of {mid}: fast-forward failed: {out[-200:]}")
+                return ""
+    else:
+        rc, base = _git(product, "merge-base", cur, head)
+        base = base.strip()
+        both = evolve._overlap(product, base, head) if rc == 0 and base else ["<no merge base>"]
+        if both or _git(product, "status", "--porcelain", "--untracked-files=no")[1] \
+                or _git(wd, "status", "--porcelain", "--untracked-files=no")[1]:
+            owner_queue(ln, f"held launch of {mid} not aligned: the product and its work tree diverged"
+                            + (f" and both change {both[:3]}" if both else " and a tree has tracked changes"))
+            return ""
+        how, note = "merge", f"merged the work-tree head {head[:12]} over product {cur[:12]} (no shared paths)"
+        if not dry:
+            rc, out = _git(product, "-c", "user.name=kobii-gex44-mission", "-c", "user.email=mission@gex44.local",
+                           "merge", "--no-ff", "-m", f"merge generation branch {head[:12]} ({ls.get('gen')}, {mid}) "
+                           "over product commits (no shared files; autopilot round 8 held-launch repair)", head)
+            if rc != 0:
+                _git(product, "merge", "--abort")
+                owner_queue(ln, f"held launch of {mid}: merge failed: {out[-200:]}")
+                return ""
+            new = _sha(product, "HEAD")
+            rc, out = _git(wd, "merge", "--ff-only", new or "HEAD")
+            if rc != 0:
+                owner_queue(ln, f"held launch of {mid}: product merged as {str(new)[:12]}, work tree not "
+                                f"fast-forwarded: {out[-200:]}")
+    ledger_add(lane=ln, kind="held_align", tokens=0, mission=mid, gen=ls.get("gen"), how=how, head=head, was=cur)
+    log(f"{ln}: held launch of {mid} ({key.split(':', 1)[-1]}): {note}")
+    digest(ln, f"HELD-ALIGN {ls.get('gen')} ({mid}): {note}")
+    return how
 
 
 def breaker_replan(st: dict, lane: dict, ls: dict, mid: str, rec: dict, hold: dict, dry: bool,
@@ -2191,6 +2304,15 @@ def build_alerts(st: dict) -> list[dict]:
         if s in ("RUNNING", "WAITING") and wd.get("told"):
             out.append({"key": f"{ln}:idle:{int(wd['since'])}", "lane": ln, "level": "idle", "since": wd["since"],
                         "text": str(wd.get("why"))[:700]})
+        hs = ls.get("held_seen") if isinstance(ls.get("held_seen"), dict) else {}
+        reason = str(rec.get("reason") or "")
+        if (s == "RUNNING" and hs.get("since") and reason.startswith("launch held")
+                and _now() - float(hs["since"]) >= HELD_NOTICE_S):
+            # round 8: FIFA/FIFATC held for 7-9.5 h reached only owner_queue.md on GEX44, which nobody reads
+            out.append({"key": f"{ln}:held:{hs.get('key')}:{int(float(hs['since']))}", "lane": ln, "level": "held",
+                        "since": hs["since"],
+                        "text": (f"HELD {ls.get('mission')} for {int((_now() - float(hs['since'])) / 60)} min with no "
+                                 f"worker (autopilot could not align it): {reason[:400]}")[:700]})
     return out
 
 
@@ -2327,7 +2449,7 @@ HELD_NOTICE_S = 1800  # F6: a RUNNING mission whose launch has been held this lo
 AGE_DEFER_SPENT = 0.75  # F2b: at or past this share of its authority a cost hold is near; the top-up extends instead
 
 
-def running_watch(st: dict, lane: dict, ls: dict, mid: str, rec: dict, dry: bool) -> None:
+def running_watch(st: dict, lane: dict, ls: dict, mid: str, rec: dict, dry: bool, age: float = 0.0) -> None:
     """A live mission with no hold. F6 (2026-11-16, S71F/S69T): RUNNING with every relaunch held ('launch held: cwd not
     aligned') sat 8 h unseen after both workers finished; it is now told to the Owner once per mission and reason.
     F2b (2026-11-16, S65M): a mission with work on its branch halted on age at 07:45 because the wall was only
@@ -2336,7 +2458,7 @@ def running_watch(st: dict, lane: dict, ls: dict, mid: str, rec: dict, dry: bool
     BEFORE the wall, not after."""
     now, ln = _now(), lane["name"]
     reason = str(rec.get("reason") or "")
-    held_s = now - float(rec.get("updated_at") or now)
+    held_s = max(float(age or 0), now - float(rec.get("updated_at") or now))  # round 8: held_age, not updated_at alone
     if reason.startswith("launch held") and held_s >= HELD_NOTICE_S and ls.get("held_notice") != f"{mid}:{reason[:120]}":
         ls["held_notice"] = f"{mid}:{reason[:120]}"
         save_state(st)
@@ -2600,12 +2722,25 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
                 log(f"{lane['name']}: {mid} ended {rec['state']} with {tck} committed on its branch; judged as its checkpoint")
             hold = {"kind": "checkpoint", "set_at": "terminal", "evidence": tck}
         if not hold and ls.get("status") == "RUNNING":
-            if held_too_long(rec) and _now() >= float(ls.get("held_grace_until") or 0):
+            age = held_age(st, ls, mid, rec)
+            if age >= HELD_REPAIR_S and held_align(st, lane, ls, mid, rec, dry):
+                return  # round 8: gsd_mission's next relaunch finds cwd == work_dir
+            fck = held_final_checkpoint(lane, ls) if age >= HELD_REPAIR_S else ""
+            if fck:  # round 8 (FIFA S392F): the held generation already wrote its FINAL checkpoint: judge it
+                if ls.get("held_final_for") != f"{mid}:{fck}":
+                    ls["held_final_for"] = f"{mid}:{fck}"
+                    save_state(st)
+                    log(f"{lane['name']}: {mid} launch held with its FINAL checkpoint {fck} on the product; judged")
+                    digest(lane["name"], f"HELD-FINAL {ls.get('gen')} ({mid}): {fck} declares final; judged as its "
+                                         "checkpoint instead of waiting for a relaunch")
+                hold = {"kind": "checkpoint", "set_at": f"held-final:{fck}", "evidence": fck}
+        if not hold and ls.get("status") == "RUNNING":
+            if held_too_long(rec, age=age) and _now() >= float(ls.get("held_grace_until") or 0):
                 # round 2: a launch held for hours is re-planned like a refused cost breaker. Round 4b (MKW 12:15Z): not
                 # within HELD_REPLAN_S of a stranded merge home, which is what lets the held relaunch align
                 return breaker_replan(st, lane, ls, mid, rec, {"set_at": f"held:{rec.get('updated_at')}",
                                                                "reason": rec.get("reason")}, dry, cause="held")
-            return running_watch(st, lane, ls, mid, rec, dry)
+            return running_watch(st, lane, ls, mid, rec, dry, age=age)
         if hold.get("kind") == "cost" and ls.get("status") == "RUNNING":
             if cost_topup(st, lane, ls, mid, rec, hold, dry) == "REFUSED":
                 return breaker_replan(st, lane, ls, mid, rec, hold, dry)
