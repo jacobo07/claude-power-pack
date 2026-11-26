@@ -5,6 +5,30 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**2026-11-26 14:04Z (pane a90ef78f, /kresume of 5f1414ed). FIFA +25M + lifter; WSR ruling; ROUND 5 STRATEGY ESCAPE LIVE.**
+- FIFA: Owner "+25M, lifter yes". Under both locks: research_cap 337.5M -> 362.5M (ledger owner_research_raise; backup
+  `state.json.bak-a90e-fifacap-20261126T132209Z`). Answer 118b4d70 authorises checkpoint_s356f_wave3 option (a), the
+  allocator-level lifter (freeze, shadow on the 40 dev rows, refused mutant, canary only if >= 20 improve). It was
+  delivered to S391F and S392F. By 13:53Z spent was 361.5M of 362.5M.
+- WSR: Owner ruling (long, Spanish) said no close, no floor cut, no budget raise. It authorises a scientific escape plus
+  a reusable mechanism.
+  - Funnel MEASURED (s371r/criteria_isolated_link.json): 34,148 -> named 1,295 -> unlinked 1,020 -> donor-defined
+    636 -> one-def 626 -> 0 after the prior-evidence exclusion.
+  - Answer 98aaff22, cut at 1000 chars (lost only "...and REOPEN conditions").
+- ROUND 5 BUILT + DEPLOYED 13:57Z. Spec PP `vault/specs/ascension-autopilot-strategy-escape.md`.
+  - evolve.py: strategy_escape / escape_problems / escape_review. _synth_or_park researches one STRATEGY_EXPANSION
+    lever instead of parking, needs >= 10M research room, ESCAPE_MAX=2, reset by a conversion. A LIMITS+REOPEN
+    checkpoint parks with park_kind=limits.
+  - autopilot.py: the park kind is passed through, and escape_streak is added to DESIGN_SNAP_KEYS.
+  - Kill switch AP_STRATEGY_ESCAPE=0.
+  - Gate 444/444, 201/201 mutants (4 new).
+  - Backups `*.bak-a90e-escape-20261126T135755Z`; sha16 evolve fce79035, autopilot 69ac0ef7, test cb4eeaa4.
+- LIVE 14:03Z: WSR judged -> escape -> armed S395R m-5b38cc30f816 (8.5M), lever wsr_strategy_escape_1, escape_streak 1.
+  The cycle is proven only up to the arm. Funnel, strategies, pool, judge and decision wait for S395R's checkpoint.
+- FINDING (Owner's call, not changed): research_spent books the reserved cap at arm, and a released reservation is not
+  credited back. FIFA S390F/S391F released 10.6M; WSR S371R released 6.9M. Crediting it would widen the budget.
+- NEXT: watch S395R's judgment (escape_problems on its checkpoint); FIFA lifter shadow result; the old 3-5 below.
+
 **2026-11-26 12:30Z (pane 5f1414ed). Owner "go ahead y subele la autonomia". ROUND 4/4b: STRANDED WORK COMES HOME.**
 - The autopilot now merges a generation's work stranded in an older worktree into the product: scaffold-only product
   side and no shared path; details in spec §Round 4.
