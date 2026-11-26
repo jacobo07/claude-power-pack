@@ -23,6 +23,7 @@ os.environ["GSD_AUTORUN_MARKER_DIR"] = TMP  # adopt/ack write markers: never in 
 os.environ["CPP_CLAUDE_JOBS_DIR"] = str(Path(TMP) / "jobs")      # host job files: never the real ones
 os.environ["GSD_LONG_RUN_PROJECTS_DIR"] = str(Path(TMP) / "projects")  # transcripts: never the real ones
 os.environ["CPP_RESOURCE_ADMISSION"] = "off"  # RAM floor reads host memory; covered by test_a5_u6
+os.environ["CPP_MISSION_ACCOUNT_ADMISSION"] = "off"  # account quota: covered by test_mission_account_admission
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import gsd_mission as gm  # noqa: E402
 
@@ -447,7 +448,7 @@ def main() -> int:
     check("V-MC-WS-INFERRED-FROM-COMMAND", rec["workstream"] == "ub", rec["workstream"])
     rec = gm.create(TMP, "/mc-task --ws ub", mission_id="m-ws-non-gsd", now=NOW)
     check("V-MC-WS-NOT-INFERRED-NON-GSD", rec["workstream"] is None, rec["workstream"])
-    # 2026-10-11 m-cec849fc02b2: armed with `--workstream worker` (the long form /gsd-* accepts);
+    # 2026-10-11 m-cec849fc02b2: armed with `--workstream ws-a` (the long form /gsd-* accepts);
     # only `--ws` was parsed, so the record again kept no workstream.
     rec = gm.create(TMP, "/gsd-autonomous --workstream ub", mission_id="m-ws-long", now=NOW)
     check("V-MC-WS-LONG-FLAG-INFERRED", rec["workstream"] == "ub"
@@ -1570,10 +1571,11 @@ def main() -> int:
     env = {**os.environ, "GSD_LONG_RUN_STATE_DIR": TMP, "GSD_AUTORUN_MARKER_DIR": TMP}
     cli = str(Path(__file__).resolve().parent / "gsd_mission.py")
     for mid_flag, want in ((None, "auto"), ("acceptEdits", "acceptEdits")):
-        # Each arm gets its own repo: a root-roadmap mission is a Goal, so a second one in TMP is refused singleflight.
-        perm_cwd = Path(TMP) / f"perm-{want}"
-        perm_cwd.mkdir(exist_ok=True)
-        argv = [sys.executable, cli, "arm", "--cwd", str(perm_cwd), "--command", "/x", "--no-launch"]
+        # mission-capital W1: each arm gets its own directory -- arm now refuses a second live mission on one
+        # repository (duplicate_arm_refusal), and this gate measures the permission default, not concurrency.
+        pdir = Path(TMP) / f"cli-perm-{want}"
+        pdir.mkdir(exist_ok=True)
+        argv = [sys.executable, cli, "arm", "--cwd", str(pdir), "--command", "/x", "--no-launch"]
         if mid_flag:
             argv += ["--permission-mode", mid_flag]
         r = subprocess.run(argv, capture_output=True, text=True, env=env, timeout=120)
@@ -1582,6 +1584,47 @@ def main() -> int:
         except Exception as exc:  # noqa: BLE001
             got = f"unparseable: {exc}: {r.stdout[-200:]} {r.stderr[-200:]}"
         check(f"V-MC-CLI-PERMISSION-{want.upper()}", got == want, repr(got))
+
+    # B1/B2 (GEX44 m-26ea4de62c50, 2026-11-14): every same-session wake failed "unknown option '--bg'"
+    # because resume_argv resolved `claude` from PATH (/usr/local/bin 2.1.113) while fresh launches use
+    # claude_exe() (~/.local/bin 2.1.325). The wake must use the same resolver as the launch.
+    import gsd_epoch as ge
+    real_ce, saved_env = gm.claude_exe, os.environ.pop("CPP_CLAUDE_EXE", None)
+    gm.claude_exe = lambda: "/home/u/.local/bin/claude"
+    try:
+        wake = ge.resume_argv("abcdef12-0000-0000-0000-000000000000", "/gsd-autonomous")
+        stop = ge.stop_argv("abcdef12") if hasattr(ge, "stop_argv") else "no stop_argv: copy-stop argv inline"
+    finally:
+        gm.claude_exe = real_ce
+        if saved_env is not None:
+            os.environ["CPP_CLAUDE_EXE"] = saved_env
+    check("V-MC-WAKE-USES-LAUNCH-EXE", wake[0] == "/home/u/.local/bin/claude" and wake[1:3] == ["--bg", "--resume"],
+          str(wake[:3]))
+    check("V-MC-COPY-STOP-USES-LAUNCH-EXE", stop == ["/home/u/.local/bin/claude", "stop", "abcdef12"], str(stop))
+
+    # B4 (m-26ea4de62c50): `requires --path inputs/X.md` was stored verbatim and judged from the sweeper's cwd,
+    # so it read absent forever. Absolutised against the mission cwd at set time; refused when that is unknowable.
+    rq_cwd = Path(TMP) / "rq-proj"
+    (rq_cwd / "inputs").mkdir(parents=True, exist_ok=True)
+    gm.create(str(rq_cwd), "/gsd-autonomous", mission_id="m-rq", now=NOW)
+    rq = gm.set_requires("m-rq", "HEAD4", [("path_exists", "inputs/OWNER-DECISION-HEAD4.md")], now=NOW)
+    arg = rq["requires"][0]["arg"]
+    want_arg = os.path.normpath(os.path.join(gm.load("m-rq")["cwd"], "inputs", "OWNER-DECISION-HEAD4.md"))
+    check("V-MC-REQUIRES-RELATIVE-ABSOLUTISED", arg == want_arg and os.path.isabs(arg), f"{arg!r} want {want_arg!r}")
+    (rq_cwd / "inputs" / "OWNER-DECISION-HEAD4.md").write_text("a", encoding="utf-8")
+    ev_rq = gm.mres.evaluate(gm.load("m-rq")["requires"], None)
+    check("V-MC-REQUIRES-RELATIVE-MET-FROM-ANY-CWD", ev_rq["admissible"], str(ev_rq.get("waiting")))
+    absp = str(rq_cwd / "elsewhere.lock")
+    rq = gm.set_requires("m-rq", "GPU", [("path_exists", absp)], now=NOW)
+    check("V-MC-REQUIRES-ABSOLUTE-VERBATIM-CONTROL",
+          [r["arg"] for r in rq["requires"] if r["obligation"] == "GPU"] == [absp], str(rq["requires"]))
+    cur = gm.load("m-rq")
+    gm.transition("m-rq", expect_epoch=cur["epoch"], expect_state=cur["state"], event="t_rel_cwd", now=NOW, cwd=".")
+    try:
+        gm.set_requires("m-rq", "HEAD5", [("path_exists", "inputs/OWNER-DECISION-HEAD5.md")], now=NOW)
+        _fail("V-MC-REQUIRES-RELATIVE-REFUSED-WITHOUT-CWD", "stored a relative path against a relative cwd")
+    except gm.MissionError as exc:
+        _ok("V-MC-REQUIRES-RELATIVE-REFUSED-WITHOUT-CWD", str(exc)[:120])
 
     print(f"MC_PASS={passes}/{passes + fails}")
     return 0 if fails == 0 else 1
