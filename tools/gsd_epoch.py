@@ -128,35 +128,6 @@ def context_tokens(session_id: str) -> int | None:
     return None
 
 
-def startup_tokens(session_id: str) -> int | None:
-    """Tokens resident at the worker's FIRST real model call: the startup floor every fresh worker
-    pays before it does any work (system prompt, rules, skills, card). None when unmeasured."""
-    path = _transcript(session_id)
-    if not path:
-        return None
-    try:
-        with open(path, encoding="utf-8", errors="replace") as fh:
-            for line in fh:
-                if '"usage"' not in line:
-                    continue
-                try:
-                    row = json.loads(line)
-                except ValueError:
-                    continue
-                msg = row.get("message") if isinstance(row, dict) and row.get("type") == "assistant" else None
-                if not isinstance(msg, dict) or msg.get("model") == "<synthetic>":
-                    continue
-                u = msg.get("usage")
-                if isinstance(u, dict):
-                    n = int(u.get("input_tokens") or 0) + int(u.get("cache_creation_input_tokens") or 0) \
-                        + int(u.get("cache_read_input_tokens") or 0)
-                    if n > 0:
-                        return n
-    except (OSError, TypeError, ValueError):
-        return None
-    return None
-
-
 def last_compaction(session_id: str) -> dict | None:
     """The host's own record of the worker's last compaction (`compact_boundary` metadata):
     trigger, tokens before and after, duration. None when the transcript does not show one."""
@@ -589,10 +560,22 @@ def cause_for(act: str, plan_reason: str | None, rec: dict, decision: dict | Non
     return {"cause": cause, "reason": plan_reason, "evidence": {}}
 
 
+def _claude() -> str:
+    """The same `claude` a fresh launch uses (gm.claude_exe: CPP_CLAUDE_EXE, else ~/.local/bin/claude off
+    Windows, else PATH). Until 2026-11-14 the wake resolved PATH only: on GEX44 an ssh `decide` reached
+    /usr/local/bin/claude 2.1.113, every same-session continuation failed "unknown option '--bg'" and each
+    epoch restarted fresh (m-26ea4de62c50: continuation_failed x3, launch_cause CONTINUATION_FAILED)."""
+    import gsd_mission as gm
+    return gm.claude_exe()
+
+
 def resume_argv(session_id: str, prompt: str) -> list[str]:
     """NO flags besides --bg/--resume: any other flag makes the host start a COPY (measured)."""
-    exe = os.environ.get("CPP_CLAUDE_EXE") or "claude"
-    return [exe, "--bg", "--resume", session_id, prompt]
+    return [_claude(), "--bg", "--resume", session_id, prompt]
+
+
+def stop_argv(short_id: str) -> list[str]:
+    return [_claude(), "stop", short_id]
 
 
 def continue_worker(mission_id: str, rec: dict, *, prompt: str, decision: dict, runner=None,
@@ -622,6 +605,15 @@ def continue_worker(mission_id: str, rec: dict, *, prompt: str, decision: dict, 
     wd = work_dir or gm.effective_workdir(sid, rec["cwd"], rec.get("workstream"))
     if wd and wd != rec.get("work_dir"):
         extra["work_dir"] = wd
+    # BAMR P3 (2026-11-20): the same-session wake is the second model-spending launch path (launch_worker is
+    # the first); it passes the same account governor, BEFORE the claim, so a refusal changes no state. The
+    # idle owner was already stopped by the caller (as for continue_refused_admission); the next pass sees it
+    # dead and replaces it through launch_worker, which refuses again until the quota admits it.
+    awhy = gm.account_refusal(rec, "resume")
+    if awhy:
+        lr.ledger_append(mission_id, "continue_refused_account", mission_id=mission_id,
+                         epoch=rec.get("epoch"), worker=sid, why=awhy[:300])
+        return {"ok": False, "mechanism": RESUME, "session": sid, "why": awhy, "account_refused": True}
     claimed = gm.transition(
         mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"], event="turn_continued",
         now=now, state=gm.LAUNCHING, worker=sid, reason=decision.get("reason"),
@@ -648,7 +640,7 @@ def continue_worker(mission_id: str, rec: dict, *, prompt: str, decision: dict, 
     if copy and copy.group(1):
         try:  # a copy is a second worker on the same mission: never leave it running
             (stop_runner or (lambda a: subprocess.run(a, capture_output=True, timeout=120)))(
-                [os.environ.get("CPP_CLAUDE_EXE") or "claude", "stop", copy.group(1)])
+                stop_argv(copy.group(1)))
         except Exception:  # noqa: BLE001 -- the orphan reaper finds it by name
             pass
     lr.ledger_append(mission_id, "continuation_failed", mission_id=mission_id, epoch=claimed["epoch"],

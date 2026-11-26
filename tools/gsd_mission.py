@@ -398,10 +398,37 @@ def block_mission(rec: dict, *, expect_epoch: int, expect_state, now: float | No
     hold = changes.get("gsd_hold") or changes.get("capsule_hold")
     b = _compile_blocker(rec, reason, hold=hold, intent=intent or changes.get("blocked_intent"))
     if b is not None:
-        changes = {**changes, "blocker": {**b, "epoch": expect_epoch, "at": now}}
-    return transition(rec["mission_id"], expect_epoch=expect_epoch, expect_state=expect_state,
-                      event="mission_blocked", now=now, state=BLOCKED, reason=reason,
-                      ledger_extra=_blocker_ledger(b) or None, **changes)
+        # the asking text rides on the blocker: later transitions overwrite rec["reason"] while the mission stays
+        # BLOCKED, and a consumer (mission_topup) must still read what was asked (m-76e04d86896d, 2026-11-23)
+        changes = {**changes, "blocker": {**b, "epoch": expect_epoch, "at": now, "reason": str(reason)[:300]}}
+    out = transition(rec["mission_id"], expect_epoch=expect_epoch, expect_state=expect_state,
+                     event="mission_blocked", now=now, state=BLOCKED, reason=reason,
+                     ledger_extra=_blocker_ledger(b) or None, **changes)
+    return _capital_event(rec["mission_id"], "blocked", out)
+
+
+def _capital_event(mission_id: str, cause: str, rec: dict) -> dict:
+    """mission-capital W3 (H5): tell the top-up a capital event happened, in-process, after the write that raised it
+    has committed. mission_topup.on_capital_event runs the same locked sweep_one as the 5-min poller (which stays the
+    reconciler), so a BLOCKED/CAPITAL_EXHAUSTED or an authority trip is renewed in the same call instead of the next
+    pass. A mission without a top-up policy costs one stat. Never raises: the write it follows already stands.
+    Returns the record as it now stands (re-read only when the top-up acted). Kill switch CPP_TOPUP_EVENT=off."""
+    try:
+        import mission_topup as _mt
+        out = _mt.on_capital_event(mission_id, cause)
+    except Exception as exc:  # noqa: BLE001 -- an event must never fail the write it follows
+        try:
+            lr.ledger_append(mission_id, "capital_event_error", mission_id=mission_id, cause=cause,
+                             error=f"{type(exc).__name__}: {exc}"[:300])
+        except Exception:  # noqa: BLE001
+            pass
+        return rec
+    if out and out.get("action") not in ("none", "error"):
+        try:
+            return load(mission_id) or rec
+        except Exception:  # noqa: BLE001 -- the caller keeps what it had; its next CAS sees the move
+            return rec
+    return rec
 
 
 def annotate_hold(rec: dict, hold: dict) -> dict:
@@ -502,7 +529,7 @@ def host_sessions(timeout_s: int = 90) -> list[dict] | None:
     read every owner as gone.
     """
     import subprocess
-    exe = os.environ.get("CPP_CLAUDE_EXE") or "claude"
+    exe = claude_exe()
     try:
         r = subprocess.run([exe, "agents", "--json", "--all"], capture_output=True, text=True,
                            encoding="utf-8", errors="replace", timeout=timeout_s)
@@ -623,9 +650,13 @@ def plan_next(rec: dict, now: float, sessions: list[dict] | None,
         # (EDD m-4bb8952b2903, m-79f84cdd34dc): a cost-breaker hold set on a worker that then finished
         # left the record RUNNING with its owner gone, and goal singleflight refused every later unit
         # until the Owner closed it by hand. Only positive DEAD evidence settles; UNKNOWN stays parked.
-        if (rec.get("closeout_lease") or {}).get("state") in (CL_AUTHORIZED, CL_LAUNCHED):
+        if (rec.get("closeout_lease") or {}).get("state") in (CL_AUTHORIZED, CL_LAUNCHED, CL_DEFERRED):
             # spec mission-closeout-reserve-launch: closeout_gate owns this record until the lease ends; no recovery,
-            # settle or relay may act on the closeout worker meanwhile.
+            # settle or relay may act on the closeout worker meanwhile. A DEFERRED closeout (launch refused by the
+            # account or the RAM floor, nothing spent) is retried by closeout_gate every pass.
+            if (rec.get("closeout_lease") or {}).get("state") == CL_DEFERRED:
+                return {"action": "none", "reason": "closeout deferred (closeout_gate retries it): "
+                        + str((rec.get("closeout_lease") or {}).get("why") or "")[:200]}
             return {"action": "none", "reason": "closeout running on the reserve (closeout_gate follows it)"}
         if state in (RUNNING, BLOCKED) and is_cost_hold(hold):
             # AMR: a cost hold stops the executor, not the goal. Recovery runs until it launches a
@@ -734,8 +765,12 @@ def plan_next(rec: dict, now: float, sessions: list[dict] | None,
         # Only a BARE blocked is judged: a host row carrying `waitingFor` is a live permission prompt, whatever the
         # job file says (review F3).
         hrow = _host_row((rec.get("owner") or {}).get("session_id"), sessions)
+        # Ascension T1 O5 (Owner "y" 2026-11-22): the one live prompt that IS judged is a worktree-entry prompt -- the
+        # host raises it although EnterWorktree is pre-approved (m-3e3a400b52d4, m-2b4b7a36b2c8, m-2be47a186897, GEX44
+        # a library mission m-36c04360244c ~4 h), and its answer (plain `git worktree add` + bind) is the runtime's, not a human's.
         b = ((blocked_probe or blocked_recovery)(rec)
-             if state in (RUNNING, BLOCKED) and hrow is not None and not hrow.get("waitingFor") else None)
+             if state in (RUNNING, BLOCKED) and hrow is not None
+             and (not hrow.get("waitingFor") or _worktree_prompt_wait(hrow.get("waitingFor"))) else None)
         cls = (b or {}).get("class")
         if cls == "QUESTION_RESOLVABLE":
             if (int(rec.get("decision_recoveries") or 0) >= MAX_DECISION_RECOVERIES
@@ -747,6 +782,11 @@ def plan_next(rec: dict, now: float, sessions: list[dict] | None,
                     "reason": f"decision recovery ({b['gate']['result']}): the worker ended on a question the "
                               f"runtime answers: {b['why'][:160]}"}
         if cls == "QUESTION_OWNER":
+            cont = owner_question_continuation(rec, b)
+            if cont is not None:
+                return {"action": "replace", "decision": b, "owner_question": cont,
+                        "reason": f"owner question parked ({b['gate'].get('owner_class')}), independent work "
+                                  f"continues: {cont['independent_reason'][:120]}; asked: {b['why'][:120]}"}
             return {"action": "surface_blocked",
                     "reason": f"OWNER_BOUNDARY ({b['gate'].get('owner_class')}): {b['why'][:200]}"}
         if cls == "STOPPED":
@@ -971,6 +1011,49 @@ def decision_progress_since(rec: dict) -> bool:
     return now_fp is not None and now_fp != then
 
 
+OWNER_INPUT_CLASSES = frozenset({"SECURITY_OR_CREDENTIAL", "EXTERNAL_PROPERTY", "OWNER_DECISION", "PRODUCT_SCOPE"})
+
+
+def owner_question_continuation(rec: dict, b: dict) -> dict | None:
+    """Spec mission-unattended-continuity A3. An Owner-class question parks only ITSELF when the typed blocker has
+    POSITIVE evidence of independent work: the successor records `OWNER DECISION NEEDED:`, leaves that part alone and
+    continues the rest. Measured: m-144eafe0ff5f idle 9.1 h, m-e78bdb938339 idle 14 h on one question each, while
+    nobody was told. None = surface as before (no evidence, mission-wide class, authority hold, switch off, or the
+    decision-recovery cap spent with an unchanged tree). Kill switch CPP_MISSION_OWNER_PENDING_CONTINUE=off."""
+    if (os.environ.get("CPP_MISSION_OWNER_PENDING_CONTINUE") or "").strip().lower() in ("off", "0", "false"):
+        return None
+    if _decision_recovery_off():
+        return None
+    if int(rec.get("decision_recoveries") or 0) >= MAX_DECISION_RECOVERIES and not decision_progress_since(rec):
+        return None
+    # Review M1: only classes whose answer is an INPUT the Owner supplies may park while other work goes on. A deploy,
+    # an irreversible act, a guard switch-off, more authority, a truth contract or a done-gate stays a full stop:
+    # positional ROADMAP evidence cannot prove the next unit is unrelated to it.
+    if (b.get("gate") or {}).get("owner_class") not in OWNER_INPUT_CLASSES:
+        return None
+    why = str(b.get("why") or "")
+    try:   # the same shape the BLOCKED write compiles (surface_blocked): typed intent + "host needs:" text
+        import blocked_intent as bint
+        intent = bint.intent(why)
+    except Exception:  # noqa: BLE001 -- untyped intent: the compiler decides on the text alone
+        intent = None
+    blk = _compile_blocker(rec, f"OWNER_BOUNDARY ({(b.get('gate') or {}).get('owner_class')}): {why}; "
+                                f"host needs: {why}", intent=intent)
+    if not blk or not blk.get("independent_work"):
+        return None
+    return {"owner_class": (b.get("gate") or {}).get("owner_class"), "question": str(b.get("why") or "")[:400],
+            "independent_reason": str(blk.get("independent_reason") or ""), "blocker_class": blk.get("class")}
+
+
+def _worktree_prompt_wait(waiting_for) -> bool:
+    """True when a host `waitingFor` only asks to enter a worktree (tools/mission_policy.WORKTREE_PROMPT_RX)."""
+    try:
+        import mission_policy as mpol
+        return bool(mpol.WORKTREE_PROMPT_RX.search(str(waiting_for or "")))
+    except Exception:  # noqa: BLE001 -- unreadable policy: the prompt stays a human's, as before
+        return False
+
+
 def _decision_recovery_off() -> bool:
     return os.environ.get("CPP_MISSION_DECISION_RECOVERY", "").strip().lower() == "off"
 
@@ -1014,7 +1097,7 @@ def worker_argv(rec: dict, prompt: str, session_id: str | None = None) -> list[s
     started idle (W8, measured). So the variadic options come first and a non-variadic
     option (`--autocompact N`) sits between them and the prompt -- the exact shape W0
     launched successfully."""
-    exe = os.environ.get("CPP_CLAUDE_EXE") or "claude"
+    exe = claude_exe()
     slim = slim_profile(rec)
     if slim:
         return slim_argv(rec, prompt, exe, slim, session_id)
@@ -1042,10 +1125,7 @@ def worker_argv(rec: dict, prompt: str, session_id: str | None = None) -> list[s
     argv += ["--disallowedTools", "AskUserQuestion"]
     for tool in topo.get("disallowed_tools", []):
         argv += ["--disallowedTools", tool]
-    # An explicit per-mission "inherit" outranks the host verdict: a mission that needs a server (a browser
-    # QA phase) opts back in without changing the measurement every other mission on the host relies on.
-    host_strip = rec.get("worker_mcp") != "inherit" and worker_mcp_verdict() == "APPLY"
-    if capsule_v2(rec) or rec.get("worker_mcp") == "none" or host_strip:
+    if capsule_v2(rec) or rec.get("worker_mcp") == "none" or worker_mcp_verdict() == "APPLY":
         # Measured, not assumed: only a fresh APPLY from tools/worker_mcp_probe.sh strips MCP.
         # capsule-v2 always strips it (G9): the mutation guard sits on the Bash and Edit chains, so
         # an `mcp__*` tool would be a write path no guard sees before the successor certifies.
@@ -1255,89 +1335,35 @@ def _rotation_fraction() -> float:
         return ROTATION_FRACTION
 
 
-# A wall must leave room to work ABOVE the startup floor. Measured 2026-11-21 (m-a13cc30b0852): every
-# fresh worker started at 119,465 tokens resident and the 175k wall (0.70 x 250k) left ~56k, so each
-# epoch re-read its inputs, hit the wall, handed off and committed nothing -- 4 epochs, ~10M tokens
-# processed, HALTED no_progress. An earlier probe measured a 186,856-token floor (tools/gsd_epoch.py).
-STARTUP_FLOOR_TOKENS = 150_000   # used until a worker of the mission has been measured
-MIN_WORK_TOKENS = 100_000        # guaranteed working room above the floor (policy: min_work_tokens)
-_AUTOCOMPACT_STEP = 25_000
-
-
-def _policy_int(key: str, default: int) -> int:
-    try:
-        v = int(json.loads(_BUDGET_DEFAULTS.read_text(encoding="utf-8-sig")).get(key, default))
-        return v if v > 0 else default
-    except Exception:  # noqa: BLE001 -- unreadable policy answers with the measured constant
-        return default
-
-
-def _measured_startup_floor(rec: dict) -> int | None:
-    """The highest startup floor seen for this mission: the recorded one, raised by the last worker's
-    first model call. None when nothing was ever measured (the policy default then applies)."""
-    known = int(rec.get("startup_floor") or 0)
-    sid = ((rec.get("owner") or {}).get("session_id")
-           or (rec.get("previous_owner") or {}).get("session_id"))
-    seen = 0
-    if sid:
-        try:
-            import gsd_epoch as ge
-            seen = int(ge.startup_tokens(sid) or 0)
-        except Exception:  # noqa: BLE001 -- an unreadable transcript is unmeasured, never zero
-            seen = 0
-    best = max(known, seen)
-    return best or None
-
-
-def _work_floor_line(rec: dict, line: int, frac: float) -> tuple[int, int]:
-    """(floor, compaction line) such that line*frac - floor >= MIN_WORK_TOKENS."""
-    floor = int(rec.get("startup_floor") or 0) or _policy_int("startup_floor_tokens", STARTUP_FLOOR_TOKENS)
-    need = floor + _policy_int("min_work_tokens", MIN_WORK_TOKENS)
-    if int(line * frac) >= need:
-        return floor, line
-    raised = -(-int(need / frac) // _AUTOCOMPACT_STEP) * _AUTOCOMPACT_STEP
-    while int(raised * frac) < need:
-        raised += _AUTOCOMPACT_STEP
-    return floor, raised
-
-
 def apply_rotation_invariant(rec: dict) -> dict:
-    """Bound the turn-end ceiling and the mid-turn token wall under the compaction line, and keep the
-    compaction line high enough that the wall leaves MIN_WORK_TOKENS above the startup floor.
+    """Bound the turn-end ceiling and the mid-turn token wall under the compaction line.
 
     Applies to explicit values too: a rotation predicate above the compaction line is unreachable
-    whoever set it, and a wall under floor+work can never let a worker commit anything. Returns a NEW
-    record; `rotation_invariant` names what was repaired (absent when nothing was)."""
+    whoever set it. Returns a NEW record; `rotation_invariant` names what was repaired (absent when
+    nothing was)."""
     line = _tokens_of(rec.get("autocompact"))
     if not line or not rotation_invariant_enabled():
         return rec
     import gsd_epoch as ge
     frac = _rotation_fraction()
-    out, repaired, derived = dict(rec), {}, {}
-    floor, raised = _work_floor_line(rec, line, frac)
-    if raised != line:
-        out["autocompact"] = f"{raised // 1000}k"
-        repaired["autocompact"] = [rec.get("autocompact"), out["autocompact"]]
-        line = raised
     limit = int(line * frac)
-    work_min = floor + _policy_int("min_work_tokens", MIN_WORK_TOKENS)
+    out, repaired, derived = dict(rec), {}, {}
     ceiling = int(rec.get("continue_max_tokens") or ge.CONTINUE_MAX_TOKENS)
-    if ceiling > limit or ceiling < work_min:
+    if ceiling > limit:
         out["continue_max_tokens"] = limit
         repaired["continue_max_tokens"] = [ceiling, limit]
     wall = dict(rec.get("wall") or DEFAULT_WALL)
     adv = int(wall.get("advisory_tokens") or 0)
-    if adv > limit or 0 < adv < work_min:
+    if adv > limit:
         repaired["wall.advisory_tokens"] = [adv, limit]
     elif adv <= 0:
         derived["wall.advisory_tokens"] = limit     # absent: the first launch derives it, once
-    if not work_min <= adv <= limit:
+    if not 0 < adv <= limit:
         wall["advisory_tokens"] = limit
     out["wall"] = wall
     out.pop("rotation_invariant", None)
     if repaired or derived:
         out["rotation_invariant"] = {"compaction_line": line, "fraction": frac, "limit": limit,
-                                     "startup_floor": floor, "work_min": work_min,
                                      "repaired": repaired, "derived": derived}
     return out
 
@@ -1372,11 +1398,9 @@ def resolve_baseline(rec: dict) -> dict:
             src[f] = f"policy@{pol['version']}" if origin == "policy" else "builtin"
     out = apply_rotation_invariant(out)
     inv = out.get("rotation_invariant")
-    if inv:
+    if inv and inv["repaired"].get("continue_max_tokens") and rec.get("continue_max_tokens") == out["continue_max_tokens"]:
         # Re-resolved from policy and bounded again to what the record already held: not a new repair.
-        for f in ("continue_max_tokens", "autocompact"):
-            if inv["repaired"].get(f) and rec.get(f) == out[f]:
-                inv["repaired"].pop(f)
+        inv["repaired"].pop("continue_max_tokens")
         if not inv["repaired"] and not inv["derived"]:
             out.pop("rotation_invariant")
     values = {f: out.get(f) for f in _BASELINE_FIELDS}
@@ -1405,6 +1429,23 @@ def _write_launcher_binding(rec: dict, sid: str) -> None:
         ms.write_binding(sid, goal, "launcher")
     except Exception:  # noqa: BLE001 -- binding is best effort; the launch already happened
         pass
+
+
+def account_refusal(rec: dict, action: str) -> str | None:
+    """None when the account governor admits a model-spending launch; else the reason, ledgered by the caller.
+
+    The governor reads the same state directory as the mission (`lr.state_dir()`), so a suite's isolated
+    state is judged on its own (empty) quota picture -- suites that are not about quota set
+    CPP_MISSION_ACCOUNT_ADMISSION=off, exactly as they set CPP_RESOURCE_ADMISSION=off for the RAM floor.
+    A governor fault is UNKNOWN, and unknown refuses (BAMR, Owner decision 2026-11-20)."""
+    if str(os.environ.get("CPP_MISSION_ACCOUNT_ADMISSION") or "").strip().lower() in ("0", "off", "false"):
+        return None
+    try:
+        import account_governor as _ag
+        code, verdict, why, _ = _ag.check(str(lr.state_dir()), action)
+    except Exception as exc:  # noqa: BLE001 -- a broken governor is an unknown quota, never an allowance
+        return f"account governor fault ({type(exc).__name__}: {exc}) -- quota unknown, launch refused"[:300]
+    return None if code == 0 else f"{verdict}: {why}"
 
 
 def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: str,
@@ -1461,7 +1502,7 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
                 f"profile={rref['profile']}")
         lr.ledger_append(mission_id, "launch_refused_resources", mission_id=mission_id,
                          epoch=rec.get("epoch"), reading=rref, why=rwhy[:300])
-        return {"ok": False, "epoch": rec.get("epoch"), "bg_id": None, "why": rwhy, "detail": ""}
+        return {"ok": False, "epoch": rec.get("epoch"), "bg_id": None, "why": rwhy, "detail": "", "resources_refused": True}
     if rec.get("wu_packet") and _admission_switch_off():
         lr.ledger_append(mission_id, "admission_bypassed", mission_id=mission_id, epoch=rec.get("epoch"),
                          verdict=(rec.get("admission") or {}).get("verdict"))
@@ -1478,13 +1519,24 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
     gate = None if prompt_override else try_done_gate_close(rec, now, run=det_runner)   # ICC-05: no model turn
     if gate:
         return gate
-    floor_seen = _measured_startup_floor(rec)
-    if floor_seen:
-        rec = dict(rec, startup_floor=floor_seen)
+    # BAMR P3 (2026-11-20): every model-spending launch -- arm, relay, rotation, quota wake, top-up wake,
+    # orphan replacement, closeout -- passes the account governor HERE, after the deterministic and done-gate
+    # closes (they spend no quota) and before the claim (a refused launch spends no epoch). Before this, only
+    # `arm` asked; a mission released from a quota hold relaunched straight into the freshly reset window.
+    # Unknown quota or a governor fault refuses (Owner decision 2026-11-20). Kill switch:
+    # CPP_MISSION_ACCOUNT_ADMISSION=off.
+    # Owner 2026-11-21: a closeout asks as `closeout` (it may spend the reserve band up to 97 %, never unknown quota).
+    awhy = account_refusal(rec, "closeout" if prompt_override else ("arm" if expect_epoch == 0 else "relaunch"))
+    if awhy:
+        lr.ledger_append(mission_id, "launch_refused_account", mission_id=mission_id,
+                         epoch=rec.get("epoch"), reason=reason, why=awhy[:300])
+        return {"ok": False, "epoch": rec.get("epoch"), "bg_id": None, "why": awhy, "detail": "", "account_refused": True}
+    if expect_epoch and not prompt_override:
+        # mission-capital W3 (H4): before a relaunch spends a lease, a mission under PRESSURE is topped up
+        # predictively (authority only, no state change), so the successor does not start into a capital park.
+        rec = _capital_event(mission_id, "pre_launch", rec)
     resolved = resolve_baseline(rec)
     baseline_on = resolved is not rec
-    if floor_seen and baseline_on:
-        resolved["startup_floor"] = floor_seen
     legacy_why = baseline_legacy_verdict(resolved) if baseline_mode() != "off" else None
     if legacy_why and baseline_mode() == "enforce":
         lr.ledger_append(mission_id, "launch_refused_baseline", mission_id=mission_id,
@@ -1493,8 +1545,6 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
     epoch = expect_epoch + 1
     failed = rec.get("failed_launches", 0) + (1 if rec.get("state") == LAUNCHING else 0)
     extra = {"note": note} if note is not None else {}
-    if floor_seen:
-        extra["startup_floor"] = floor_seen
     if baseline_on:
         extra.update({k: resolved[k] for k in (*_BASELINE_FIELDS, "baseline")})
         if "wall" in resolved:
@@ -1560,6 +1610,12 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
     run = runner or (lambda argv, cwd: subprocess.run(
         argv, cwd=cwd, capture_output=True, text=True, encoding="utf-8",
         errors="replace", timeout=180))
+    if runner is None:
+        # Self-heal (spec mission-self-heal): trust and unrunnable MCP servers are host setup a headless worker
+        # cannot answer. Measured 2026-11-08: m-df9b41d13eb3 HALTED on "Workspace not trusted"; m-9444639a3c78
+        # blocked 3 epochs on an approval dialog for a Windows-only MCP server. Never raises.
+        import mission_remedies as mr
+        mr.preflight(rec)
     try:
         r = run(worker_argv(rec, prompt), rec["cwd"])
         out = (r.stdout or "") + "\n" + (r.stderr or "")
@@ -1577,7 +1633,7 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
             # holds no RAM and can never be mistaken for the run.
             try:
                 (stop_runner or (lambda a: subprocess.run(a, capture_output=True, timeout=120)))(
-                    [os.environ.get("CPP_CLAUDE_EXE") or "claude", "stop", bg_id])
+                    [claude_exe(), "stop", bg_id])
             except Exception:
                 pass
         return {"ok": False, "epoch": epoch, "bg_id": bg_id, "why": why, "detail": detail}
@@ -2012,6 +2068,7 @@ def set_owner_hold(mission_id: str, reason: str, now: float | None = None, kind:
         except Exception as exc:  # noqa: BLE001 -- recorded, never silent
             lr.ledger_append(mission_id, "economic_incident_error", mission_id=mission_id,
                              error=f"{type(exc).__name__}: {exc}"[:300])
+        out = _capital_event(mission_id, "cost_hold", out)   # mission-capital W3: renew in-process, not next pass
     return out
 
 
@@ -2042,23 +2099,45 @@ CLOSED_HOLD_KIND = "closed"
 _ASK_HOST = object()
 
 
-def close_mission(mission_id: str, reason: str, owner_turn: str, outcome: str = HALTED, now: float | None = None,
-                  sessions=_ASK_HOST, pid_alive=lr._pid_alive, stop_runner=None, finder=None) -> dict:
+def close_mission(mission_id: str, reason: str, owner_turn: str | None, outcome: str = HALTED,
+                  now: float | None = None, sessions=_ASK_HOST, pid_alive=lr._pid_alive, stop_runner=None,
+                  finder=None, receipt=None) -> dict:
     """spec mission-close: settle a mission terminal on a verified Owner turn. Measured 2026-11-06 (GEX44): 12
     missions were closed by a hand `transition(event="hold_settled")`, with no authority, no reason of the Owner's
     and no worker stop. A background worker is stopped through the host first; an unanswered host or a failed stop
-    never closes (the failed stop parks the mission instead). -> {closed, record, stop}."""
+    never closes (the failed stop parks the mission instead). -> {closed, record, stop}.
+    mission-capital W4: `receipt` (act "close") carries an Owner turn verified on another host; its signed outcome
+    and reason are the close's, and a different outcome given here is refused."""
+    rec = load(mission_id)
+    if rec is None:
+        raise MissionError(f"no mission {mission_id}")
+    portable = None
+    if receipt is not None:
+        import authority_receipt as ar
+        if owner_turn:
+            raise MissionError("give an owner turn OR a receipt, not both")
+        try:
+            portable = ar.verify(receipt, rec, "close", now=now)
+        except ar.ReceiptError as exc:
+            raise MissionError(f"receipt refused: {exc}") from None
+        signed = portable["close"] or {}
+        if outcome not in (HALTED, signed.get("outcome")):
+            raise MissionError(f"receipt refused: outcome {outcome!r} is not the signed {signed.get('outcome')!r}")
+        outcome, reason = signed.get("outcome"), signed.get("reason")   # the Owner's signed words, not the caller's
     reason = (reason or "").strip()
     if not reason:
         raise MissionError("a close needs a reason")
     if outcome not in CLOSE_OUTCOMES:
         raise MissionError(f"close outcome must be one of {', '.join(CLOSE_OUTCOMES)}, not {outcome!r}")
-    rec = load(mission_id)
-    if rec is None:
-        raise MissionError(f"no mission {mission_id}")
     if rec["state"] in TERMINAL:
         raise MissionError(f"{mission_id} is already {rec['state']}; there is nothing to close")
-    turn = verify_owner_turn(owner_turn, finder)
+    if portable:
+        import authority_receipt as ar
+        turn = ar.owner_turn_of(portable)
+    else:
+        if not owner_turn:
+            raise MissionError("a close needs an owner turn (or a receipt)")
+        turn = verify_owner_turn(owner_turn, finder)
     now = time.time() if now is None else now
     hold = rec.get("owner_hold") or {}
     if not rec.get("owner") or hold.get("worker_stopped_at"):
@@ -2277,9 +2356,10 @@ def _recompile_forecast(rec: dict, now: float, rc: dict) -> dict:
     lr.ledger_append(rec["mission_id"], "forecast_invalidated", mission_id=rec["mission_id"], spent=rc["spent"],
                      old_estimate=rc["estimate"], authority=rc["authority"], ratio=rc["ratio"],
                      lease=bool(rc.get("lease")))
-    if rc.get("lease"):
-        return _renew_lease(rec, now, rc)
-    return _auto_budget(rec, now, measure=lambda _r: rc["spent"])
+    out = _renew_lease(rec, now, rc) if rc.get("lease") else _auto_budget(rec, now, measure=lambda _r: rc["spent"])
+    # mission-capital W3 (H4): the 00:31Z moment of m-76e04d86896d -- the runtime saw 3.06M headroom and nothing
+    # acted. A predictive top-up is judged here, while the mission still runs.
+    return _capital_event(rec["mission_id"], "forecast_invalidated", out)
 
 
 def _cost_breaker(rec: dict, now: float, measure=None, fingerprint=None) -> dict:
@@ -2314,9 +2394,10 @@ def _cost_breaker(rec: dict, now: float, measure=None, fingerprint=None) -> dict
         return set_owner_hold(mid, verdict["trip"], now=now, kind="cost",
                               extra={"authority_kind": ms.authority_kind(rec)})
     if verdict["mark"]:
-        return transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
-                          event="cost_mark", now=now, cost_mark=verdict["mark"],
-                          reason=f"progress fingerprint moved at {spent:,} processed")
+        marked = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
+                            event="cost_mark", now=now, cost_mark=verdict["mark"],
+                            reason=f"progress fingerprint moved at {spent:,} processed")
+        return _capital_event(mid, "cost_mark", marked)   # mission-capital W3: predictive top-up under PRESSURE
     return rec
 
 
@@ -2455,10 +2536,19 @@ def _settle_completed_phase(rec: dict, now: float, measure=None, phase_fn=None) 
 def _note_liveness_incident(mid: str, key: str, why: str) -> bool:
     """M4 B: one `liveness_incident` row per blocking condition (key), so a dead worker that cannot be replaced is
     visible where status reads, and an unchanged blocker costs no further rows. True when a row was written."""
-    if _ledger_has(mid, "liveness_incident", key=key):
-        return False
-    lr.ledger_append(mid, "liveness_incident", mission_id=mid, key=key, why=why[:300])
-    return True
+    wrote = not _ledger_has(mid, "liveness_incident", key=key)
+    if wrote:
+        lr.ledger_append(mid, "liveness_incident", mission_id=mid, key=key, why=why[:300])
+    # Self-heal (spec mission-self-heal): a recorded incident nobody hears about held m-9444639a3c78 for 21 h.
+    # Called on every pass while the condition holds: notify_incident delivers once and retries a failed channel
+    # a bounded number of times, so an unchanged blocker still costs no rows once delivered.
+    try:
+        import mission_remedies as mr
+        cwd = (load(mid) or {}).get("cwd", "")
+        mr.notify_incident(mid, key, f"{why[:300]} (cwd {cwd})")
+    except Exception as exc:  # noqa: BLE001 -- the incident row above is already durable
+        lr.ledger_append(mid, "remedy_error", mission_id=mid, kind="notify", why=f"{type(exc).__name__}: {exc}"[:300])
+    return wrote
 
 
 def _dead_worker_open(rec: dict, sessions, pid_alive) -> bool:
@@ -2510,6 +2600,10 @@ CLOSEOUT_SWITCH = "CPP_MISSION_CLOSEOUT_LAUNCH"
 CLOSEOUT_MIN_TOKENS = 100_000
 CL_AUTHORIZED, CL_LAUNCHED = "CLOSEOUT_AUTHORIZED", "CLOSEOUT_LAUNCHED"
 CL_DONE, CL_FAILED = "CLOSEOUT_COMPLETED", "CLOSEOUT_FAILED"
+# Owner 2026-11-21 ("que no se bloqueen ni queden paradas las misiones"): a closeout launch refused BEFORE its claim
+# (account quota, RAM floor) spent nothing, so it is not a failed closeout. It waits as DEFERRED and closeout_gate
+# re-authorizes it on every pass until the refusal lifts. Only a launch that was tried and failed is CLOSEOUT_FAILED.
+CL_DEFERRED = "CLOSEOUT_DEFERRED"
 
 
 def closeout_launch_on() -> bool:
@@ -2531,7 +2625,7 @@ def closeout_prompt(rec: dict, tokens: int) -> str:
 
 
 def closeout_gate(rec: dict, now: float, sessions, pid_alive=lr._pid_alive, *, runner=None, stop_runner=None,
-                  measure=None, launcher=None) -> dict:
+                  measure=None, launcher=None, precheck=None) -> dict:
     """Sweep step. An authority hold whose implementation worker is stopped or dead gets ONE closeout worker on a lease of
     min(reserve, authority - spent); a launched lease is followed to CLOSEOUT_COMPLETED (its checkpoint) or
     CLOSEOUT_FAILED (ended without one, never acked, launch refused). Never a second lease for the same trip."""
@@ -2539,11 +2633,38 @@ def closeout_gate(rec: dict, now: float, sessions, pid_alive=lr._pid_alive, *, r
         return rec
     hold = rec.get("owner_hold") or {}
     lease = rec.get("closeout_lease")
-    if lease and not _closeout_lease_is_history(rec, lease):
+    if lease and lease.get("state") != CL_DEFERRED and not _closeout_lease_is_history(rec, lease):
         return _closeout_follow(rec, lease, now, sessions, pid_alive, stop_runner)
+    if lease and lease.get("state") == CL_DEFERRED and not is_authority_hold(hold) \
+            and rec.get("state") in (RUNNING, BLOCKED):
+        # review LOW-2: the hold changed under a waiting closeout; the closeout belonged to the authority trip.
+        why = "deferred closeout retired: the hold is no longer an authority hold"
+        lr.ledger_append(rec["mission_id"], "closeout_failed", mission_id=rec["mission_id"], why=why)
+        try:
+            return transition(rec["mission_id"], expect_epoch=rec["epoch"], expect_state=rec["state"], now=now,
+                              expect_seq=rec.get("seq"), event="closeout_deferred_retired",
+                              closeout_lease={**lease, "state": CL_FAILED, "why": why, "at": now})
+        except CasConflict:
+            return load(rec["mission_id"]) or rec
     if not is_authority_hold(hold) or rec.get("state") not in (RUNNING, BLOCKED):
         return rec
     owner = rec.get("owner")
+    if (owner and not hold.get("worker_stopped_at") and sessions is not None
+            and owner.get("kind") == "background" and _host_row(owner.get("session_id"), sessions) is None):
+        # S22 m-4a5a719551ae (2026-11-09): a background owner the host no longer lists is UNKNOWN to liveness (the host
+        # owns its restarts), and the sweep's stop branch only stops LIVE owners, so worker_stopped_at was never set and
+        # the reserve stayed unreachable. Settle it through the same host stop path a close uses, and record the stop.
+        ok, how = stop_owner(owner, sessions, pid_alive=pid_alive, runner=stop_runner)
+        if not ok:
+            return rec
+        try:
+            rec = transition(rec["mission_id"], expect_epoch=rec["epoch"], expect_state=rec["state"], now=now,
+                             expect_seq=rec.get("seq"), event="authority_worker_stopped",
+                             reason=f"authority hold: unlisted background worker settled ({how})",
+                             owner_hold={**hold, "worker_stopped_at": now, "stop": how})
+        except CasConflict:
+            return load(rec["mission_id"]) or rec
+        hold = rec.get("owner_hold") or {}
     if not (hold.get("worker_stopped_at") or not owner or liveness(owner, sessions, pid_alive)[0] == DEAD):
         return rec   # the stop branch acts first: a live implementation worker never shares the closeout
     import mission_spend as ms
@@ -2565,10 +2686,17 @@ def closeout_gate(rec: dict, now: float, sessions, pid_alive=lr._pid_alive, *, r
         return transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="closeout_unfunded",
                           now=now, closeout_lease={"state": CL_FAILED, "why": why, "at": now, "tokens": max(0, tokens),
                                                    "base_spend": int(spent), "reserve": reserve})
+    prev = rec.get("closeout_lease") or {}
+    if prev.get("state") == CL_DEFERRED and int(prev.get("authority") or 0) == auth:
+        # review MEDIUM-1: re-ask the two pre-claim refusals read-only first; still refused -> nothing is written.
+        if (precheck or _closeout_still_refused)(rec):
+            return rec
     lease = {"state": CL_AUTHORIZED, "granted_at": now, "tokens": tokens, "base_spend": int(spent), "reserve": reserve,
              "claim_epoch": int(rec["epoch"]), "authority": auth, "hold_set_at": hold.get("set_at")}
     if rec.get("closeout_lease"):
         lease["previous"] = {k: rec["closeout_lease"].get(k) for k in ("state", "authority", "why", "at")}
+        if rec["closeout_lease"].get("state") == CL_DEFERRED and int(rec["closeout_lease"].get("authority") or 0) == auth:
+            lease["deferrals"] = int(rec["closeout_lease"].get("deferrals") or 0)   # same trip: carried, not reset
     try:
         # expect_seq (review M1): two sweeps that both read "no lease" cannot both authorize; the loser launches nothing.
         rec = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="closeout_authorized",
@@ -2587,6 +2715,11 @@ def closeout_gate(rec: dict, now: float, sessions, pid_alive=lr._pid_alive, *, r
         new = {**lease, "state": CL_LAUNCHED, "epoch": res.get("epoch"), "bg_id": res.get("bg_id"), "launched_at": now}
         lr.ledger_append(mid, "closeout_launched", mission_id=mid, epoch=res.get("epoch"), bg_id=res.get("bg_id"),
                          tokens=tokens)
+    elif res.get("account_refused") or res.get("resources_refused"):
+        n = int(lease.get("deferrals") or 0) + 1
+        new = {**lease, "state": CL_DEFERRED, "why": f"deferred: {str(res.get('why'))[:200]}", "at": now,
+               "deferrals": n}
+        lr.ledger_append(mid, "closeout_deferred", mission_id=mid, why=new["why"], deferrals=n)
     else:
         new = {**lease, "state": CL_FAILED, "why": f"launch: {str(res.get('why'))[:200]}", "at": now}
         lr.ledger_append(mid, "closeout_failed", mission_id=mid, why=new["why"])
@@ -2597,10 +2730,24 @@ def closeout_gate(rec: dict, now: float, sessions, pid_alive=lr._pid_alive, *, r
         cur = load(mid) or rec
         try:
             return transition(mid, expect_epoch=cur["epoch"], expect_state=cur["state"], now=now, closeout_lease=new,
-                              event="closeout_launched" if res.get("ok") else "closeout_launch_failed")
+                              event="closeout_launched" if res.get("ok") else (
+                                  "closeout_deferred" if new["state"] == CL_DEFERRED else "closeout_launch_failed"))
         except CasConflict:
             continue
     return load(mid) or rec
+
+
+def _closeout_still_refused(rec: dict) -> str | None:
+    """The two pre-claim refusals a DEFERRED closeout waits on, asked again before any write. The RAM floor is read
+    first (no ledger); the account check appends one governor-ledger row, as every mission admission does."""
+    try:
+        import resource_admission as rsa
+        rref = rsa.refusal(slim_profile(rec) or "top-level-worker")
+    except Exception as exc:  # noqa: BLE001 -- an unreadable floor keeps it deferred, never launches blind
+        return f"resource admission fault: {type(exc).__name__}"
+    if rref:
+        return f"{rref.get('verdict')}: available_mb={rref.get('available_mb')}"
+    return account_refusal(rec, "closeout")
 
 
 def _closeout_lease_is_history(rec: dict, lease: dict) -> bool:
@@ -2865,11 +3012,12 @@ def _reconciled_breaker(rec: dict, now: float, measure=None, fingerprint=None, c
     if verdict["mark"]:
         _breaker_receipt(mid, mb.GOOD, "mark", **evidence)
         settled = mb.settle_obligations(rec, root, now)   # a landed artifact closes its child obligation
-        return transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="cost_mark", now=now,
-                          cost_mark={**verdict["mark"], "at": max(float(now), time.time()), "gen": gen0},
-                          progress_unknown=None,
-                          **({"obligations": settled} if settled else {}),
-                          reason=f"progress fingerprint moved at {spent:,} processed (gen {gen0}, {root})")
+        marked = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="cost_mark", now=now,
+                            cost_mark={**verdict["mark"], "at": max(float(now), time.time()), "gen": gen0},
+                            progress_unknown=None,
+                            **({"obligations": settled} if settled else {}),
+                            reason=f"progress fingerprint moved at {spent:,} processed (gen {gen0}, {root})")
+        return _capital_event(mid, "cost_mark", marked)   # mission-capital W3: predictive top-up under PRESSURE
     if verdict.get("recompile"):
         return _recompile_forecast(rec, now, verdict["recompile"])
     if fp is None and not verdict["trip"]:
@@ -3009,13 +3157,28 @@ def topology(mission_id: str) -> dict:
     }
 
 
-def release_owner_hold(mission_id: str, now: float | None = None) -> dict:
+def release_owner_hold(mission_id: str, now: float | None = None, allow_overrun: bool = False) -> dict:
     """Return a held mission to normal supervision. The budget clock is not reset."""
     rec = load(mission_id)
     if rec is None:
         raise MissionError(f"no mission {mission_id}")
     if not rec.get("owner_hold"):
         raise MissionError(f"{mission_id} has no owner hold")
+    # W0 2026-11-19: a cost hold is not lifted under a ceiling already crossed (C5 m-a8f0221b1acc ran after a refused
+    # raise). Same measure and reserve as set_authority's I3 check; unmeasurable spend does not refuse.
+    if is_cost_hold(rec.get("owner_hold")) and rec.get("authority_tokens") and not allow_overrun:
+        import mission_spend as ms
+        try:
+            spent = ms.processed_tokens(rec)
+        except Exception:  # noqa: BLE001 -- unmeasured is not zero, and not a refusal either
+            spent = None
+        auth = int(rec["authority_tokens"])
+        reserve = ms.closeout_reserve(rec)
+        if spent is not None and auth - reserve <= spent:
+            raise MissionError(
+                f"refused: {mission_id} is cost-held and authority {auth:,} minus closeout reserve {reserve:,} "
+                f"is not above live spend {spent:,}; raise authority first (budget/authority), or pass "
+                "--allow-overrun to release a worker that will trip again at the next sweep")
     if rec["owner_hold"].get("kind") == CLOSED_HOLD_KIND:
         # spec mission-close: a closed mission is reopened only by arming a new one.
         raise MissionError(f"{mission_id} was closed by the Owner ({rec['state']}); arm a new mission instead")
@@ -3034,6 +3197,25 @@ def _blocking_hold(rec: dict) -> bool:
     return bool(hold) and hold.get("kind") != "resource"
 
 
+def requires_answered_by(rec: dict, question: str) -> tuple[list, list]:
+    """(kept, answered): the requirements a runtime answer to `question` settles. Pure.
+
+    B3 (m-26ea4de62c50, 2026-11-14): the worker parked itself on `path_exists inputs/OWNER-DECISION-HEAD4.md`,
+    ended its turn asking for that file, and the sweep answered the question RESOLVE_BY_DEFAULT. The requirement
+    outlived the answer, so the successor was parked 17:00Z->19:50Z on a file nobody would write. A path_exists
+    requirement whose file the question names (by basename, >= 6 chars) is answered, and its whole obligation goes
+    with it; every other requirement is kept."""
+    q = question or ""
+    hit = set()
+    for r in rec.get("requires") or []:
+        arg = str(r.get("arg") or "").rstrip("/\\")
+        base = re.split(r"[\\/]", arg)[-1] if arg else ""
+        if r.get("kind") == "path_exists" and len(base) >= 6 and base in q:
+            hit.add(r.get("obligation"))
+    reqs = list(rec.get("requires") or [])
+    return [r for r in reqs if r.get("obligation") not in hit], [r for r in reqs if r.get("obligation") in hit]
+
+
 def set_requires(mission_id: str, obligation: str, specs: list[tuple[str, object]] | None = None,
                  clear: bool = False, now: float | None = None) -> dict:
     """Set/replace the requirements of ONE obligation (siblings kept), or clear them."""
@@ -3045,6 +3227,20 @@ def set_requires(mission_id: str, obligation: str, specs: list[tuple[str, object
     if not clear and not specs:
         raise MissionError("give at least one requirement (--ram-free-gb, --path, --no-process) or --clear")
     keep = [r for r in rec.get("requires") or [] if r.get("obligation") != obligation]
+    if not clear:
+        # B4 (m-26ea4de62c50, 2026-11-14): a relative path was stored verbatim and judged later from the
+        # sweeper's cwd, so it read absent forever. Absolutised here against the mission cwd, where the answer
+        # is knowable (as gsd_autorun_marker.resolve_cwd does at arming); refused when it is not.
+        cwd = rec.get("cwd") or ""
+        fixed = []
+        for kind, arg in specs:
+            if kind == "path_exists" and arg is not None and not os.path.isabs(str(arg)):
+                if not cwd or not os.path.isabs(cwd):
+                    raise MissionError(f"relative --path {arg!r} cannot be resolved: mission cwd {cwd!r} is not "
+                                       "absolute; give an absolute path")
+                arg = os.path.normpath(os.path.join(cwd, str(arg)))
+            fixed.append((kind, arg))
+        specs = fixed
     new = [] if clear else [{"id": f"{obligation}-{kind}", "kind": kind, "arg": arg, "obligation": obligation}
                             for kind, arg in specs]
     for r in new:
@@ -3274,13 +3470,21 @@ def _blocked_after_checkpoint(rec: dict, hold: dict, sessions, now: float) -> bo
 
 
 # --------------------------------------------------------------------------- S11 A2: opt-in Method-Pivot autonomy
-# Measured 2026-11-02 (Game-A S10 m-e6e0340e743d, S10b m-f41146776f2b): both waves ended at a checkpoint whose next
+# Measured 2026-11-02 (game S10 m-e6e0340e743d, S10b m-f41146776f2b): both waves ended at a checkpoint whose next
 # step was an engineering method change, and both parked until the Owner wrote the next plan. On a mission armed for it
 # (`pivot-autonomy --on`), a METHOD_PIVOT_REQUIRED / NEXT_PLAN_REQUIRED checkpoint that names its residual is turned
 # into a directive and the relay continues -- unless the reason is an Owner class (mission_policy.gate_question, which
 # carries TRUTH_CONTRACT since A1) or the streak cap is reached. Missions without the flag keep the park unchanged.
-PIVOT_STATES = ("METHOD_PIVOT_REQUIRED", "NEXT_PLAN_REQUIRED")
+# spec mission-checkpoint-autonomy C1 (measured 2026-11-12, S30T m-2e14179c5b6a parked 10.8 h): CHECKPOINT_COMPLETE is
+# "the wave's obligations are closed and the Goal is not" -- the same next step as NEXT_PLAN_REQUIRED, so an opted-in
+# mission pivots on it too. Every guard in pivot_decision (authority net, streak caps, kill switch) still runs first.
+PIVOT_STATES = ("METHOD_PIVOT_REQUIRED", "NEXT_PLAN_REQUIRED", "CHECKPOINT_COMPLETE")
 PIVOT_MAX_STREAK = 3
+
+
+def _pivot_residual(hold: dict) -> str | None:
+    """The pivot's input: the declared residual, else the checkpoint's own evidence (C1). Neither = None (park)."""
+    return hold.get("residual") or hold.get("evidence") or None
 
 
 def pivot_autonomy_on() -> bool:
@@ -3363,8 +3567,8 @@ def pivot_decision(rec: dict, hold: dict) -> dict:
     if objs:
         why = "authority object(s) " + ", ".join(str(o) for o in objs)
         return {"action": "owner", "why": why, "owner_question": _owner_question(hold, r, why, objs)}
-    if not hold.get("residual"):
-        return {"action": "park", "why": "no residual declared (checkpoint --residual)"}
+    if not _pivot_residual(hold):
+        return {"action": "park", "why": "no residual declared (checkpoint --residual or --evidence)"}
     streak = 0 if hold.get("gain") else int(rec.get("pivot_streak") or 0)
     if not r:
         if streak >= PIVOT_MAX_STREAK:
@@ -3398,7 +3602,7 @@ def pivot_decision(rec: dict, hold: dict) -> dict:
 
 def _pivot_directive(hold: dict, streak: int) -> str:
     return (f"AUTO METHOD PIVOT {streak}/{PIVOT_MAX_STREAK} (Owner-approved pivot autonomy). The previous worker "
-            f"declared {hold.get('reason')}. Residual: {hold.get('residual')}. Read it and the method graph, mark the "
+            f"declared {hold.get('reason')}. Residual: {_pivot_residual(hold)}. Read it and the method graph, mark the "
             "falsified route, choose the next evidence-supported route inside the approved plan, truth contract and "
             "budget, and run it shadow then canary. If that route needs a truth-contract, held-out, capital or scope "
             "change, declare a checkpoint naming that question instead (it reaches the Owner). Pass --gain to the "
@@ -3417,7 +3621,7 @@ def pivot_gate(rec: dict, now: float, sessions=None, pid_alive=lr._pid_alive) ->
     mid = rec["mission_id"]
     d = pivot_decision(rec, hold)
     lr.ledger_append(mid, f"pivot_{d['action']}", mission_id=mid, checkpoint=hold.get("checkpoint"), why=d["why"],
-                     streak=d.get("streak"), residual=hold.get("residual"))
+                     streak=d.get("streak"), residual=_pivot_residual(hold))
     if d["action"] != "pivot":
         return transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event=f"pivot_{d['action']}",
                           now=now, touch=False, owner_hold={**hold, "pivot": d})
@@ -3470,12 +3674,17 @@ def authority_lineage(rec: dict) -> dict:
     free-text reason) and the typed receipts written since F2. Read-only; an unreadable ledger is named."""
     try:
         rows = [{"at": r.get("ts") or r.get("at"), "reason": str(r.get("reason") or "")[:240],
-                 "owner_turn": ((r.get("receipt") or {}).get("owner_turn") or {}).get("uuid")}
+                 "owner_turn": ((r.get("receipt") or {}).get("owner_turn") or {}).get("uuid"),
+                 "provenance": (r.get("receipt") or {}).get("provenance")}
                 for r in lr.ledger_events(rec["mission_id"]) if r.get("event") == "authority_set"]
     except Exception as exc:  # noqa: BLE001 -- shown, never hidden
         rows = [{"error": f"ledger unreadable: {type(exc).__name__}: {exc}"[:200]}]
-    return {"tokens": rec.get("authority_tokens"), "set_rows": rows,
-            "receipts": rec.get("authority_receipts") or []}
+    receipts = rec.get("authority_receipts") or []
+    # W4: receipt-less raises, counted from the typed receipts (rows written before W4 carry no provenance and are
+    # not counted: their provenance is unknown, which is not the same as none).
+    unprovenanced = sum(1 for r in receipts if r.get("provenance") == "none")
+    return {"tokens": rec.get("authority_tokens"), "set_rows": rows, "receipts": receipts,
+            "receipt_less_raises": unprovenanced}
 
 
 def verify_owner_turn(ref: str, finder=None) -> dict:
@@ -3525,18 +3734,45 @@ def verify_owner_turn(ref: str, finder=None) -> dict:
 def set_authority(mission_id: str, tokens=None, extend_hours: float | None = None,
                   now: float | None = None, reason: str = "", owner_turn: str | None = None,
                   actor: str | None = None, expected_seq: int | None = None, recognize_overrun: bool = False,
-                  spent_fn=None, finder=None, stage: str | None = None) -> dict:
+                  spent_fn=None, finder=None, stage: str | None = None, lineage_fn=None, receipt=None,
+                  provenance: str | None = None) -> dict:
     """Record Owner-granted programme authority on a mission: `authority_tokens` is the processed-token
     ceiling AMR may lease inside; `extend_hours` adds wall time. Both are Owner acts; the reason names it.
+    Lineage (measured 2026-11-22, avatar m-c4569262384c): a renewed mission also carries the lineage's
+    `lineage_authority_tokens` / `lineage_token_budget`, which renewal and autoresume judge against the whole
+    lineage's spend. A raise that moved only `authority_tokens` left the lineage at 199.56M of 200M, so the Owner's
+    typed 90M could never survive a renewal. The raise now carries the same headroom to the lineage:
+    lineage ceiling = lineage spend + (new mission ceiling - mission spend). It never lowers the lineage ceiling,
+    and an unmeasured mission or lineage spend leaves it unchanged (named in the receipt, never read as zero).
     T1 F2: each act appends a receipt (prev, new, owner_turn, actor, expected_seq, spend at the set). The same
     owner turn applied again with the same figure is an idempotent no-op; with another figure it is refused.
     I3: a ceiling that leaves no room above live spend after the closeout reserve is refused unless
     `recognize_overrun` (the T1 80M raise arrived below a live 141M and tripped 2m21s later). An unmeasurable
     spend does not refuse; the receipt records it as unmeasured."""
     import mission_spend as ms
+    import authority_receipt as ar
     rec = load(mission_id)
     if rec is None:
         raise MissionError(f"no mission {mission_id}")
+    portable = None
+    if receipt is not None:
+        # mission-capital W4: an Owner turn verified on ANOTHER host, carried as an HMAC-signed receipt. The act is
+        # bounded by the signed figures: a figure the caller gives must equal the receipt's, and one the receipt does
+        # not carry cannot be added here.
+        if owner_turn:
+            raise MissionError("give an owner turn OR a receipt, not both")
+        try:
+            portable = ar.verify(receipt, rec, "authority", now=now)
+        except ar.ReceiptError as exc:
+            raise MissionError(f"receipt refused: {exc}") from None
+        t = portable["terms"]
+        signed = {"tokens": t.get("tokens"), "extend_hours": t.get("extend_hours"), "stage": t.get("stage")}
+        given = {"tokens": _token_count("authority", tokens) if tokens is not None else None,
+                 "extend_hours": float(extend_hours) if extend_hours else None, "stage": stage}
+        for k, g in given.items():
+            if g is not None and g != signed[k]:
+                raise MissionError(f"receipt refused: {k} {g!r} is not the signed {signed[k]!r}")
+        tokens, extend_hours, stage = signed["tokens"], signed["extend_hours"], signed["stage"]
     fields = {}
     if tokens is not None:
         fields["authority_tokens"] = _token_count("authority", tokens)
@@ -3546,7 +3782,15 @@ def set_authority(mission_id: str, tokens=None, extend_hours: float | None = Non
         raise MissionError("nothing to set: give --tokens and/or --extend-hours")
     if stage is not None and not re.fullmatch(r"[A-Za-z0-9._-]{1,40}", str(stage)):
         raise MissionError(f"stage {stage!r}: use 1-40 characters of A-Z a-z 0-9 . _ -")
-    turn = verify_owner_turn(owner_turn, finder) if owner_turn else None
+    turn = ar.owner_turn_of(portable) if portable else (verify_owner_turn(owner_turn, finder) if owner_turn else None)
+    # W4: where this raise's authority came from. "none" = no Owner turn and no receipt: the 08:50 hand raise shape.
+    # Review M1: a caller-supplied label is evidence of nothing. "topup_policy" is recorded only when the call comes from
+    # inside a top-up pass AND the current policy's last grant raises to exactly this figure; otherwise the raise is
+    # "none" (flagged below, with the label it claimed).
+    if provenance not in (None, "topup_policy"):
+        raise MissionError(f"provenance {provenance!r}: only 'topup_policy' may be passed, and only by a top-up pass")
+    claimed = provenance == "topup_policy" and _topup_label_proven(mission_id, fields.get("authority_tokens"))
+    prov = "portable_receipt" if portable else ("owner_turn" if turn else ("topup_policy" if claimed else "none"))
     receipts = list(rec.get("authority_receipts") or [])
     cur_stage = receipts[-1].get("stage") if receipts else None
     stage_opened = stage is not None and stage != cur_stage
@@ -3563,7 +3807,8 @@ def set_authority(mission_id: str, tokens=None, extend_hours: float | None = Non
                     used[-1].get("extend_hours") == (float(extend_hours) if extend_hours else None):
                 lr.ledger_append(mission_id, "authority_replay_noop", mission_id=mission_id, owner_turn=turn["uuid"])
                 return rec
-            raise MissionError(f"owner turn {owner_turn!r} already authorized a different act on {mission_id}")
+            raise MissionError(f"owner turn {owner_turn or turn['uuid']!r} already authorized a different act on "
+                               f"{mission_id}")
     spent = None
     if "authority_tokens" in fields:
         try:
@@ -3577,14 +3822,75 @@ def set_authority(mission_id: str, tokens=None, extend_hours: float | None = Non
                 f"refused: authority {new:,} minus closeout reserve {reserve:,} is not above live spend {spent:,} "
                 f"(measured now), so the breaker would trip on arrival. Re-read spend (topology) and choose again, "
                 "or pass --recognize-overrun to record a ceiling that recognises spend already made")
+    lineage = _lineage_authority_carry(rec, fields, spent, lineage_fn or ms.lineage_spend, ms.closeout_reserve)
+    fields.update(lineage.pop("fields"))
     entry = {"at": time.time() if now is None else now, "prev": rec.get("authority_tokens"),
              "new": fields.get("authority_tokens", rec.get("authority_tokens")),
              "extend_hours": float(extend_hours) if extend_hours else None, "owner_turn": turn, "actor": actor,
              "expected_seq": expected_seq, "seq_before": rec.get("seq"), "spent_at_set": spent,
-             "recognize_overrun": bool(recognize_overrun), "stage": eff_stage, "stage_opened": bool(stage_opened)}
-    return transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"], expect_seq=expected_seq,
-                      event="authority_set", now=now, reason=f"authority: {fields} ({reason[:200]})",
-                      authority_receipts=(receipts + [entry])[-20:], ledger_extra={"receipt": entry}, **fields)
+             "recognize_overrun": bool(recognize_overrun), "stage": eff_stage, "stage_opened": bool(stage_opened),
+             "lineage": lineage or None, "provenance": prov}
+    out = transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"], expect_seq=expected_seq,
+                     event="authority_set", now=now, reason=f"authority: {fields} ({reason[:200]})",
+                     authority_receipts=(receipts + [entry])[-20:], ledger_extra={"receipt": entry}, **fields)
+    if prov == "none" and ar.enabled():
+        # W4: flagged, not refused. The API caller (a hand python -c, an arm script) is still served, but the raise is
+        # named as carrying no Owner provenance, and status counts it.
+        lr.ledger_append(mission_id, "authority_receipt_missing", mission_id=mission_id, prev=entry["prev"],
+                         new=entry["new"], actor=actor, reason=str(reason or "")[:200],
+                         claimed_provenance=provenance)
+    # mission-capital W3: an Owner raise over a capital park is judged at once (RESUME_ONLY releases a park the raise
+    # answered). A top-up's own raise is not re-dispatched (mission_topup in_capital_pass).
+    return _capital_event(mission_id, "authority_set", out)
+
+
+def _topup_label_proven(mission_id: str, new_tokens) -> bool:
+    """Review M1 (W4): the 'topup_policy' label is accepted only from inside a mission_topup pass (its thread-local
+    depth) whose CURRENT policy's last unvoided grant raises to exactly `new_tokens`. Anything unreadable is False."""
+    try:
+        import mission_topup as mt
+        if not mt.in_capital_pass():
+            return False
+        g = ((mt.load_policy(mission_id) or {}).get("grants") or [None])[-1]
+        return bool(g) and not g.get("voided") and new_tokens is not None and int(g.get("to") or -1) == int(new_tokens)
+    except Exception:  # noqa: BLE001 -- an unprovable label is not a label
+        return False
+
+
+def _lineage_authority_carry(rec: dict, fields: dict, spent, lineage_fn, reserve_fn) -> dict:
+    """The lineage half of an authority raise (see set_authority). Returns {"fields": <record fields to write>, ...
+    receipt facts}. Only a record that already carries a lineage ceiling is touched; a mission outside a lineage
+    returns no fields and no facts."""
+    out: dict = {"fields": {}}
+    prev = rec.get("lineage_authority_tokens")
+    if "authority_tokens" not in fields or not prev:
+        return out
+    out["prev"] = int(prev)
+    if spent is None:
+        out["unchanged"] = "mission spend unmeasured"
+        return out
+    try:
+        sp = lineage_fn(rec["mission_id"], extra=rec)
+    except Exception as exc:  # noqa: BLE001 -- unmeasured is named, never zero
+        out["unchanged"] = f"lineage spend unmeasured: {type(exc).__name__}: {exc}"[:200]
+        return out
+    if sp.get("unmeasured") or sp.get("processed") is None:
+        out["unchanged"] = f"lineage members unmeasured: {sp.get('unmeasured')}"[:200]
+        return out
+    lin_spent = int(sp["processed"])
+    new_lin = lin_spent + (int(fields["authority_tokens"]) - int(spent))
+    out.update(spent=lin_spent, computed=new_lin)
+    if new_lin <= int(prev):
+        out["unchanged"] = "computed lineage ceiling is not above the current one (never lowered)"
+        return out
+    out["fields"]["lineage_authority_tokens"] = new_lin
+    out["new"] = new_lin
+    budget = rec.get("lineage_token_budget")
+    if budget is not None:
+        nb = max(int(budget), new_lin - int(reserve_fn({**rec, "authority_tokens": new_lin})))
+        out["fields"]["lineage_token_budget"] = nb
+        out["budget_prev"], out["budget_new"] = int(budget), nb
+    return out
 
 
 def _amr_transcript(rec: dict, sid: str | None) -> Path | None:
@@ -3912,10 +4218,7 @@ def recover_mission(rec: dict, sessions, now: float, *, pid_alive=lr._pid_alive,
     hold = dict(rec.get("owner_hold") or {})
     owner = rec.get("owner")
     failed_sid = (owner or {}).get("session_id") or (rec.get("previous_owner") or {}).get("session_id")
-    # Where the work IS, as the halt and relay paths resolve it. NEVER_AGAIN 2026-11-22 (m-d3d2b709130d):
-    # execution_root alone asked the main checkout while the worker sealed phases in its worktree, so every
-    # sealed phase read "closed twice, GSD still lists it" and parked the mission at an Owner boundary.
-    wd = live_root(rec)
+    wd = mb.execution_root(rec)
     try:
         st = (gsd_status or _supervise_gsd_status)(wd, workstream=rec.get("workstream"))
     except Exception as exc:  # noqa: BLE001 -- unanswered is not "work remains"
@@ -4429,6 +4732,13 @@ def admit_route(mission_id: str, route_path: str, *, floors_path: str | None = N
         if spent is not None:
             ratio = float(rec.get("token_trip_ratio") or ms.DEFAULT_TRIP_RATIO)
             remaining = int(ratio * int(rec["token_estimate"])) - spent
+            if rec.get("authority_tokens") and rec.get("token_estimate_src") in ("auto", "amr"):
+                # Spec mission-autoresolve R1: a machine-set estimate (auto envelope, AMR lease) is bounded BY the
+                # Owner authority -- the ceiling the auto envelope (auto_headroom) and AMR lease pricing already
+                # use -- so it may not halt the mission below it. Measured 2026-11-12 (m-6043c9b8e6c4): 2 x an
+                # AMR estimate of 25.2M left 0.76M, DEFER halted it at 49.7M of a 320M authority, and no
+                # steward or chain existed to continue it (4.5 h lost). An operator-set estimate keeps its ratio.
+                remaining = int(rec["authority_tokens"]) - ms.closeout_reserve(rec) - spent
     # WU-ADV2a: the mission's spend goal bounds admission too. No goal / unmeasurable keeps the above.
     goal_rem = halt_authority(rec)
     if goal_rem is not None:
@@ -4528,6 +4838,21 @@ def _declare_worker_envelope(rec: dict, sid: str | None) -> None:
     """The admitted envelope becomes the worker's SESSION envelope, enforced call by call by
     hooks/session_budget_guard.js. Recorded either way, never silent."""
     adm = rec.get("admission") or {}
+    if sid and not rec.get("wu_packet") and rec.get("authority_tokens"):
+        # W0 2026-11-19 slim worker for ordinary missions: no admitted packet, so the Owner's authority is the session envelope.
+        mid = rec["mission_id"]
+        try:
+            import mission_spend as ms
+            stop = int(rec["authority_tokens"]) - int(ms.closeout_reserve(rec))
+            if stop <= 0:
+                raise ValueError(f"authority {rec['authority_tokens']} leaves no room above the closeout reserve")
+            ms.declare(sid, int(stop * 0.8), int(stop * 0.9), stop)
+            lr.ledger_append(mid, "worker_envelope_declared", mission_id=mid, worker=sid, target=int(stop * 0.8),
+                             stop=stop, source="authority")
+        except Exception as exc:  # noqa: BLE001 -- recorded, never silent
+            lr.ledger_append(mid, "worker_envelope_failed", mission_id=mid, worker=sid,
+                             error=f"{type(exc).__name__}: {exc}"[:300])
+        return
     if not sid or not rec.get("wu_packet") or adm.get("verdict") not in LAUNCHABLE_VERDICTS:
         return
     env = adm.get("envelope") or {}
@@ -4761,10 +5086,8 @@ def _git_toplevel_and_common(path: str) -> tuple[str, str] | None:
     import subprocess
     g = resolve_exe("git") or "git"
     try:
-        # git prints paths in UTF-8. The locale default (cp1252 on Windows) turned "María" into "MarÃ\xada", the
-        # top never equalled the worktree, and effective_workdir never followed an accented worktree (2026-11-22).
         r = subprocess.run([g, "-C", path, "rev-parse", "--show-toplevel", "--git-common-dir"],
-                           capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=20)
+                           capture_output=True, text=True, timeout=20)
     except Exception:
         return None
     lines = [l.strip() for l in (r.stdout or "").splitlines() if l.strip()]
@@ -4817,6 +5140,43 @@ def _worktree_carries_workstream(worktree: str, base_cwd: str, workstream: str) 
 CWD_ALIGN_BLOCKING = ("behind_dirty", "diverged", "unreadable")
 
 
+def _recreate_vanished_worktree(cwd: str, work_dir: str) -> str | None:
+    """Recreate `<cwd>/.claude/worktrees/<name>` when it is gone; None = nothing done.
+
+    Claude Code removes a `--worktree` checkout (and its branch) when the session exits with no
+    changes. The mission still names it as its work_dir, so every later launch was held as
+    "unreadable" for good. Measured 2026-11-16 (library mission m-c97edc551ce7): held from 19:39Z on.
+    A surviving `worktree-<name>` branch is reused (its commits are the work); without one the
+    checkout had nothing to lose and is branched from the cwd HEAD. Only that exact path shape is
+    touched, never an existing path. Kill switch: CPP_MISSION_SELF_HEAL=off."""
+    import subprocess
+    import mission_remedies as mr
+    if not mr.enabled():
+        return None
+    wd = Path(work_dir)
+    if wd.exists():
+        return None
+    try:
+        rel = wd.resolve().relative_to((Path(cwd) / ".claude" / "worktrees").resolve())
+    except ValueError:
+        return None
+    if len(rel.parts) != 1 or not _git_toplevel_and_common(cwd):
+        return None
+    g = resolve_exe("git") or "git"
+
+    def git(*args):
+        return subprocess.run([g, "-C", str(cwd), *args], capture_output=True, text=True, timeout=60)
+
+    branch = f"worktree-{rel.parts[0]}"
+    git("worktree", "prune")
+    kept = git("rev-parse", "--verify", "--quiet", f"refs/heads/{branch}").returncode == 0
+    r = git("worktree", "add", str(wd), branch) if kept else git("worktree", "add", "-b", branch, str(wd), "HEAD")
+    if r.returncode != 0 or not wd.exists():
+        return None
+    return (f"work_dir {wd} was gone; recreated from "
+            + (f"surviving branch {branch}" if kept else f"cwd HEAD as new branch {branch}"))
+
+
 def align_cwd(cwd: str, work_dir: str | None, proven_workstream: str | None = None) -> dict:
     """Make the mission cwd carry the work before a worker is launched in it.
 
@@ -4839,6 +5199,9 @@ def align_cwd(cwd: str, work_dir: str | None, proven_workstream: str | None = No
     import subprocess
     if not work_dir or os.path.normcase(str(Path(work_dir).resolve())) == os.path.normcase(str(Path(cwd).resolve())):
         return {"status": "same", "detail": ""}
+    healed = _recreate_vanished_worktree(cwd, work_dir)
+    if healed:
+        return {**align_cwd(cwd, work_dir, proven_workstream), "recreated": healed}
     here, there = _git_toplevel_and_common(cwd), _git_toplevel_and_common(work_dir)
     if not here or not there:
         return {"status": "unreadable", "detail": f"git could not read cwd={cwd} or work_dir={work_dir}"}
@@ -4847,8 +5210,7 @@ def align_cwd(cwd: str, work_dir: str | None, proven_workstream: str | None = No
     g = resolve_exe("git") or "git"
 
     def git(path, *args):
-        return subprocess.run([g, "-C", path, *args], capture_output=True, text=True, encoding="utf-8",
-                              errors="replace", timeout=60)
+        return subprocess.run([g, "-C", path, *args], capture_output=True, text=True, timeout=60)
 
     try:
         hc = git(cwd, "rev-parse", "HEAD").stdout.strip()
@@ -4867,6 +5229,16 @@ def align_cwd(cwd: str, work_dir: str | None, proven_workstream: str | None = No
                 return {"status": "diverged_followed", "detail": f"cwd {hc[:12]} and work_dir {hw[:12]}"
                         f" have diverged, but the work_dir is a proven worktree carrying"
                         f" {proven_workstream}'s latest roadmap; following it, nothing moved", **facts}
+            # Spec mission-autoresolve R3: the work_dir's own commits touch only `.planning/` while the cwd moved
+            # on -> the work_dir is a stranded planning note, not the work. The caller rebinds to the cwd (nothing
+            # moved, the stranded head is named). Measured 2026-11-12 (m-6043c9b8e6c4): held 2 h 15 m on a
+            # worktree whose one extra commit was a STATE.md note while Phase 5 merged into the main tree.
+            base = git(cwd, "merge-base", hc, hw).stdout.strip()
+            names = git(cwd, "diff", "--name-only", base, hw).stdout.split() if base else []
+            if names and all(n.replace("\\", "/").startswith(".planning/") for n in names):
+                return {"status": "diverged_planning_only", "detail": f"work_dir {hw[:12]} adds only"
+                        f" {len(names)} .planning/ path(s) since {base[:12]}; cwd {hc[:12]} carries the work;"
+                        f" rebinding to the cwd, stranded head {hw[:12]} left in place", "stranded": hw, **facts}
             return {"status": "diverged", "detail": f"cwd {hc[:12]} and work_dir {hw[:12]} have diverged;"
                     " a worker launched here would branch from a lineage without the work", **facts}
         dirty = git(cwd, "status", "--porcelain", "--untracked-files=no").stdout.strip()
@@ -4880,66 +5252,24 @@ def align_cwd(cwd: str, work_dir: str | None, proven_workstream: str | None = No
                 return {"status": "behind_followed", "detail": f"cwd {hc[:12]} is behind work_dir"
                         f" {hw[:12]} and dirty, but the work_dir is a proven worktree carrying"
                         f" {proven_workstream}'s latest roadmap; following it, nothing moved", **facts}
+            # Self-heal (spec mission-self-heal): line-ending-only dirt the fast-forward does not touch is not a
+            # change anyone made. Measured 2026-11-09 (m-9444639a3c78): held 21 h on such a file.
+            import mission_remedies as mr
+            phantom = mr.phantom_dirty(git, cwd, hc, hw) if mr.enabled() else None
+            if phantom:
+                ff = git(cwd, "merge", "--ff-only", hw)
+                if ff.returncode == 0:
+                    return {"status": "fast_forwarded", "detail": f"cwd {hc[:12]} -> {hw[:12]}; left alone"
+                            f" line-ending-only paths {phantom[:5]}", "phantom": phantom, **facts}
             return {"status": "behind_dirty", "detail": f"cwd {hc[:12]} is behind work_dir {hw[:12]}"
                     " but has uncommitted tracked changes; not fast-forwarding over them", **facts}
         ff = git(cwd, "merge", "--ff-only", hw)
         if ff.returncode != 0:
-            refusal = (ff.stderr or ff.stdout).strip()[-200:]
-            aside = _set_aside_identical_untracked(git, here[0], hc, hw)
-            if aside["moved"]:
-                ff = git(cwd, "merge", "--ff-only", hw)
-                if ff.returncode == 0:
-                    return {"status": "fast_forwarded", "detail": f"cwd {hc[:12]} -> {hw[:12]}; set aside"
-                            f" {len(aside['moved'])} untracked file(s) identical to the work_dir's in {aside['backup']}",
-                            "set_aside": aside["moved"], "set_aside_dir": aside["backup"], **facts}
-                _restore_set_aside(here[0], aside)
-                refusal = (ff.stderr or ff.stdout).strip()[-200:]
-            if aside["differ"]:
-                refusal += f"; untracked file(s) differ from the work_dir's copy: {aside['differ'][:5]}"
-            return {"status": "behind_dirty", "detail": "fast-forward refused: " + refusal, **facts}
+            return {"status": "behind_dirty", "detail": "fast-forward refused: "
+                    + ((ff.stderr or ff.stdout).strip()[-200:]), **facts}
         return {"status": "fast_forwarded", "detail": f"cwd {hc[:12]} -> {hw[:12]}", **facts}
     except Exception as exc:  # never launch on an unanswered question
         return {"status": "unreadable", "detail": f"{type(exc).__name__}: {exc}"}
-
-
-def _set_aside_identical_untracked(git, top: str, hc: str, hw: str) -> dict:
-    """Move out of the way the untracked files a fast-forward to `hw` would overwrite, ONLY when every one of them is
-    byte-identical (after the repo's clean filters) to the version `hw` brings, so the fast-forward writes the same
-    bytes back and nothing is lost. Any differing file moves nothing and is reported. Measured 2026-11-21 (Lola's,
-    m-d71f5191ed2f): the arm-time milestone scaffold wrote .planning/ into the cwd, the worker committed the same files
-    in its worktree, and the mission slept 70 min on "untracked working tree files would be overwritten"."""
-    import shutil
-    import tempfile
-    changed = {p for p in git(top, "diff", "--name-only", "-z", hc, hw).stdout.split("\0") if p}
-    untracked = {p for p in git(top, "ls-files", "--others", "--exclude-standard", "-z").stdout.split("\0") if p}
-    hits = sorted(changed & untracked)
-    if not hits:
-        return {"moved": [], "differ": [], "backup": None}
-    differ = [p for p in hits
-              if (git(top, "rev-parse", "--verify", "-q", f"{hw}:{p}").stdout.strip() or "?")
-              != (git(top, "hash-object", "--", p).stdout.strip() or "!")]
-    if differ:
-        return {"moved": [], "differ": differ, "backup": None}
-    base = Path(lr.state_dir()) / "cwd-align-set-aside"
-    base.mkdir(parents=True, exist_ok=True)
-    backup = tempfile.mkdtemp(prefix=time.strftime("%Y%m%dT%H%M%S-"), dir=str(base))
-    moved = []
-    for p in hits:
-        dst = Path(backup) / p
-        dst.parent.mkdir(parents=True, exist_ok=True)
-        shutil.move(str(Path(top) / p), str(dst))
-        moved.append(p)
-    return {"moved": moved, "differ": [], "backup": backup}
-
-
-def _restore_set_aside(top: str, aside: dict) -> None:
-    """Put back what _set_aside_identical_untracked moved when the retried fast-forward still failed."""
-    import shutil
-    for p in aside["moved"]:
-        src, dst = Path(aside["backup"]) / p, Path(top) / p
-        if src.exists() and not dst.exists():
-            dst.parent.mkdir(parents=True, exist_ok=True)
-            shutil.move(str(src), str(dst))
 
 
 def effective_workdir(session_id: str, base_cwd: str, workstream: str | None = None) -> str | None:
@@ -5119,7 +5449,7 @@ def stop_owner(owner: dict | None, sessions: list[dict] | None, pid_alive=lr._pi
     # precondition (it was only ever seen in fixtures).
     if "background" not in (row.get("kind"), owner.get("kind")):
         return True, "interactive owner left running; lease moves"
-    exe = os.environ.get("CPP_CLAUDE_EXE") or "claude"
+    exe = claude_exe()
     run = runner or (lambda argv: subprocess.run(argv, capture_output=True, text=True, timeout=120))
     live = row.get("status") in HOST_LIVE_STATUSES
     if row.get("state") not in ("stopped", "done", "exited", "failed") or live:
@@ -5421,6 +5751,21 @@ HALT_CONTINUE_MAX_RENEWAL = 2
 
 def halt_continue_on() -> bool:
     return os.environ.get("CPP_HALT_CONTINUE", "").lower() != "off"
+
+
+def claude_exe() -> str:
+    """The `claude` the host's background jobs run under (spec mission-autoresolve R4). CPP_CLAUDE_EXE wins; else,
+    off Windows, the per-user install the sweep unit pins (~/.local/bin/claude), before PATH. Measured 2026-11-12
+    (GEX44, m-6043c9b8e6c4): an ssh shell resolved /usr/local/bin/claude 2.1.113 (no --bg), so `decide` recorded
+    the answer but answered woke=False and the worker stayed parked."""
+    env = os.environ.get("CPP_CLAUDE_EXE")
+    if env:
+        return env
+    if os.name != "nt":
+        local = Path.home() / ".local" / "bin" / "claude"
+        if local.is_file() and os.access(local, os.X_OK):
+            return str(local)
+    return "claude"
 
 
 def resolve_exe(name: str) -> str | None:
@@ -6328,7 +6673,7 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
     if sessions is None:
         sessions = host_sessions()
     stop_run = stop_runner or (lambda a: subprocess.run(a, capture_output=True, text=True, timeout=120))
-    exe = os.environ.get("CPP_CLAUDE_EXE") or "claude"
+    exe = claude_exe()
 
     def reap(rec: dict, row: dict) -> None:
         # Judge against the record as it is NOW, not as this pass first read it: the host
@@ -6603,6 +6948,17 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                                 pid_alive=pid_alive, host_fetch=None, now=now)
                         except Exception as exc:  # noqa: BLE001 -- the BLOCKED row stands; the failure is on it
                             row["standing_answer"] = f"{type(exc).__name__}: {exc}"[:200]
+                    elif bi_["action"] == "ESCALATE_OWNER":
+                        # Self-heal (spec mission-self-heal): a question only the Owner can answer is not a stall
+                        # to repair, but nobody reads the ledger. Measured 2026-11-09: m-9444639a3c78 BLOCKED on an
+                        # evidence request with no notification. Once per epoch and question.
+                        try:
+                            import mission_remedies as mr
+                            row["owner_notified"] = mr.notify_incident(
+                                mid, f"owner:{rec['epoch']}:{bi_['kind']}:{reason[:60]}",
+                                f"waiting for YOUR decision ({bi_['kind']}): {reason[:600]} (cwd {rec.get('cwd', '')})")
+                        except Exception as exc:  # noqa: BLE001 -- the BLOCKED row stands
+                            row["owner_notified"] = f"{type(exc).__name__}: {exc}"[:200]
             elif act == "surface_unknown":
                 # Once per epoch: every 5-minute pass would otherwise add the same row.
                 if not any(e.get("event") == "owner_unknown" and e.get("epoch") == rec["epoch"]
@@ -6950,12 +7306,29 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                 # carry the work first (align_cwd; measured Brand #001 2026-09-30).
                 aligned = align_cwd(rec["cwd"], work_dir or rec.get("work_dir"), proven_workstream=proven_ws)
                 row["cwd_align"] = aligned["status"]
+                if aligned.get("recreated"):
+                    lr.ledger_append(mid, "worktree_recreated", mission_id=mid, epoch=rec["epoch"],
+                                     detail=aligned["recreated"])
                 if aligned["status"] == "fast_forwarded":
                     lr.ledger_append(mid, "cwd_fast_forwarded", mission_id=mid, epoch=rec["epoch"],
                                      detail=aligned["detail"])
                 elif aligned["status"] in ("diverged_followed", "behind_followed"):
                     lr.ledger_append(mid, f"cwd_{aligned['status']}", mission_id=mid, epoch=rec["epoch"],
                                      detail=aligned["detail"])
+                elif aligned["status"] == "diverged_planning_only":
+                    # Spec mission-autoresolve R3: follow the tree that carries the work. A refused rebind is held
+                    # like any other misalignment and re-judged on the next pass.
+                    try:
+                        rec = bind_mission(mid, rec["cwd"], cause="planning_only_divergence", now=now)
+                        work_dir = mb.execution_root(rec)
+                        lr.ledger_append(mid, "cwd_planning_only_rebound", mission_id=mid, epoch=rec["epoch"],
+                                         detail=aligned["detail"], stranded=aligned.get("stranded"))
+                    except MissionError as exc:
+                        why = f"launch held: planning-only divergence, rebind refused: {exc}"
+                        lr.ledger_append(mid, "launch_held_cwd", mission_id=mid, epoch=rec["epoch"],
+                                         status=aligned["status"], detail=why[:300])
+                        row["held"] = why
+                        continue
                 elif aligned["status"] in CWD_ALIGN_BLOCKING:
                     why = f"launch held: cwd not aligned with work_dir ({aligned['status']}): {aligned['detail']}"
                     wake = {"kind": "cwd_aligned", "cwd": rec["cwd"], "work_dir": work_dir or rec.get("work_dir"),
@@ -6982,11 +7355,34 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                         # AMR-X: the predecessor's open question is answered here, by the runtime, with the
                         # gate's provenance -- the successor must not ask it again.
                         d = plan["decision"]
-                        answer = (f"RUNTIME ANSWER to the predecessor's question ({d['gate']['result']}): "
-                                  f"{d['gate']['resolution']}\nThe question was: {d['why']}\n"
-                                  f"Do not end a turn on a question the repo policy or your own recommended option "
-                                  f"answers; Owner-only classes: deploy/push/live write, credentials, external "
-                                  f"properties, irreversible actions, product scope, authority.")
+                        oq = plan.get("owner_question")
+                        if oq:
+                            # Spec mission-unattended-continuity A3: the question stays the Owner's; only the
+                            # independent work goes on. Recorded and notified so it does not wait unseen.
+                            answer = (f"RUNTIME ANSWER to the predecessor's question (OWNER_REQUIRED, class "
+                                      f"{oq['owner_class']}): this part is the Owner's. Do NOT do it, do not work "
+                                      f"around it and do not ask it again. Write one `OWNER DECISION NEEDED:` line "
+                                      f"for it in the mission STATE, then continue the work that does not depend on "
+                                      f"it ({oq['independent_reason']}). If nothing else is runnable, stop.\n"
+                                      f"The question was: {d['why']}")
+                            lr.ledger_append(mid, "owner_question_parked", mission_id=mid, epoch=rec["epoch"],
+                                             owner_class=oq["owner_class"], question=oq["question"][:300],
+                                             independent=oq["independent_reason"][:200])
+                            try:
+                                import mission_remedies as _mr
+                                _mr.notify_incident(mid, f"owner-question:{oq['question'][:80]}",   # one notice per question
+                                                    f"question for you ({oq['owner_class']}), the mission continues "
+                                                    f"other work meanwhile: {oq['question'][:300]}")
+                            except Exception as exc:  # noqa: BLE001 -- a failed notice never stops the relaunch
+                                lr.ledger_append(mid, "incident_notify_failed", mission_id=mid,
+                                                 key="owner-question", channel=f"{type(exc).__name__}"[:120])
+                            row["owner_question"] = oq["owner_class"]
+                        else:
+                            answer = (f"RUNTIME ANSWER to the predecessor's question ({d['gate']['result']}): "
+                                      f"{d['gate']['resolution']}\nThe question was: {d['why']}\n"
+                                      f"Do not end a turn on a question the repo policy or your own recommended "
+                                      f"option answers; Owner-only classes: deploy/push/live write, credentials, "
+                                      f"external properties, irreversible actions, product scope, authority.")
                         note = f"{answer}\n\n{note}"
                         # Persisted with the counter (review F2): the predecessor's job file is overwritten by its
                         # stop, so a launch that fails after this point would otherwise lose the answer for good.
@@ -6996,11 +7392,23 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                             fp_now = mission_fingerprint(rec, mb.execution_root(rec))   # S9 A2: same Workset as the check
                         except Exception:  # noqa: BLE001 -- unmeasured: the next cap check keeps the cap
                             fp_now = None
+                        # An Owner question answers no requirement: nothing is cleared by parking it.
+                        kept_req, answered_req = (rec.get("requires"), []) if oq else requires_answered_by(rec, d["why"])
+                        oq_field = ({"owner_questions": ([*(rec.get("owner_questions") or []),
+                                                          {**oq, "at": now, "epoch": rec["epoch"]}])[-20:]}
+                                    if oq else {})
                         rec = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
                                          event="decision_recovered", now=now, pending_decision=answer,
                                          decision_recoveries=1 if moved else int(rec.get("decision_recoveries") or 0) + 1,
-                                         decision_recovery_fp=fp_now,
+                                         decision_recovery_fp=fp_now, **oq_field,
+                                         **({"requires": kept_req} if answered_req else {}),
                                          ledger_extra={"gate": d["gate"]["result"], "question": d["why"][:200]})
+                        if answered_req:
+                            lr.ledger_append(mid, "requires_cleared_by_decision", mission_id=mid, epoch=rec["epoch"],
+                                             gate=d["gate"]["result"],
+                                             obligations=sorted({r.get("obligation") for r in answered_req}),
+                                             paths=[r.get("arg") for r in answered_req if r.get("kind") == "path_exists"])
+                            row["requires_cleared"] = sorted({r.get("obligation") for r in answered_req})
                         row["decision_recovery"] = d["gate"]["result"]
                     row["note_chars"] = len(note)
                 if (v2 and rec.get("capsule_key") and act in ("relay", "replace", "launch")
@@ -7019,10 +7427,16 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                         # The unit's own lease cannot fund another epoch of its route, and no pass will change that:
                         # retrying refused 17 launches in 85 min with the record RUNNING (gsdx-factory-2 H012,
                         # 2026-10-25), so neither the steward (HALTED only) nor the chain's residual could act.
+                        # Spec mission-autoresolve R1b: say who continues it. A mission with no CE goal has no
+                        # steward, and HALTED is terminal for renewal, so the old text promised a continuation
+                        # that never came (m-6043c9b8e6c4, 2026-11-12).
+                        heir = ("the steward and the chain residual continue it" if spend_goal(rec)
+                                else "no steward goal owns this mission: raise its authority "
+                                     "(gsd_mission.py authority) and arm a successor")
                         halted = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
                                             event="unit_lease_exhausted", now=now, state=HALTED, pending=None,
                                             reason=f"relay re-admission {adm_v}: the unit lease cannot fund another "
-                                                   f"epoch; the steward and the chain residual continue it")
+                                                   f"epoch; {heir}")
                         reap(halted, row)
                         row["action"] = "halted"
                         continue
@@ -7076,37 +7490,58 @@ def _steward_rows(missions, now, sessions, pid_alive, dry_run) -> list[dict]:
 # mission is a disposable attempt at it. Measured 2026-10-06: create() refused only a live record with
 # the SAME id, so a fresh `arm` on a workstream whose attempt sits under an Owner hold (KSR recon-factory,
 # InfinityOps odr-device-trust) would have started a second attempt beside the hold.
-# A mission with no workstream drives the repository's ROOT roadmap (.planning/ROADMAP.md). That roadmap is a Goal
-# too: until 2026-11-21 goal_key answered None for it, so two root missions armed on one repo both ran /gsd-autonomous
-# against the same ROADMAP.md with no singleflight, hold or supersede check between them.
-ROOT_GOAL = ""
-
-
 def goal_key(cwd: str, workstream: str | None) -> tuple[str, str] | None:
-    """(repository identity, workstream), with ROOT_GOAL for the root roadmap; None only without a cwd.
+    """(repository identity, workstream), or None for a mission without a workstream (no Goal to guard).
     The repository is the git common dir, so a worktree and its main checkout are one Goal."""
-    if not cwd:
+    if not workstream or not cwd:
         return None
     tc = _git_toplevel_and_common(cwd)
     repo = tc[1] if tc else os.path.normcase(str(Path(cwd).resolve()))
-    return repo, workstream or ROOT_GOAL
+    return repo, workstream
 
 
 def goal_conflicts(key: tuple[str, str] | None, *, exclude: str | None = None,
                    records: list[dict] | None = None) -> list[dict]:
-    """Non-terminal attempts of the Goal `key` other than `exclude`, each {mission_id, held, unit, root}."""
+    """Non-terminal attempts of the Goal `key` other than `exclude`, each {mission_id, held, unit}."""
     if key is None:
         return []
     out = []
     for r in (records if records is not None else all_missions()):
-        if (r["mission_id"] == exclude or r.get("state") in TERMINAL
-                or (r.get("workstream") or ROOT_GOAL) != key[1]):
+        if r["mission_id"] == exclude or r.get("state") in TERMINAL or r.get("workstream") != key[1]:
             continue
         if goal_key(r.get("cwd") or "", r.get("workstream")) != key:
             continue
         out.append({"mission_id": r["mission_id"], "held": bool(r.get("owner_hold")),
-                    "unit": (r.get("goal") or {}).get("unit"), "root": key[1] == ROOT_GOAL})
+                    "unit": (r.get("goal") or {}).get("unit")})
     return out
+
+
+def duplicate_arm_refusal(cwd: str, *, exclude: str | None = None, workstream: str | None = None,
+                          records: list[dict] | None = None) -> str | None:
+    """mission-capital W1: why an arm on `cwd` would duplicate a live mission, or None. Measured 2026-11-23 12:28Z:
+    a second mission was armed on anti-slop-web while its runtime successor m-bc8814955e63 was RUNNING; a pgrep
+    check missed the worker. The RECORD is the truth: a non-terminal mission with no Owner hold on the same resolved
+    cwd or the same git common dir (a worktree and its main checkout are one repo). When BOTH the arm and the record
+    name a workstream, the goal guard (goal_refusal) owns the case: distinct workstreams are declared Goals.
+    --parallel-unit skips this (declared concurrency). Kill switch CPP_MISSION_DUP_ARM_GUARD=off."""
+    if (os.environ.get("CPP_MISSION_DUP_ARM_GUARD") or "").strip().lower() in ("off", "0", "false") or not cwd:
+        return None
+    here = os.path.normcase(str(Path(cwd).resolve()))
+    live = [r for r in (records if records is not None else all_missions())
+            if r.get("mission_id") != exclude and r.get("state") not in TERMINAL and not r.get("owner_hold")
+            and r.get("cwd") and not (workstream and r.get("workstream"))]
+    if not live:
+        return None
+    tc = _git_toplevel_and_common(cwd)
+    for r in live:
+        same = os.path.normcase(str(Path(r["cwd"]).resolve())) == here
+        if not same and tc:
+            rtc = _git_toplevel_and_common(r["cwd"])
+            same = bool(rtc) and rtc[1] == tc[1]
+        if same:
+            return (f"duplicate arm: {r['mission_id']} is a live {r.get('state')} mission on this repository "
+                    f"({r['cwd']}); continue or close it, supersede it with authority, or name a --parallel-unit")
+    return None
 
 
 def goal_refusal(conflicts: list[dict], unit: str | None = None) -> str | None:
@@ -7119,10 +7554,8 @@ def goal_refusal(conflicts: list[dict], unit: str | None = None) -> str | None:
     for c in conflicts:
         if not unit or not c["unit"] or c["unit"] == unit:
             return (f"singleflight: {c['mission_id']} is a live attempt of this goal"
-                    + (" (the repository's root roadmap, .planning/ROADMAP.md)" if c.get("root") else "")
                     + (f" (unit {c['unit']})" if c["unit"] else "")
-                    + "; supersede it with authority, or name a distinct --parallel-unit on both"
-                    + (", or arm the new work on its own --workstream" if c.get("root") else ""))
+                    + "; supersede it with authority, or name a distinct --parallel-unit on both")
     return None
 
 
@@ -7315,9 +7748,161 @@ def batch_foreseeable_decisions(rec: dict, cwd: str, workstream: str | None) -> 
         return None
 
 
+# --------------------------------------------------------------------------- BAMR P5: burn-optimisation hold
+# Burn census 2026-11-20 (tools/burn_census.py): the largest class of spend without progress was missions
+# SUPERSEDED after spending with no tree change (~528M tokens in 4). Owner 2026-11-20: hold at supersede time,
+# N = 50M, released automatically by a cited fix. Kill switch CPP_MISSION_BURN_HOLD=off.
+BURN_HOLD_KIND = "burn_optimization"
+BURN_HOLD_TOKENS = 50_000_000
+BURN_CITATIONS = "burn-optimizations.jsonl"
+
+
+def burn_hold_on() -> bool:
+    return (os.environ.get("CPP_MISSION_BURN_HOLD") or "").strip().lower() != "off"
+
+
+def burn_facts(rec: dict, fp_fn=None) -> dict:
+    """What a mission spent and whether its tree changed, from RECORDED fields (never a transcript scan --
+    T-ADMISSION-CHECK-THAT-SCANS-001). tokens/changed are None when the record cannot say; absent is not zero.
+    Tree change: the recorded progress fingerprint against the origin (the census's instrument); a recorded
+    "unchanged" is re-checked against a live fingerprint, so a change the last relay did not record still counts."""
+    seen = [int(v) for v in ((rec.get("spend_stamp") or {}).get("tokens"), (rec.get("cost_mark") or {}).get("tokens"))
+            if isinstance(v, (int, float)) and not isinstance(v, bool) and v >= 0]
+    tokens = max(seen) if seen else None
+    origin, prog = rec.get("progress_origin"), rec.get("progress") or {}
+    changed = None
+    if origin and prog.get("measured") and prog.get("fp"):
+        changed = prog["fp"] != origin
+        if not changed:
+            # Review MEDIUM-1: the same root every other progress check measures (AMCR binding first); an
+            # unresolvable root skips the re-check rather than fingerprinting the process cwd.
+            root = mb.execution_root(rec)
+            try:
+                live = mission_fingerprint(rec, root, fp_fn) if root else None
+            except Exception:  # noqa: BLE001 -- an unreadable live tree leaves the recorded verdict standing
+                live = None
+            if live is not None and live != origin:
+                changed = True
+    return {"tokens": tokens, "changed": changed}
+
+
+def _citations_path() -> Path:
+    return Path(lr.state_dir()) / BURN_CITATIONS
+
+
+_SHA_RE = re.compile(r"^[0-9a-f]{7,40}$")
+
+
+def _commit_time(repo: str, sha: str) -> float | None:
+    """Committer time of `sha` in `repo`, or None when it is not a commit there. Review LOW-3: only a hex sha
+    (no option injection, no HEAD/branch that any later commit satisfies) in a repo directory that exists."""
+    import subprocess
+    if not _SHA_RE.match(sha or "") or not repo or not Path(repo).is_dir():
+        return None
+    g = resolve_exe("git") or "git"
+    try:
+        out = subprocess.run([g, "-C", repo, "show", "-s", "--format=%ct", f"{sha}^{{commit}}", "--"],
+                             capture_output=True, text=True, timeout=20)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    t = (out.stdout or "").strip()
+    return float(t) if out.returncode == 0 and t.isdigit() else None
+
+
+def _citation_refusal(rec: dict, commit: str) -> str | None:
+    """A citation cites a fix only if the commit exists in the mission's repo and is not older than the burn
+    hold: a fix that predates the burn it answers is not a fix for it."""
+    set_at = float((rec.get("burn_hold") or {}).get("set_at") or 0)
+    repo = mb.execution_root(rec) or rec.get("cwd") or ""
+    t = _commit_time(repo, commit)
+    if t is None:
+        return f"{commit} is not a commit sha in {repo or '<no repo>'} (a 7-40 char hex sha is required)"
+    if t < math.floor(set_at):
+        return f"{commit} predates the burn hold on {rec['mission_id']} (committed before the hold was set)"
+    return None
+
+
+def burn_cite(mission_id: str, fix: str, commit: str, now: float | None = None) -> dict:
+    """Record the optimisation that answers a burn hold. Validated now and again when the supersede consumes it."""
+    fix, commit = (fix or "").strip(), (commit or "").strip().lower()
+    if not fix or not commit:
+        raise MissionError("burn-cite needs --fix (what changed) and --commit (where)")
+    rec = load(mission_id)
+    if rec is None:
+        raise MissionError(f"no mission {mission_id}")
+    if not rec.get("burn_hold"):
+        raise MissionError(f"{mission_id} has no burn-optimisation hold to cite")
+    why = _citation_refusal(rec, commit)
+    if why:
+        raise MissionError(f"citation refused: {why}")
+    row = {"mission_id": mission_id, "fix": fix[:1000], "commit": commit, "at": time.time() if now is None else now,
+           "hold_set_at": rec["burn_hold"].get("set_at")}
+    p = _citations_path()
+    p.parent.mkdir(parents=True, exist_ok=True)
+    with p.open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps(row) + "\n")
+    lr.ledger_append(mission_id, "burn_cited", mission_id=mission_id, commit=commit, fix=fix[:300])
+    return row
+
+
+def burn_citation(rec: dict) -> dict | None:
+    """The newest citation for this mission's CURRENT burn hold that still validates, or None."""
+    p = _citations_path()
+    if not p.exists():
+        return None
+    set_at = (rec.get("burn_hold") or {}).get("set_at")
+    if set_at is None:
+        return None
+    rows = []
+    for line in p.read_text(encoding="utf-8").splitlines():
+        try:
+            r = json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(r, dict) and r.get("mission_id") == rec["mission_id"] and r.get("hold_set_at") == set_at:
+            rows.append(r)
+    for r in reversed(rows):
+        if _citation_refusal(rec, str(r.get("commit") or "")) is None:
+            return r
+    return None
+
+
+def burn_supersede_refusal(old: dict, new_mission_hint: str, now: float | None = None, fp_fn=None) -> str | None:
+    """Before `arm --supersedes` replaces `old`: a burn-held attempt is replaced only with a valid citation; an
+    attempt that spent >= BURN_HOLD_TOKENS with an unchanged tree is held instead of replaced. Unknown spend or
+    tree change is recorded and does not hold (absent is not zero, and not evidence of burn either)."""
+    if not burn_hold_on():
+        return None
+    mid = old["mission_id"]
+    bh = old.get("burn_hold") or {}
+    if bh:
+        if burn_citation(old):
+            return None
+        return (f"{mid} is under a burn-optimisation hold: {bh.get('reason')}. Cite the fix first: "
+                f"gsd_mission.py burn-cite --mission {mid} --fix \"<what changed>\" --commit <sha>")
+    f = burn_facts(old, fp_fn)
+    if f["tokens"] is None or f["changed"] is None:
+        lr.ledger_append(mid, "burn_check_unknown", mission_id=mid, tokens=f["tokens"], changed=f["changed"],
+                         by=new_mission_hint[:200])
+        return None
+    if f["changed"] or f["tokens"] < BURN_HOLD_TOKENS:
+        return None
+    reason = (f"BURN_OPTIMIZATION_REQUIRED: {f['tokens']:,} tokens spent with no tree change "
+              f"(>= {BURN_HOLD_TOKENS:,}); supersede refused until an optimisation is cited")
+    # Review MEDIUM-2: the burn marker is its own field, so a hold this feature does not own (cost, owner_stop,
+    # resource) is never overwritten; an existing hold already refuses a plain arm of the goal. Only an unheld
+    # attempt gets an owner hold of kind burn_optimization, which parks supervision the same way.
+    t = time.time() if now is None else now
+    transition(mid, expect_epoch=old["epoch"], expect_state=old["state"], event="burn_hold_set", now=t,
+               burn_hold={"reason": reason, "set_at": t, "burn": f})
+    if not old.get("owner_hold"):
+        set_owner_hold(mid, reason, now=t, kind=BURN_HOLD_KIND, extra={"burn": f})
+    return f"{mid}: {reason}. Cite it: gsd_mission.py burn-cite --mission {mid} --fix \"<what changed>\" --commit <sha>"
+
+
 def arm(cwd: str, resume_command: str, *, launch: bool = True, supersedes: str | None = None,
         authority: str | None = None, parallel_unit: str | None = None, goal: str | None = None,
-        milestone_from: str | None = None, preflighted: bool = False, **kw) -> dict:
+        milestone_from: str | None = None, preflighted: bool = False, pivot: bool = True, **kw) -> dict:
     ws = kw.get("workstream")
     if ws is None and resume_command.startswith("/gsd-"):
         m = _WS_FLAG.search(resume_command)
@@ -7353,19 +7938,32 @@ def arm(cwd: str, resume_command: str, *, launch: bool = True, supersedes: str |
             raise MissionError(f"{supersedes} is not a live attempt to supersede")
         if key is None or goal_key(old.get("cwd") or "", old.get("workstream")) != key:
             raise MissionError(f"{supersedes} is not an attempt of this goal")
+        burn_why = burn_supersede_refusal(old, f"arm --supersedes ({authority.strip()[:150]})")
+        if burn_why:
+            lr.ledger_append(supersedes, "burn_supersede_refused", mission_id=supersedes, why=burn_why[:300])
+            raise MissionError(burn_why[:600])
         conflicts = [c for c in conflicts if c["mission_id"] != supersedes]
+    dup_why = None if parallel_unit else duplicate_arm_refusal(cwd, exclude=supersedes, workstream=ws)
+    if dup_why:
+        # SHADOW by default (parent review of W1, 2026-11-23): enforcing broke arm flows other suites drive on one
+        # repo (test_arm_worker_guard 2/6, test_mission_pivot, test_programme_spend, test_gsd_mission_capsule_v2 all
+        # green with the guard off). Until each flow is classified, a duplicate is recorded, not refused.
+        # CPP_MISSION_DUP_ARM_GUARD=on enforces; =off skips the check entirely.
+        if (os.environ.get("CPP_MISSION_DUP_ARM_GUARD") or "").strip().lower() == "on":
+            lr.ledger_append("arm-guard", "duplicate_arm_refused", cwd=str(cwd), why=dup_why[:300])
+            raise MissionError(dup_why)
+        lr.ledger_append("arm-guard", "duplicate_arm_shadow", cwd=str(cwd), why=dup_why[:300])
     why = goal_refusal(conflicts, parallel_unit)
     if why:
         if key is not None:
-            lr.ledger_append(f"goal-{key[1] or 'root'}", "goal_arm_refused", workstream=key[1] or None, why=why[:300])
+            lr.ledger_append(f"goal-{key[1]}", "goal_arm_refused", workstream=key[1], why=why[:300])
         raise MissionError(why)
-    try:   # CCN-3 weekly account ceiling (Owner Q2 = enforce 85%); covers arm_chain, which calls arm
-        import account_governor as _ag
-        _code, _verdict, _why, _ = _ag.check(_ag.DEFAULT_STATE, "arm")
-    except Exception as exc:  # noqa: BLE001 -- the governor fails open; a fault here must not stop every mission
-        _code, _why = 0, ""
-        lr.ledger_append("arm-guard", "account_governor_error", why=f"{type(exc).__name__}: {exc}"[:300])
-    if _code == 3:
+    # CCN-3 account ceiling, covers arm_chain (which calls arm). BAMR 2026-11-20: one policy with launch_worker --
+    # same state dir (lr.state_dir()), official reading first, and a governor fault or unknown quota refuses
+    # (it used to fail open here and read DEFAULT_STATE, so the two checks could disagree). Kill switch:
+    # CPP_MISSION_ACCOUNT_ADMISSION=off.
+    _why = account_refusal({}, "arm")
+    if _why:
         lr.ledger_append("arm-guard", "account_arm_refused", why=_why[:300])
         raise MissionError(_why)
     rec = create(cwd, resume_command, **kw)
@@ -7388,9 +7986,23 @@ def arm(cwd: str, resume_command: str, *, launch: bool = True, supersedes: str |
         rec = transition(rec["mission_id"], expect_epoch=rec["epoch"], expect_state=PREPARED,
                          event="goal_bound", **extra)
     if old is not None:
+        burn = {}
+        if old.get("burn_hold"):
+            # BAMR P5: reached only with a valid citation (burn_supersede_refusal above). The burn hold is
+            # consumed in the SAME transition that supersedes (review LOW-4: never released before create).
+            cite = burn_citation(old) or {}
+            burn = {"burn_hold": None, "burn_cited": {"commit": cite.get("commit"), "fix": cite.get("fix")}}
+            if (old.get("owner_hold") or {}).get("kind") == BURN_HOLD_KIND:
+                burn["owner_hold"] = None
+            lr.ledger_append(supersedes, "burn_hold_released_by_citation", mission_id=supersedes,
+                             commit=cite.get("commit"))
         transition(supersedes, expect_epoch=old["epoch"], expect_state=old["state"],
                    event="mission_superseded", state=HALTED, pending=None,
-                   reason=f"superseded by {rec['mission_id']}: {authority.strip()[:300]}")
+                   reason=f"superseded by {rec['mission_id']}: {authority.strip()[:300]}", **burn)
+    if pivot and pivot_autonomy_on():
+        # spec mission-checkpoint-autonomy C3: on before the first launch, so the first worker's card teaches the
+        # typed checkpoint. `--no-pivot` keeps the park-for-Owner behaviour (S30T parked 10.8 h without it).
+        rec = set_pivot_autonomy(rec["mission_id"], True)
     if not launch:
         return {"mission": rec}
     # The origin is the tree BEFORE epoch 1 works (review F6): measured here, at arm, it makes
@@ -7621,6 +8233,14 @@ def supervise(*args, **kw) -> list[dict]:
             rows = rows + advance_pass()
         except Exception as exc:  # noqa: BLE001
             rows = rows + [{"mission_id": "advance", "action": "advance", "status": "ERROR",
+                            "error": f"{type(exc).__name__}: {exc}"[:300]}]
+        try:
+            # spec mission-autoresume: a mission stopped >= 5 min on a plane mechanism renews under the Owner's
+            # unchanged ceilings; every other stop is ledgered and notified (m-f27c61b9e75c sat 3 h 46 min unheard).
+            import mission_autoresume as mar
+            rows = rows + mar.autoresume_pass()
+        except Exception as exc:  # noqa: BLE001
+            rows = rows + [{"mission_id": "autoresume", "action": "autoresume", "status": "ERROR",
                             "error": f"{type(exc).__name__}: {exc}"[:300]}]
         if before is not None:
             try:
@@ -8302,6 +8922,8 @@ def _cli(argv=None) -> int:
     a.add_argument("--parallel-unit", help="a named work unit that may run beside other named units "
                                            "of the same goal")
     a.add_argument("--goal", help="bind the worker's session to this goal at launch (launcher binding record)")
+    a.add_argument("--no-pivot", action="store_true",
+                   help="leave method-pivot autonomy off: every checkpoint parks for the Owner (pre-2026-11-12 default)")
     ac =sub.add_parser("arm-chain", help="atomic arm: --no-launch + envelope + admit; hold on any failure")
     ac.add_argument("--cwd", required=True)
     ac.add_argument("--command", required=True)
@@ -8345,9 +8967,11 @@ def _cli(argv=None) -> int:
     cl = sub.add_parser("close", help="spec mission-close: settle a mission terminal on a verified Owner turn; a "
                                       "live background worker is stopped through the host first")
     cl.add_argument("--mission", required=True)
-    cl.add_argument("--reason", required=True)
+    cl.add_argument("--reason", default=None, help="REQUIRED with --owner-turn; a --receipt carries its own")
     cl.add_argument("--owner-turn", default=None, help="REQUIRED: <session>:<timestamp> of the Owner's own message "
                                                        "authorizing the close (verified in that transcript)")
+    cl.add_argument("--receipt", default=None, help="mission-capital W4: instead of --owner-turn, a signed close "
+                                                    "receipt (file or ar1. token) issued where the Owner typed it")
     cl.add_argument("--outcome", choices=list(CLOSE_OUTCOMES), default=HALTED)
     oh = sub.add_parser("hold", help="park a live mission: no launch, halt or renewal (spec mission-owner-hold)")
     oh.add_argument("--mission", required=True)
@@ -8355,7 +8979,13 @@ def _cli(argv=None) -> int:
     oh.add_argument("--stop", action="store_true",
                     help="also stop the live background worker through the host (claude stop + wait); "
                          "never kill the pid by hand: the daemon resumes a killed session")
+    bc = sub.add_parser("burn-cite", help="BAMR P5: cite the optimisation that answers a burn-optimisation hold; "
+                                          "the next arm --supersedes releases it")
+    bc.add_argument("--mission", required=True)
+    bc.add_argument("--fix", required=True, help="what changed so the next attempt does not burn the same way")
+    bc.add_argument("--commit", required=True, help="the commit in the mission's repo that carries the fix")
     orl = sub.add_parser("release", help="lift an owner hold; the budget clock is not reset")
+    orl.add_argument("--allow-overrun", action="store_true", help="release a cost hold even though authority is not above live spend (W0 2026-11-19)")
     orl.add_argument("--mission", required=True)
     rq = sub.add_parser("requires", help="M2: typed resource requirements for ONE obligation; the sweep parks the "
                                          "mission as WAIT_RESOURCE until they are met (no model call)")
@@ -8412,6 +9042,8 @@ def _cli(argv=None) -> int:
     au.add_argument("--recognize-overrun", action="store_true",
                     help="admit a ceiling at or below live spend (recognises spend already made)")
     au.add_argument("--stage", help="named programme stage; opening a different stage needs --owner-turn")
+    au.add_argument("--receipt", help="mission-capital W4: instead of --owner-turn, a signed authority receipt "
+                                      "(file or ar1. token) issued on the host where the Owner typed the turn")
     pr = sub.add_parser("protocol", help="set the rollover protocol on an existing mission "
                                          "(held or owner-less only; same permission-mode rule as arm)")
     pr.add_argument("--mission", required=True)
@@ -8424,6 +9056,7 @@ def _cli(argv=None) -> int:
     en.add_argument("--estimate-basis", help="why an estimate below half the lineage's measured cost is right "
                                              "(spec mission-cost-hold-stops-worker)")
     en.add_argument("--model", help="worker model: sonnet, opus, haiku, fable or a claude- model id")
+    en.add_argument("--worker-profile", choices=["slim-t1", "slim-t2", "none"], help="slim = `claude -p` worker, no GSD re-orientation (W0 2026-11-19 slim worker for ordinary missions)")
     en.add_argument("--autocompact", help="worker autocompact window, e.g. 300k")
     en.add_argument("--wu-packet", help="compiled work-unit file sent instead of the resume command")
     en.add_argument("--continue-max-tokens",
@@ -8470,7 +9103,7 @@ def _cli(argv=None) -> int:
                   permission_mode=args.permission_mode, allowed_tools=args.allowed_tools,
                   add_dirs=args.add_dir, wall=wall, rollover_protocol=args.rollover_protocol,
                   supersedes=args.supersedes, authority=args.authority, parallel_unit=args.parallel_unit,
-                  goal=args.goal, milestone_from=args.milestone_from)
+                  goal=args.goal, milestone_from=args.milestone_from, pivot=not args.no_pivot)
         mid = (res.get("mission") or res).get("mission_id")
         if mid:
             lr.ledger_append(mid, "planning_gate", mission_id=mid, gate=adm["gate"], override=adm.get("override"),
@@ -8521,12 +9154,17 @@ def _cli(argv=None) -> int:
               f"id={out['decision']['id']} woke={bool(w.get('ok'))} why={w.get('why', 'resumed')}")
         return 0
     if args.cmd == "close":
-        if not args.owner_turn:
+        if not args.owner_turn and not args.receipt:
             print("CLOSE REFUSED: --owner-turn <session>:<timestamp> is required (the Owner's own message "
-                  "authorizing the close; it is verified in that session's transcript)", file=sys.stderr)
+                  "authorizing the close; it is verified in that session's transcript), or --receipt <file> "
+                  "issued where the Owner typed it", file=sys.stderr)
+            return 2
+        if args.owner_turn and not args.reason:
+            print("CLOSE REFUSED: --reason is required with --owner-turn", file=sys.stderr)
             return 2
         try:
-            out = close_mission(args.mission, args.reason, args.owner_turn, outcome=args.outcome)
+            out = close_mission(args.mission, args.reason, args.owner_turn, outcome=args.outcome,
+                                receipt=args.receipt)
         except MissionError as exc:
             print(f"CLOSE REFUSED: {exc}", file=sys.stderr)
             return 3
@@ -8586,16 +9224,17 @@ def _cli(argv=None) -> int:
         print(f"REQUIRES SET mission={rec['mission_id']} obligation={args.obligation} total={len(rec['requires'])}")
         return 0
     if args.cmd == "authority":
-        if not args.owner_turn:
+        if not args.owner_turn and not args.receipt:
             # T1 F2 (I2): an Owner act from the command line names the Owner message it records.
             print("AUTHORITY REFUSED: --owner-turn <session>:<timestamp> is required (the Owner's own message "
-                  "authorizing this act; it is verified in that session's transcript)", file=sys.stderr)
+                  "authorizing this act; it is verified in that session's transcript), or --receipt <file> "
+                  "issued where the Owner typed it", file=sys.stderr)
             return 2
         try:
             rec = set_authority(args.mission, args.tokens, args.extend_hours, reason=args.reason,
                                 owner_turn=args.owner_turn, expected_seq=args.expected_seq,
                                 actor=args.actor or os.environ.get("CLAUDE_CODE_SESSION_ID"),
-                                recognize_overrun=args.recognize_overrun, stage=args.stage)
+                                recognize_overrun=args.recognize_overrun, stage=args.stage, receipt=args.receipt)
         except MissionError as exc:
             print(f"AUTHORITY REFUSED: {exc}", file=sys.stderr)
             return 3
@@ -8616,8 +9255,12 @@ def _cli(argv=None) -> int:
     if args.cmd == "topology":
         print(json.dumps(topology(args.mission), indent=1, default=str))
         return 0
+    if args.cmd == "burn-cite":
+        row = burn_cite(args.mission, args.fix, args.commit)
+        print(f"BURN CITED mission={row['mission_id']} commit={row['commit']} (the next arm --supersedes releases it)")
+        return 0
     if args.cmd == "release":
-        rec = release_owner_hold(args.mission)
+        rec = release_owner_hold(args.mission, allow_overrun=bool(getattr(args, "allow_overrun", False)))
         print(f"OWNER HOLD RELEASED mission={rec['mission_id']} state={rec['state']} epoch={rec['epoch']}")
         return 0
     if args.cmd == "protocol":
@@ -8626,6 +9269,20 @@ def _cli(argv=None) -> int:
               f"state={rec['state']} epoch={rec['epoch']}")
         return 0
     if args.cmd == "envelope":
+        if getattr(args, "worker_profile", None):
+            # W0 2026-11-19: the profile is set on its own, so `--worker-profile` alone is a valid call.
+            cur = load(args.mission)
+            if cur is None:
+                raise MissionError(f"no mission {args.mission}")
+            prof = None if args.worker_profile == "none" else args.worker_profile
+            rec = transition(args.mission, expect_epoch=cur["epoch"], expect_state=cur["state"],
+                             event="worker_profile_set", worker_profile=prof,
+                             worker_profile_src="owner" if prof else None, reason=f"worker profile {prof}")
+            print(f"WORKER PROFILE SET mission={rec['mission_id']} profile={prof}")
+            if all(v is None for v in (args.token_estimate, args.model, args.autocompact, args.wu_packet,
+                                       args.continue_max_tokens, args.worker_mcp, args.ccr_class,
+                                       args.phase_lease)):
+                return 0
         rec = set_envelope(args.mission, token_estimate=args.token_estimate, model=args.model,
                            autocompact=args.autocompact, wu_packet=args.wu_packet,
                            continue_max_tokens=args.continue_max_tokens, worker_mcp=args.worker_mcp,
@@ -8665,7 +9322,8 @@ def _cli(argv=None) -> int:
     sessions = host_sessions()
     for m in missions:
         v_, why = liveness(m.get("owner"), sessions)
-        rows.append({"mission_id": m["mission_id"], "state": m["state"], "epoch": m["epoch"],
+        rows.append({"mission_id": m["mission_id"], "state": m["state"], "display_state": display_state(m),
+                     "epoch": m["epoch"],
                      "iterations": m.get("iterations"), "owner": (m.get("owner") or {}).get("session_id"),
                      "liveness": v_, "evidence": why, "pending": m.get("pending"),
                      "plan": plan_next(m, time.time(), sessions)})
@@ -8700,6 +9358,18 @@ def _cli(argv=None) -> int:
     except Exception as exc:  # noqa: BLE001 -- an unreadable incident store is itself reported
         print(f"ECONOMIC INCIDENTS UNREADABLE: {type(exc).__name__}: {exc}", file=sys.stderr)
     return 0
+
+
+def display_state(rec: dict) -> str:
+    """The label an Owner should read. `state` stays the raw record state (consumers key on it); a non-terminal
+    mission that holds an owner_hold is PARKED, not running (ASC-02: 46 parked holds read `state: RUNNING`)."""
+    st = rec.get("state")
+    if st in TERMINAL or st == "UNREADABLE":
+        return st
+    hold = rec.get("owner_hold")
+    if hold:
+        return f"PARKED:{hold.get('kind') or 'owner'}-hold"
+    return st
 
 
 SWEEP_STALE_S = 900   # 3 missed 5-minute passes
