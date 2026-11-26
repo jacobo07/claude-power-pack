@@ -180,8 +180,126 @@ def synthesize(levers: dict, lane: str, ls: dict, product: str, family, designer
     return lv, None
 
 
+# ---------------------------------------------------------------- strategy escape (round 5)
+# Owner 2026-11-26 (pane a90ef78f, "OWNER RULING — WSR SCIENTIFIC ESCAPE AND STRATEGY EVOLUTION"): a stalled generation
+# must open a strategic investigation by itself instead of waiting for the Owner to invent the next route; reusable for
+# every lane. Where _synth_or_park would park (SYNTH_MAX reached, design refused or none), a lane with research room
+# researches ONE fixed-template STRATEGY_EXPANSION lever (not model-designed): causal funnel, >= 2 hypotheses of new
+# families, a versioned discovery pool apart from any held-out set, or demonstrated LIMITS with REOPEN conditions.
+# Bounded: ESCAPE_MAX in a row without a conversion; the research cap, envelope and day cap bind as before; no
+# certifier, breaker or held-out change. Kill switch AP_STRATEGY_ESCAPE=0. Spec: PP vault/specs/ascension-autopilot-
+# strategy-escape.md.
+ESCAPE_FAMILY = "STRATEGY_EXPANSION"
+ESCAPE_MAX = 2
+ESCAPE_LIMITS_TAG = "STRATEGY LIMITS DEMONSTRATED"
+_ESC_LINE = re.compile(r"^[ \t>*_`-]*(FUNNEL|STRATEGY|DISCOVERY_POOL|HELD_OUT|LIMITS|REOPEN)[*_`]*\s*:\s*(.+?)\s*$", re.M)
+_ESC_FAMILY = re.compile(r"\bfamily\s+([A-Z][A-Z0-9_]{2,})\b")
+_ESC_POOL = re.compile(r"count\s+(\d+)\s+floor\s+(\d+)")
+
+
+def escape_lines(text: str) -> dict:
+    out: dict = {}
+    for m in _ESC_LINE.finditer(text or ""):
+        out.setdefault(m.group(1), []).append(m.group(2))
+    return out
+
+
+def escape_problems(text: str, known_families) -> list[str]:
+    """Deterministic admission of a STRATEGY_EXPANSION checkpoint. Empty list = it did its job (an eligible discovery
+    pool, or demonstrated limits with reopen conditions). A pool below its floor is exploration, never eligible."""
+    ln, bad = escape_lines(text), []
+    known = {str(f) for f in known_families or ()} | {ESCAPE_FAMILY}
+    if len(ln.get("FUNNEL", [])) < 2:
+        bad.append("fewer than 2 FUNNEL lines (where the candidates disappear)")
+    fams = [m.group(1) for s in ln.get("STRATEGY", []) if (m := _ESC_FAMILY.search(s))]
+    new = sorted(set(fams) - known)
+    if len(new) < 2:
+        bad.append(f"fewer than 2 STRATEGY hypotheses of a family not tried before (new: {new or 'none'})")
+    if ln.get("LIMITS"):
+        if not ln.get("REOPEN"):
+            bad.append("LIMITS without a REOPEN condition")
+        return bad
+    pools = [(int(m.group(1)), int(m.group(2))) for s in ln.get("DISCOVERY_POOL", []) if (m := _ESC_POOL.search(s))]
+    if not pools:
+        bad.append("no DISCOVERY_POOL line and no LIMITS line")
+    elif not any(c >= f > 0 for c, f in pools):
+        bad.append(f"discovery pool below its floor {pools}: exploration only, not eligible")
+    if not any("untouched" in s.lower() for s in ln.get("HELD_OUT", [])):
+        bad.append("no 'HELD_OUT: untouched' line")
+    return bad
+
+
+def _read_residual(product: str, residual) -> str:
+    if not residual:
+        return ""
+    p = residual if os.path.isabs(str(residual)) else os.path.join(product or "", str(residual))
+    try:
+        with open(p, encoding="utf-8", errors="replace") as f:
+            return f.read(400_000)
+    except OSError:
+        return ""
+
+
+def strategy_escape(ls: dict, levers: dict, lane: str, family, residual, stall: str, refused=None):
+    """-> the escape lever (appended to `levers`), or None when the escape is off, spent or has no research room."""
+    if os.environ.get("AP_STRATEGY_ESCAPE", "1") == "0" or not lane:
+        return None
+    if int(ls.get("escape_streak") or 0) >= ESCAPE_MAX:
+        return None
+    if lane_research_cap(ls) - int(ls.get("research_spent") or 0) < RESEARCH_GEN_CAP:
+        return None
+    mine = [x for x in levers.get(lane, []) if isinstance(x, dict)]
+    known = sorted({str(x.get("family")) for x in mine if x.get("family")} - {ESCAPE_FAMILY})
+    n = 1 + sum(1 for x in mine if x.get("family") == ESCAPE_FAMILY)
+    lid = f"{re.sub(r'[^a-z0-9]', '', lane.lower())}_strategy_escape_{n}"
+    res = os.path.basename(str(residual)) if residual else "the last checkpoint"
+    what = (f"STRATEGY ESCAPE {n}/{ESCAPE_MAX} from {res}: the lane stalled ({stall[:300]}). "
+            + (f"The previous escape was refused: {'; '.join(refused)[:400]}. " if refused else "")
+            + "Do not repeat a failed search with new seeds or parameters. Phase 1 diagnoses causally and writes one "
+            "machine line per stage, `FUNNEL: <stage> <count>` (at least 2), proving where the candidates disappear "
+            "(universe, eligibility, generation, filters, dedup, target coverage, input data, instruments, planner "
+            "constraints). Then it writes at least 2 materially different hypotheses as `STRATEGY: <id> family <FAMILY> "
+            "<what>`, each FAMILY absent from the families already tried by this lane: " + (", ".join(known) or "none")
+            + ". These are the rival hypotheses; name a positive control and a decision rule. If a strategy can bring new "
+            "candidates, build a NEW versioned discovery pool independent of every held-out set and write "
+            "`DISCOVERY_POOL: <name> count <N> floor <F>` (the lane's floor, never lowered) and `HELD_OUT: untouched`; "
+            "pilots below the floor are exploration only. If no informative strategy fits the authorised resources, "
+            "write `LIMITS: <what was demonstrated>` and `REOPEN: <precise condition>` and stop: no invented progress.")
+    lv = {"id": lid, "family": ESCAPE_FAMILY, "kind": "research", "status": "open", "origin": "autopilot",
+          "escape": n, "blockers": ["DESIGN_EXHAUSTED"], "requires": [], "cost": 1, "what": what}
+    levers.setdefault(lane, []).append(lv)
+    ls["escape_streak"] = int(ls.get("escape_streak") or 0) + 1
+    ls["synth_streak"] = 0  # the escape is the strategic look SYNTH_MAX waits for (Owner standing ruling, above)
+    return lv
+
+
+def escape_review(levers: dict, lane: str, product: str, family, residual):
+    """After a STRATEGY_EXPANSION generation: (limits_park | None, refusals). A checkpoint that demonstrates LIMITS with
+    REOPEN conditions parks the lane honestly (park_kind limits); refusals feed the next escape's directive."""
+    if family != ESCAPE_FAMILY:
+        return None, None
+    text = _read_residual(product, residual)
+    known = {x.get("family") for x in levers.get(lane, []) if isinstance(x, dict)}
+    refused, ln = escape_problems(text, known), escape_lines(text)
+    if not refused and ln.get("LIMITS"):
+        return ({"action": "park", "park_kind": "limits",
+                 "why": f"{ESCAPE_LIMITS_TAG}: {'; '.join(ln['LIMITS'])[:300]} | REOPEN: "
+                        f"{'; '.join(ln.get('REOPEN', []))[:300]}"}, [])
+    return None, refused
+
+
 def _synth_or_park(ls, levers, lane, product, family, designer, residual, why: str, src: str) -> dict:
+    limits, refused = escape_review(levers, lane, product, family, residual)
+    if limits:
+        return limits
     lever, swhy = synthesize(levers, lane, ls, product, family, designer, residual)
+    if lever is None and designer is not None:
+        esc = strategy_escape(ls, levers, lane, family, residual, f"{why} ({swhy})", refused or None)
+        if esc is not None:
+            ls.update(mode="RESEARCH", info_streak=0, no_conversion=0, research_fail=0, repair={})
+            return {"action": "research", "lever": esc, "designed": True, "escape": True,
+                    "why": f"{src}: strategy escape {esc['escape']}/{ESCAPE_MAX} instead of parking ({swhy})"[:600],
+                    "directive": directive(esc, "RESEARCH")}
     if lever is None:
         return {"action": "park", "why": f"{why} ({swhy})" if designer is not None else why}
     ls.update(mode="RESEARCH", info_streak=0, no_conversion=0, research_fail=0, repair={})
@@ -355,6 +473,7 @@ def after_judgment(ls: dict, cls: str, instruments: list[str], levers: dict, lan
     family = (cur or {}).get("family") or "UNREGISTERED"
     if cls in CONVERSIONS:
         ls["synth_streak"] = 0
+        ls["escape_streak"] = 0
 
     def synth_or_park(why: str, src: str) -> dict:
         return _synth_or_park(ls, levers, lane, product, family, designer, residual, why, src)
@@ -395,6 +514,10 @@ def after_judgment(ls: dict, cls: str, instruments: list[str], levers: dict, lan
         return {"action": "research", "lever": lever, "why": f"Owner-directed method transition from {family}: "
                                                              f"research with {lever['id']} ({lever.get('family')})",
                 "directive": directive(lever, "RESEARCH")}
+    # round 5: an escape generation that demonstrated LIMITS stops here, whatever the class: no invented progress
+    limits, _ = escape_review(levers, lane, product, family, residual)
+    if limits and cls not in CONVERSIONS:
+        return limits
     # one count per instrument per judgment; legacy free-text keys fold onto their identity (max, not sum: the old
     # code wrote one key per name, and two names of one instrument in one judgment were one failure)
     rep: dict = {}

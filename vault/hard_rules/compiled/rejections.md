@@ -1,8 +1,8 @@
 # HARD-RULE REJECTION REPORT (compiled artifact)
 
-Compiled 2026-08-07T14:04:23Z.
+Compiled 2026-11-26T16:16:11Z.
 
-**13 of 162 rules failed the schema gate.** A rejected rule is not deleted -- it is denied entry to the ACTIVE set. It cannot fire, and it is listed here so it can be repaired or retired.
+**7 of 184 rules failed the schema gate.** A rejected rule is not deleted -- it is denied entry to the ACTIVE set. It cannot fire, and it is listed here so it can be repaired or retired.
 
 A rule earns a place in the kill switch by being able to stop the agent: an observable TRIGGER, an imperative ACTION, and a real incident as EVIDENCE.
 
@@ -40,43 +40,3 @@ A rule earns a place in the kill switch by being able to stop the agent: an obse
 - **trigger_missing** -- no TRIGGER field
   - observed ACTION: `** the browser runs on the VPS (204.168.166.63, host `ubuntu-8gb-hel1`) or GEX44 — NEVER on the Owner's laptop, where a `
   - observed EVIDENCE: `** TUA-X qa-system-vps-playwright sprint 2026-07-10 (SL-115). Built `scripts/qa/` (unified runner + VPS-only visual regr`
-
-## pp:vault/hard_rules/HARD_RULES.md (6 rejected)
-
-### HR-002 -- Test Critical Bug For Auto-propose Pipeline
-- **trigger_is_smoke_fixture** -- TRIGGER is a smoke-test fixture, not a production condition
-- **evidence_is_smoke_fixture** -- EVIDENCE cites a smoke-test fixture, not a real incident
-  - observed TRIGGER: `Test recognizer for pipeline`
-  - observed ACTION: `Run auto_HR-002 proposal drafting`
-  - observed EVIDENCE: `[never_again] TEST CRITICAL bug for auto-propose pipeline ZZZ`
-
-### HR-003 -- Ukdl S 2026-05-26
-- **trigger_is_heading_scrape** -- TRIGGER is a document heading the generator scraped (a doc title is not an observable condition)
-  - observed TRIGGER: `Before: UKDL S+++ 2026-05-26`
-  - observed ACTION: `write body to file via Write tool, invoke `git commit -F file` (or `gh --body-file`, `mix run -f`, `node script.js`). Tr`
-  - observed EVIDENCE: `[ukdl] UKDL S+++ 2026-05-26`
-
-### HR-004 -- Osa Absorption Tco Context Fix
-- **trigger_is_heading_scrape** -- TRIGGER is a document heading the generator scraped (a doc title is not an observable condition)
-  - observed TRIGGER: `Before: OSA Absorption + TCO Context Fix UKDL (2026-05-28)`
-  - observed ACTION: `UKDL (2026-05-28)`
-  - observed EVIDENCE: `[ukdl] OSA Absorption + TCO Context Fix UKDL (2026-05-28)`
-
-### HR-005 -- 2026-05-24 -- Deployment Skill Iteration Log
-- **stop_is_table_fragment** -- ACCION/STOP is a markdown table fragment, not an imperative action -- the generator captured the wrong lines
-  - observed TRIGGER: `Before initiating any production deploy or release`
-  - observed ACTION: `|`
-  - observed EVIDENCE: `[session_lessons] 2026-05-24 -- Deployment Skill iteration log`
-
-### HR-006 -- L6 A1a2 Sync Direction Propagates Corruption
-- **stop_is_boilerplate** -- ACCION/STOP is generator boilerplate shared verbatim with another rule -- it prescribes nothing rule-specific
-  - observed TRIGGER: `Before: L6: A1/A2 sync direction propagates corruption byte-perfectly`
-  - observed ACTION: `STOP. Verify preconditions in writing. Document what you are about to do. Get explicit confirmation if any step is irrev`
-  - observed EVIDENCE: `[session_lessons] L6: A1/A2 sync direction propagates corruption byte-perfectly`
-
-### HR-007 -- Neveragain 2026-05-29t200643z Claude-power-pack
-- **trigger_is_heading_scrape** -- TRIGGER is a document heading the generator scraped (a doc title is not an observable condition)
-- **stop_is_boilerplate** -- ACCION/STOP is generator boilerplate shared verbatim with another rule -- it prescribes nothing rule-specific
-  - observed TRIGGER: `Before: NEVER_AGAIN — 2026-05-29T20:06:43Z — claude-power-pack — HIGH`
-  - observed ACTION: `STOP. Verify preconditions in writing. Document what you are about to do. Get explicit confirmation if any step is irrev`
-  - observed EVIDENCE: `[session_lessons] NEVER_AGAIN — 2026-05-29T20:06:43Z — claude-power-pack — HIGH`

@@ -354,6 +354,36 @@ def settle(ln: str, mission, gen, authority, spent, at: float | None = None, why
     return {"freed": freed, "corrected": fix}
 
 
+RESEARCH_BOOKED_KEEP = 12  # generations whose research booking is remembered for the credit (newest kept)
+
+
+def book_research(ls: dict, gen, caps: int) -> None:
+    """Round 6 (Owner 2026-11-26 "go ahead", pane a90ef78f): a RESEARCH generation books its whole cap at arm, as before;
+    the booking is now remembered per generation so its unspent part can come back (credit_research)."""
+    ls["research_spent"] = int(ls.get("research_spent") or 0) + int(caps)
+    b = dict(ls.get("research_booked") or {})
+    b.pop(str(gen), None)
+    b[str(gen)] = int(caps)
+    ls["research_booked"] = dict(list(b.items())[-RESEARCH_BOOKED_KEEP:])
+
+
+def credit_research(ln: str, ls: dict, gen, freed) -> int:
+    """The unspent reservation a settlement released goes back into the lane's research room, bounded by what that
+    generation booked as research (an EXPLOIT generation booked none, so it credits none). Idempotent: settle frees a
+    reservation once, and the credit draws down the remembered booking. -> tokens credited."""
+    b = dict(ls.get("research_booked") or {})
+    left = int(b.get(str(gen)) or 0)
+    c = max(0, min(int(freed or 0), left, int(ls.get("research_spent") or 0)))
+    if not c:
+        return 0
+    ls["research_spent"] = int(ls.get("research_spent") or 0) - c
+    b[str(gen)] = left - c
+    ls["research_booked"] = b
+    ledger_add(lane=ln, kind="research_credit", gen=gen, tokens=0, credited=c, research_spent=ls["research_spent"])
+    log(f"{ln}: research room +{c:,} (unspent reservation of {gen}); research_spent {ls['research_spent']:,}")
+    return c
+
+
 def release_reservations(ln: str, mission: str | None, gen: str | None, authority, spent) -> int:
     """Books the reserve_release rows (negative tokens, back-dated to the reservation's day). Returns tokens released."""
     total = 0
@@ -800,6 +830,32 @@ def match_lost(old: set, cur: set) -> list:
     return sorted(old - cur)
 
 
+def read_snap(snap: Path, lane_name: str) -> set | None:
+    """The MATCH snapshot, or None when there is none. 2026-11-25 (WIIPARTY S357W, 56 CERTIFIED and AGREE): the disk filled
+    at 06:16Z while the snapshot was being rewritten, left it 0 bytes, and every later judgment of the lane died on
+    json.loads (ERROR JSONDecodeError, lane parked). An unreadable snapshot is moved aside (.corrupt-<ts>) and the caller
+    re-seeds from HEAD with nothing claimed: no MATCH is credited twice and none is invented."""
+    if not snap.exists():
+        return None
+    try:
+        return set(json.loads(snap.read_text()))
+    except (ValueError, TypeError, OSError) as exc:
+        bad = snap.with_name(f"{snap.name}.corrupt-{int(time.time())}")
+        snap.replace(bad)
+        log(f"{lane_name}: MATCH snapshot unreadable ({type(exc).__name__}); moved to {bad.name}, re-seeded from HEAD")
+        owner_queue(lane_name, f"NOTICE (no action needed): MATCH snapshot was unreadable ({type(exc).__name__}); kept as "
+                               f"{bad.name} and re-seeded from HEAD, nothing claimed from it")
+        return None
+
+
+def write_snap(snap: Path, cur: set) -> None:
+    """Atomic: a full disk fails the write and leaves the previous snapshot whole."""
+    snap.parent.mkdir(parents=True, exist_ok=True)
+    tmpf = snap.with_name(snap.name + ".tmp")
+    tmpf.write_text(json.dumps(sorted(cur)))
+    os.replace(tmpf, snap)
+
+
 def verify_match(lane, product: str, notes: list):
     """None = not configured or nothing new; True = MATCH (snapshot advanced); str = refused. Owner 2026-11-17: MKW
     S112M/S116M put 113 functions at 100% and were classified INFORMATION, because only KSR receipts could convert."""
@@ -809,17 +865,16 @@ def verify_match(lane, product: str, notes: list):
     if cur is None:
         return why
     snap = OUT / "match" / f"{lane['name']}.json"
-    if not snap.exists():
-        snap.parent.mkdir(parents=True, exist_ok=True)
-        snap.write_text(json.dumps(sorted(cur)))
+    old = read_snap(snap, lane["name"])
+    if old is None:
+        write_snap(snap, cur)
         return f"no MATCH snapshot yet: seeded from HEAD ({len(cur)} at 100%), nothing claimed"
-    old = set(json.loads(snap.read_text()))
     lost, new = match_lost(old, cur), sorted(cur - old)
     if lost:
         return f"{len(lost)} functions dropped from 100%: {', '.join(lost[:5])}"
     if not new:
         return None
-    snap.write_text(json.dumps(sorted(cur)))
+    write_snap(snap, cur)
     notes.append(f"MATCH: +{len(new)} functions at 100% ({len(cur)} total): {', '.join(new[:5])}")
     return True
 
@@ -921,10 +976,10 @@ def match_new(lane, product: str) -> tuple[int, str | None]:
     cur, why = match_at100(lane, product)
     if cur is None:
         return 0, why
-    snap = OUT / "match" / f"{lane['name']}.json"
-    if not snap.exists():
+    old = read_snap(OUT / "match" / f"{lane['name']}.json", lane["name"])
+    if old is None:
         return 0, "no MATCH snapshot"
-    return len(cur - set(json.loads(snap.read_text()))), None
+    return len(cur - old), None
 
 
 def superseded_ok(v: dict, product: str, base, prior=None, lane=None) -> str | None:
@@ -1162,7 +1217,7 @@ def design_before_park(st: dict, lane: dict, ls: dict, key: str, checkpoint: str
     return None
 
 
-DESIGN_SNAP_KEYS = ("mode", "next_lever", "synth_streak", "research_fail", "repair")
+DESIGN_SNAP_KEYS = ("mode", "next_lever", "synth_streak", "research_fail", "repair", "escape_streak")
 
 
 def design_snap(ls: dict) -> dict:
@@ -1256,8 +1311,9 @@ def declared_not_final(checkpoint: str, product: str) -> str | None:
             "(deterministic, no judge call)")
 
 
-POOL_FLOOR_RE = re.compile(r"^[ \t>*_`-]*POOL_FLOOR[*_`]*\s*:\s*[*_`]*\s*([\w.\-/]+)\s+count\s+(\d+)\s+floor\s+(\d+)",
-                           re.I | re.M)
+POOL_FLOOR_RE = re.compile(r"^[ \t>*_`-]*POOL_FLOOR[*_`]*\s*:\s*[*_`]*\s*([\w.\-/]+)\s+count\s+(\d+)\s+floor\s+(\d+)"
+                           r"(?:[*_`]*\s+via\s+python3?\s+([\w.\-/]+\.py))?", re.I | re.M)
+J0_TIMEOUT = 300  # one re-count under cron.lock; a tool slower than this is unobserved, and the judge decides
 
 
 def pool_floor_below(checkpoint: str, product: str) -> list[dict]:
@@ -1270,8 +1326,86 @@ def pool_floor_below(checkpoint: str, product: str) -> list[dict]:
         text = p.read_text(errors="replace")
     except OSError:
         return []
-    return [{"name": m.group(1), "count": int(m.group(2)), "floor": int(m.group(3))}
+    return [dict({"name": m.group(1), "count": int(m.group(2)), "floor": int(m.group(3))},
+                 **({"tool": m.group(4)} if m.group(4) else {}))
             for m in POOL_FLOOR_RE.finditer(text) if int(m.group(2)) < int(m.group(3))]
+
+
+def count_via_tool(product: str, ref: str, tool, name: str, runner=None) -> tuple[int | None, int | None, str]:
+    """T2 W2: (count, floor, why) from the `POOL_FLOOR: <name> ...` line that a COMMITTED counting tool prints when run
+    bare at `ref` in a scratch worktree (gate_rc_at). (None, None, why) when the tool is not a relative .py path, is
+    absent at that ref, fails, times out, or prints no line for `name`: unobserved is never a count."""
+    t = str(tool or "").strip()
+    if not t.endswith(".py") or t.startswith(("/", "-")) or ".." in Path(t).parts:
+        return None, None, f"not a relative .py tool path: {t[:80]!r}"
+    sha = _sha(product, ref)
+    if not sha:
+        return None, None, f"{ref} does not resolve in {product}"
+    if _git(product, "cat-file", "-e", f"{sha}:{t}")[0] != 0:
+        return None, None, f"{t} is not committed at {sha[:12]}"
+    rc, tail = (runner or gate_rc_at)(product, sha, t, J0_TIMEOUT)
+    if rc is None:
+        return None, None, f"{t} unobserved: {tail[:160]}"
+    if rc != 0:
+        return None, None, f"{t} rc {rc}: {tail[-160:]}"
+    for m in POOL_FLOOR_RE.finditer(tail):
+        if m.group(1) == name:
+            return int(m.group(2)), int(m.group(3)), "ok"
+    return None, None, f"{t} printed no POOL_FLOOR line for {name}"
+
+
+def j0_pool_floor(lane: dict, checkpoint: str, product: str, runner=None) -> dict | None:
+    """T2 W2 (a) J0: a below-floor halt is INSTRUMENT_FAIL(population) with no model call only when EVERY below-floor line
+    names `via python3 <tool>`, that tool re-counts the same count and floor at the product's HEAD, and the protected
+    identities are intact. Anything else is JUDGE. None = no below-floor line. SHADOW: the caller only logs it."""
+    below = pool_floor_below(checkpoint, product)
+    if not below:
+        return None
+    why = []
+    for b in below:
+        if not b.get("tool"):
+            why.append(f"{b['name']}: no `via python3 <tool>`")
+            continue
+        n, f, w = count_via_tool(product, "HEAD", b["tool"], b["name"], runner)
+        if n is None:
+            why.append(f"{b['name']}: {w}")
+        elif (n, f) != (b["count"], b["floor"]):
+            why.append(f"{b['name']}: re-count {n} floor {f} != declared {b['count']} floor {b['floor']}")
+    pbad = protected_check(lane)
+    if pbad:
+        why.append(pbad)
+    return {"j0": "JUDGE" if why else "INSTRUMENT_FAIL(population)", "why": [w[:200] for w in why[:4]],
+            "pools": [b["name"] for b in below]}
+
+
+def j0_shadow_agreements(rows=None) -> int:
+    """Live J0 verdicts of INSTRUMENT_FAIL(population) that the judge, called anyway, agreed with (AGREE, naming an
+    instrument failure). ENFORCE is an Owner act after 3 (plan T2 W2, sequential stopping)."""
+    return sum(1 for r in (ledger_rows() if rows is None else rows)
+               if r.get("kind") == "j0_shadow" and r.get("agree") is True)
+
+
+def prearm_shadow(lane: dict, name: str, product: str, p: dict, runner=None) -> dict | None:
+    """T2 W2 (b): a plan whose `precheck` {name, tool, floor} cites a counting tool ALREADY committed in the product is
+    counted at HEAD before arming. SHADOW: one 0-token `prearm_shadow` row says what enforcement would do (REPLAN below
+    the floor, ARM at or above it, UNOBSERVED when no count was read); the generation is armed either way."""
+    pc = p.get("precheck")
+    if not isinstance(pc, dict):
+        return None
+    pool, tool = str(pc.get("name") or ""), pc.get("tool")
+    try:
+        floor = int(pc.get("floor"))
+    except (TypeError, ValueError):
+        floor = None
+    if not pool or floor is None:
+        n, f, why = None, None, f"malformed precheck: {json.dumps(pc)[:160]}"
+    else:
+        n, f, why = count_via_tool(product, "HEAD", tool, pool, runner)
+    row = {"gen": name, "pool": pool, "tool": str(tool or "")[:120], "floor": floor, "count": n, "tool_floor": f,
+           "would": "UNOBSERVED" if n is None else ("REPLAN" if n < floor else "ARM"), "why": why[:200]}
+    ledger_add(lane=lane["name"], kind="prearm_shadow", tokens=0, **row)
+    log(f"{lane['name']}: pre-arm shadow {name}: {pool} count {n} floor {floor} -> would {row['would']} ({why[:120]})")
+    return row
 
 
 def book_pool_floor_halt(lane: dict, checkpoint: str, product: str) -> int:
@@ -1301,6 +1435,13 @@ def judge(lane: dict, checkpoint: str, product: str, ruling: str = "") -> dict:
         log(f"{lane.get('name')}: {nf}")
         return {"verdict": "INCONCLUSIVE", "checkpoint_final": False, "notes": nf, "_tokens": 0, "_session": None,
                 "_not_executable": True}
+    j0 = None
+    try:  # T2 W2 (a) SHADOW: decided before the model call, booked beside its verdict; once per (lane, checkpoint)
+        if not any(r.get("kind") == "j0_shadow" and r.get("lane") == lane.get("name")
+                   and r.get("checkpoint") == checkpoint for r in ledger_rows()):
+            j0 = j0_pool_floor(lane, checkpoint, product)
+    except Exception as e:  # noqa: BLE001 -- a shadow never blocks a judgment
+        log(f"{lane.get('name')}: j0 shadow failed: {e!r}")
     prompt = (HOME / "judge_prompt.md").read_text().replace("{CHECKPOINT}", checkpoint).replace("{PRODUCT}", product)
     prompt += ruling
     # 2026-11-19 (pane 08cba76c): the judge's bare gate runs rewrote tracked evidence (MKW s184m/seq_gate_run.json,
@@ -1324,15 +1465,33 @@ def judge(lane: dict, checkpoint: str, product: str, ruling: str = "") -> dict:
         v["verdict"] = "INCONCLUSIVE"
         v["notes"] = r.get("error") or "judge reply did not end with a verdict JSON"
         v["_judge_failed"] = True  # the instrument failed, not the generation: never answered with a designed lever
+    if j0:
+        try:
+            inst = [str(f.get("instrument") or "")[:80] for f in v.get("instrument_failures") or [] if isinstance(f, dict)]
+            agree = (None if j0["j0"] != "INSTRUMENT_FAIL(population)"
+                     else bool(v.get("verdict") == "AGREE" and inst and not v.get("_judge_failed")))
+            ledger_add(lane=lane.get("name"), kind="j0_shadow", tokens=0, checkpoint=checkpoint, j0=j0["j0"],
+                       why=j0["why"], pools=j0["pools"], judge_verdict=v.get("verdict"), judge_instruments=inst,
+                       agree=agree)
+            log(f"{lane.get('name')}: j0 shadow {j0['j0']} vs judge {v.get('verdict')} {inst}: agree={agree}; "
+                f"{j0_shadow_agreements()} live agreement(s), ENFORCE is the Owner's after 3")
+        except Exception as e:  # noqa: BLE001
+            log(f"{lane.get('name')}: j0 shadow not booked: {e!r}")
     return v
 
 
-def plan(lane: dict, name: str, checkpoint: str, product: str, verdict: dict, evo_directive: str = "") -> dict:
-    prompt = ((HOME / "planner_prompt.md").read_text().replace("{NAME}", name).replace("{LANE}", lane["name"])
+def planner_prompt(lane: dict, name: str, checkpoint: str, product: str, verdict: dict,
+                   evo_directive: str = "") -> str:
+    return ((HOME / "planner_prompt.md").read_text().replace("{NAME}", name).replace("{LANE}", lane["name"])
               .replace("{CHECKPOINT}", checkpoint).replace("{PRODUCT}", product)
               .replace("{VERDICT}", json.dumps({k: v for k, v in verdict.items() if not k.startswith("_")})[:3000])
               .replace("{DIGEST}", str(OUT / "digest.md")).replace("{BRIEF}", str(HOME / "brief.md"))
-              .replace("{EVOLUTION}", evo_directive or "EVO: no method transition this generation."))
+              .replace("{EVOLUTION}", evo_directive or "EVO: no method transition this generation.")) \
+        + rulings_block(lane["name"])
+
+
+def plan(lane: dict, name: str, checkpoint: str, product: str, verdict: dict, evo_directive: str = "") -> dict:
+    prompt = planner_prompt(lane, name, checkpoint, product, verdict, evo_directive)
     r = run_claude(prompt, cwd=product, tools=["Read", "Grep", "Glob", "Bash(git log:*)", "Bash(ls:*)"],
                    add_dirs=[lane["cwd"], "/home/kobii/missions/gen3-pp", "/home/kobii/missions/recon-general", str(HOME)],
                    max_turns=50, timeout=3600)
@@ -1438,19 +1597,41 @@ def write_packet(lane: dict, name: str, text: str) -> Path:
     return path
 
 
+SLIM_LOOP = ("Then execute the packet's phases yourself, in order, one at a time (this worker has no slash commands "
+             "and no GSD re-orientation): for each phase do its work, commit its evidence, record its measured spend "
+             "and status in .planning/STATE.md, and go on to the next only when it is done or at its cap.")
+
+
+SLIM_PILOT_MAX = 2  # Owner 2026-11-22: "arm 2 WIIPARTY generations"; lanes.json `worker_profile_max` overrides
+
+
+def worker_profile(lane: dict, rows=None) -> str | None:
+    """T2 W3b pilot (Owner 'slim-t2 + inline loop', '12-hook list'): lanes.json `worker_profile: "slim-asc"` arms that
+    lane's generations as slim workers. Absent or null = the default launch (the kill switch); any other value is
+    ignored, so a typo never arms an unvetted profile. Bounded: after SLIM_PILOT_MAX successful `worker_profile_set`
+    rows on the lane, the default launch returns by itself (the pilot runs unattended overnight)."""
+    if lane.get("worker_profile") != "slim-asc":
+        return None
+    done = sum(1 for r in (ledger_rows() if rows is None else rows)
+               if r.get("kind") == "worker_profile_set" and r.get("lane") == lane.get("name") and r.get("ok") is True)
+    return "slim-asc" if done < int(lane.get("worker_profile_max") or SLIM_PILOT_MAX) else None
+
+
 def command_text(lane: dict, name: str, packet: Path, notes: str) -> str:
     rel = packet.relative_to(lane["cwd"])
+    run = SLIM_LOOP if worker_profile(lane) else f"Then run /gsd-autonomous on the {name} milestone in .planning."
     return (f"Execute {name} of the Ascension programme (Autopilot lane {lane['name']}; open-ended reconstruction, method "
             f"evolution, independent certification). This cwd ({lane['cwd']}) is the CONTROL repo; the PRODUCT is "
             f"{lane['product']}. FIRST read {rel} in full (authority, NOT-authorised list, facts, phases with caps); it binds. "
-            f"Then run /gsd-autonomous on the {name} milestone in .planning. {notes} "
+            f"{run} {notes} "
             "Freeze in a commit before anything judged on it; gates with planted mutants; micro-commit owned files only and "
             "never stage pre-existing dirty residue; keep a budget.md with measured spend per phase (gsd_mission.py topology "
             "--mission <this mission>); stop a phase at its cap; no push, no paid API. Each tool call costs ~120k processed "
             "tokens (the resident context is re-read): commit evidence as you go, never leave results uncommitted, and "
             "commit the checkpoint (or a pivot residual) before 75% of the authority is processed. Count before you spend: "
             "the phase that freezes a population with a declared floor writes the machine line `POOL_FLOOR: <name> count "
-            "<N> floor <F>` into its evidence; when N < F, stop the generation there (no further phase) and commit an "
+            "<N> floor <F>` into its evidence (append ` via python3 tools/<x>.py` when a committed tool, run bare, prints "
+            "that same line as its last line); when N < F, stop the generation there (no further phase) and commit an "
             "INSTRUMENT_FAIL (population) checkpoint carrying that line and `CHECKPOINT_FINAL: true`. At the end: "
             "gsd_mission.py checkpoint "
             f"CHECKPOINT_COMPLETE with an evidence checkpoint file for {name} that states new canonical certificates (per "
@@ -1538,7 +1719,7 @@ def hours_left(rec: dict, now: float) -> float:
 def cost_topup(st: dict, lane: dict, ls: dict, mid: str, rec: dict, hold: dict, dry: bool) -> None:
     key = f"{mid}:{hold.get('set_at')}"
     if ls.get("topup_for") == key:
-        return
+        return "REFUSED" if ls.get("topup_refused") == key else None
     env, n, ln = lane.get("envelope") or {}, int(ls.get("topups") or 0), lane["name"]
     rows, now, basis = ledger_rows(), _now(), None
     if not env.get("owner_turn"):
@@ -1569,18 +1750,20 @@ def cost_topup(st: dict, lane: dict, ls: dict, mid: str, rec: dict, hold: dict, 
             ledger_add(lane=ln, kind="topup_skipped_age", gen=ls.get("gen"), mission=mid, tokens=0)
     ls["topup_for"] = key
     if why:
+        ls["topup_refused"] = key
         save_state(st)
         owner_queue(ln, f"cost hold on {mid} not topped up: {why}. Hold: {str(hold.get('reason'))[:200]}")
-        return
+        return "REFUSED"
     auth = int(rec.get("authority_tokens") or 0) + TOPUP
     args = ["authority", "--mission", mid, "--tokens", str(auth)] + (["--extend-hours", f"{ext:g}"] if ext else [])
     rc, out = gm(*args, "--owner-turn", env["owner_turn"], "--reason",
                  f"Autopilot top-up {n + 1}/{MAX_TOPUPS}: +{TOPUP:,} inside the {ln} envelope ({env.get('note', '')}); "
                  f"{basis}" + (f"; wall +{ext:g} h ({hours_left(rec, now):.1f} h left)" if ext else ""), dry=dry)
     if rc != 0:
+        ls["topup_refused"] = key
         save_state(st)
         owner_queue(ln, f"top-up of {mid} refused by gsd_mission: {out[-300:]}")
-        return
+        return "REFUSED"
     ledger_add(lane=ln, kind="auto_topup", gen=ls.get("gen"), mission=mid, tokens=TOPUP, authority=auth,
                basis=basis[:160], extend_hours=ext or None)
     ls.update(topups=n + 1, authority=auth, topup_at=now, topup_head=gen_head(rec) or ls.get("topup_head"))
@@ -1589,6 +1772,490 @@ def cost_topup(st: dict, lane: dict, ls: dict, mid: str, rec: dict, hold: dict, 
     log(f"{ln}: cost hold on {mid}: authority -> {auth:,} (top-up {n + 1}/{MAX_TOPUPS}, {basis[:80]})"
         + (f", wall +{ext:g} h" if ext else "") + f"; release rc={rc}")
     digest(ln, f"TOP-UP {mid}: +{TOPUP:,} -> {auth:,} inside the lane envelope ({basis})")
+
+
+BREAKER_REPLAN_MAX = 2
+
+
+HELD_REPLAN_S = 7200  # round 2 (Owner "hazlas todas"): MKW S338M sat 15 h on "launch held: cwd diverged"
+
+
+def held_too_long(rec: dict, now: float | None = None) -> bool:
+    """A RUNNING mission with no hold whose every relaunch has been held ('launch held: ...') for HELD_REPLAN_S.
+    Round 2c (MKW 22:02Z): gsd_mission renewed the aged-out m-c32ebb609572 as m-905388a9fcc8, which sat PREPARED on the
+    same 'launch held: cwd diverged'; a renewal that never launched is the same stall."""
+    now = _now() if now is None else now
+    return (rec.get("state") in ("RUNNING", "PREPARED") and str(rec.get("reason") or "").startswith("launch held")
+            and now - float(rec.get("updated_at") or now) >= HELD_REPLAN_S)
+
+
+def breaker_replan(st: dict, lane: dict, ls: dict, mid: str, rec: dict, hold: dict, dry: bool,
+                   cause: str = "cost") -> None:
+    """Owner 2026-11-25 (laptop pane 5f1414ed, "anadele permisos al autopilot para que esto no pase mas"): a cost-breaker
+    hold whose top-up was refused left the lane RUNNING with no worker, forever (WSR from 11-23, WIIPARTY 11-25), because
+    only an Owner act could end the generation. The autopilot now ends it itself: the next generation is planned from the
+    judgment this one was planned from (no re-judge; arm_generation closes and settles the stalled mission), told why and
+    told to change route. Once per hold; BREAKER_REPLAN_MAX in a row per lane (a judged checkpoint resets the streak),
+    then the lane parks visibly (park_kind breaker), never RUNNING-idle.
+    Round 2 (Owner "hazlas todas", same pane): cause "held" does the same for a launch held >= HELD_REPLAN_S; and a
+    re-plan that drew a policy refusal resumes from its kept plan at the next tick (before, the second tick returned on
+    breaker_replan_for and the lane sat RUNNING-idle again)."""
+    ln, key = lane["name"], f"{mid}:{hold.get('set_at')}"
+    what = "cost hold" if cause == "cost" else "launch held"
+    if ls.get("breaker_replan_for") == key:
+        pend = resumable_plan(ls, key)
+        if not pend or ls.get("judged_for") == key or resume_wait(pend):
+            return
+        ls["judged_for"] = key
+        d0 = pend.get("directive") or ""
+        if pend.get("bad"):
+            d0 = (d0 + "\n\n" + replan_feedback(pend["bad"], pend.get("offenders"))).strip()
+        log(f"{ln}: breaker re-plan of {mid} resumed from its kept plan (no re-judge)")
+        save_state(st)
+        return plan_and_arm(st, lane, ls, key, (ls.get("planned_from") or {}).get("checkpoint"), lane["product"],
+                            dict(pend["verdict"]), d0, pend.get("snap") or {}, dry)
+    ls["breaker_replan_for"] = key
+    pf = ls.get("planned_from") or {}
+    ck, v, n = pf.get("checkpoint"), pf.get("verdict"), int(ls.get("breaker_replans") or 0)
+    if not (ck and isinstance(v, dict)):
+        return _park(st, ls, ln, f"{what} on {mid} and no kept judgment to re-plan from; lane parked",
+                     f"PARKED: {what} on {mid}, nothing to re-plan from", kind="breaker")
+    if n >= BREAKER_REPLAN_MAX:
+        return _park(st, ls, ln, f"{what} on {mid}: {n} breaker re-plans in a row without a judged checkpoint; "
+                                 "lane parked for the Owner", f"PARKED: {n} breaker re-plans in a row", kind="breaker")
+    ls["breaker_replans"] = n + 1
+    ls["judged_for"] = key
+    ledger_add(lane=ln, kind="breaker_replan", tokens=0, mission=mid, gen=ls.get("gen"), n=n + 1, checkpoint=ck,
+               cause=cause)
+    log(f"{ln}: {what} on {mid}: breaker re-plan {n + 1}/{BREAKER_REPLAN_MAX} from the kept judgment of {ck} "
+        "(no re-judge)")
+    digest(ln, f"BREAKER RE-PLAN {n + 1}/{BREAKER_REPLAN_MAX} ({what}): {ls.get('gen')} stalled; next generation "
+               f"planned from {ck}")
+    save_state(st)
+    if cause == "cost":
+        directive = (f"COST BREAKER (autopilot authority, Owner 2026-11-25): generation {ls.get('gen')} ({mid}) was "
+                     f"stopped: {str(hold.get('reason'))[:300]}. Its lever {ls.get('lever')} made no proven progress (no "
+                     "new commit with a moved progress fingerprint). Do not repeat that route: name a materially "
+                     "different method or a smaller bounded step, cite the residual it answers, and plan it inside the caps.")
+    else:
+        hrs = (_now() - float(rec.get("updated_at") or _now())) / 3600
+        directive = (f"LAUNCH HELD (autopilot authority, Owner 2026-11-25): generation {ls.get('gen')} ({mid}) could not "
+                     f"relaunch its worker for {hrs:.1f} h: {str(hold.get('reason'))[:300]}. It is re-planned from the "
+                     "same judgment: read its branch and evidence first, do not redo what it proved, and plan the rest "
+                     "inside the caps.")
+    return plan_and_arm(st, lane, ls, key, ck, lane["product"], dict(v), directive, design_snap(ls), dry)
+
+
+def recover_interrupted_tick(st: dict, ln: str, ls: dict) -> None:
+    """2026-11-25 (FIFATC S339C, disk full): a tick judged a hold, saved judged_for, then died while planning; the
+    except's own save failed too, so the lane kept status RUNNING and every later tick returned on judged_for == key.
+    tick_lane marks each lane's tick open on disk; a mark found at the next tick means that tick never finished:
+    the judgment it left is cleared so the hold is judged (or its kept plan re-planned) again."""
+    ls.pop("tick_open", None)
+    jf = ls.get("judged_for")
+    if ls.get("status") in ("RUNNING", "WAITING") and jf:
+        ls["judged_for"] = None
+        ledger_add(lane=ln, kind="tick_recovered", tokens=0, judged_for=jf)
+        log(f"{ln}: the previous tick died before finishing (judged_for {jf}): cleared, the hold is taken again")
+        owner_queue(ln, f"NOTICE (no action needed): an interrupted tick left judged_for {jf}; cleared and retried")
+    else:
+        log(f"{ln}: the previous tick died before finishing; nothing to undo ({ls.get('status')})")
+
+
+WATCHDOG_S = 3 * 3600  # round 2 (Owner "hazlas todas"): WSR sat RUNNING-idle 2 days unseen
+
+
+def _wd_fingerprint(ls: dict, rec: dict) -> str:
+    return json.dumps([ls.get("status"), ls.get("mission"), ls.get("gen"), ls.get("judged_for"),
+                       (ls.get("pending_plan") or {}).get("gen"), rec.get("state"), rec.get("updated_at"),
+                       (rec.get("owner_hold") or {}).get("set_at"), (rec.get("cost_mark") or {}).get("tokens")],
+                      default=str)
+
+
+def watchdog(st: dict, lane: dict, ls: dict) -> None:
+    """One notice when a RUNNING/WAITING lane has not changed at all for WATCHDOG_S: not its own state, not its mission's
+    (state, updated_at, hold, processed tokens). It covers every silent `return` in lane_tick, known or not. Never
+    parks: a day-cap or weekly wait is legitimate and is only told. Once per fingerprint."""
+    ln = lane["name"]
+    if ls.get("status") not in ("RUNNING", "WAITING"):
+        ls.pop("wd", None)
+        return
+    rec = (mission(ls["mission"]) if ls.get("mission") else None) or {}
+    fp, now = _wd_fingerprint(ls, rec), _now()
+    wd = ls.get("wd") or {}
+    if wd.get("fp") != fp:
+        wd = ls["wd"] = {"fp": fp, "since": now}
+    if wd.get("told") or now - float(wd["since"]) < WATCHDOG_S:
+        return
+    hold = rec.get("owner_hold") or {}
+    why = (f"lane {ls.get('status')} gen {ls.get('gen')}, judged_for {ls.get('judged_for')}; mission "
+           f"{ls.get('mission')} {rec.get('state')}, hold {hold.get('kind')}, reason: {str(rec.get('reason') or '')[:200]}")
+    hrs = (now - float(wd["since"])) / 3600
+    wd.update(told=now, why=why)
+    ledger_add(lane=ln, kind="watchdog_idle", tokens=0, mission=ls.get("mission"), hours=round(hrs, 1))
+    log(f"{ln}: WATCHDOG: nothing changed for {hrs:.1f} h ({why})")
+    owner_queue(ln, f"WATCHDOG: nothing changed for {hrs:.1f} h: {why}")
+    digest(ln, f"WATCHDOG idle {hrs:.1f} h: {why}")
+
+
+OWN_TMP_RE = re.compile(r"^ap-(dry|test)-\w+$")
+TMP_SWEEP_AGE_S = 24 * 3600
+TMP_SWEEP_MAX = 2000
+
+
+def sweep_own_tmp(root=None, now: float | None = None) -> int:
+    """2026-11-25: 12,382 /tmp/ap-dry-* scratch dirs since 11-11 (test_autopilot's dry-tick check, ~167 per gate run)
+    were never removed. Only this programme's two prefixes, only directories this user owns, only older than
+    TMP_SWEEP_AGE_S (a hand-run dry-tick's scratch stays inspectable for a day), at most TMP_SWEEP_MAX per tick."""
+    root = Path(root or os.environ.get("AP_SWEEP_ROOT") or tempfile.gettempdir())  # the gate points it at its own tmp
+    if not root.is_dir():
+        return 0
+    now = time.time() if now is None else now
+    uid = os.getuid() if hasattr(os, "getuid") else None
+    n = 0
+    with os.scandir(root) as it:
+        for e in it:
+            if n >= TMP_SWEEP_MAX:
+                break
+            try:
+                if not OWN_TMP_RE.match(e.name) or not e.is_dir(follow_symlinks=False):
+                    continue
+                s = e.stat(follow_symlinks=False)
+                if (uid is not None and s.st_uid != uid) or now - s.st_mtime < TMP_SWEEP_AGE_S:
+                    continue
+            except OSError:
+                continue
+            shutil.rmtree(e.path, ignore_errors=True)
+            n += 0 if os.path.exists(e.path) else 1
+    return n
+
+
+DISK_FLOOR_GB = 20.0
+
+
+def disk_admits() -> str | None:
+    """2026-11-25: the disk was 100% full from ~06:16Z; FIFATC died mid-plan (judged_for left set), MKWLIB on ENOSPC,
+    and MKW's worker spent a generation to report 'disk 4G<10G'. Below the floor no lane is ticked (nothing judged,
+    planned or armed; state untouched), so nothing is left half-done for lack of space. AP_DISK_FLOOR_GB=0 = off."""
+    try:
+        floor = float(os.environ.get("AP_DISK_FLOOR_GB") or DISK_FLOOR_GB)
+        free = shutil.disk_usage(str(OUT)).free / 2 ** 30
+    except (OSError, ValueError):
+        return None
+    return None if free >= floor else f"disk {free:.1f}G free < floor {floor:g}G on {OUT}"
+
+
+ALERT_STATUSES = ("PARKED", "STOPPED")
+QUEUE_LINE_RE = re.compile(r"^- \[([^\]]+)\] (\S+): (.*)$")
+
+
+def _last_queue_lines(tail_bytes: int = 400_000) -> dict:
+    """lane -> (ts, text) of its last owner_queue line that is not a NOTICE or a QUESTION (the park reason)."""
+    p = OUT / "owner_queue.md"
+    try:
+        with open(p, "rb") as f:
+            f.seek(max(0, p.stat().st_size - tail_bytes))
+            text = f.read().decode("utf-8", "replace")
+    except OSError:
+        return {}
+    last = {}
+    for line in text.splitlines():
+        m = QUEUE_LINE_RE.match(line)
+        if m and not m.group(3).startswith(("QUESTION", "NOTICE")):
+            last[m.group(2)] = (m.group(1), m.group(3))
+    return last
+
+
+def stranded_due(rec: dict) -> bool:
+    """When to look for stranded work: the mission ended, or its relaunch is held on a cwd/work_dir divergence."""
+    return bool(rec) and (rec.get("state") in TERMINAL
+                          or str(rec.get("reason") or "").startswith("launch held: cwd not aligned"))
+
+
+def _diff_paths(product: str, a: str, b: str):
+    rc, out = _git(product, "diff", "--name-only", a, b)
+    return None if rc else [p.strip() for p in out.splitlines() if p.strip()]
+
+
+def reconcile_stranded(lane: dict, ls: dict, rec: dict, dry: bool) -> str:
+    """Round 4 (Owner 2026-11-26 "subele la autonomia"). FIFATC S364C did its work in the PREVIOUS generation's worktree
+    (worktree-s359c: phases 1-3, held-out 55/60 SUPPORTED, provisional checkpoint) while the product kept only the S364C
+    scaffold. gsd_mission saw "3.9M processed since the work tree last changed", cut it on cost and it was settled
+    HALTED, so the lane parked over a checkpoint nobody judged. MKW S369M did the same in worktree-s362m; its relaunch
+    was then held "cwd diverged" and two held re-plans re-created it.
+    Commits whose subject starts with the lane's current generation, sitting on a worktree branch the product lacks,
+    whose worktree is NOT this generation's own (its directory name does not start with the generation), are merged
+    into the product (--no-ff, never a rewrite). This happens only when the product's own side since the merge base is
+    the autopilot scaffold alone (.planning/ and the lane packet dir), the two sides share no path, and no uncommitted
+    product change touches the merged paths. The worktree is then fast-forwarded to the merge, so cwd == work_dir.
+    Anything else is a 'skip: ...' and nothing moves. -> '' when nothing is stranded."""
+    product, gen = lane.get("product"), str(ls.get("gen") or "")
+    if not gen or not product or not Path(product).is_dir():
+        return ""
+    pkt = str(lane.get("packet_dir") or "vault/autopilot").strip("/") + "/"
+    rc, out = _git(product, "worktree", "list", "--porcelain")
+    if rc:
+        return ""
+    wts, cur = [], {}
+    for line in [*out.splitlines(), ""]:
+        if not line.strip():
+            if cur.get("worktree") and cur.get("branch"):
+                wts.append((cur["worktree"], cur["branch"].replace("refs/heads/", "", 1)))
+            cur = {}
+            continue
+        k, _, v = line.partition(" ")
+        cur[k] = v
+    me = os.path.realpath(product)
+    hits = []
+    for path, br in wts:
+        if os.path.realpath(path) == me or Path(path).name.lower().startswith(gen.lower()):
+            continue  # the product itself, or this generation's own worktree (normal work, merged at the checkpoint)
+        rc, subj = _git(product, "log", "--format=%s", f"HEAD..{br}")
+        if not rc and any(s.startswith(gen) for s in subj.splitlines()):
+            hits.append((path, br))
+    if not hits:
+        return ""
+    if len(hits) > 1:
+        return f"skip: {gen} commits on {len(hits)} worktree branches ({', '.join(b for _, b in hits)[:200]})"
+    path, br = hits[0]
+    tip = _git(product, "rev-parse", br)[1].strip()
+    base = _git(product, "merge-base", "HEAD", br)[1].strip()
+    mine, theirs = (_diff_paths(product, base, "HEAD"), _diff_paths(product, base, tip)) if base else (None, None)
+    if mine is None or theirs is None:
+        return f"skip: {br} unreadable"
+    beyond = [p for p in mine if not (p.startswith(".planning/") or p.startswith(pkt))]
+    if beyond:
+        return f"skip: the product moved beyond the scaffold since {base[:12]} ({', '.join(beyond[:3])})"
+    both = sorted(set(mine) & set(theirs))
+    if both:
+        return f"skip: {br} and the product both touch {', '.join(both[:3])}"
+    dirty = {l[3:].strip() for l in _git(product, "status", "--porcelain", "--untracked-files=no")[1].splitlines() if l.strip()}
+    if dirty & set(theirs):
+        return f"skip: uncommitted product changes in {', '.join(sorted(dirty & set(theirs))[:3])}"
+    msg = (f"autopilot: bring {gen} work home from {br} ({len(theirs)} paths; the product side since {base[:12]} "
+           "is only the scaffold)")
+    if dry:
+        return "DRY " + msg
+    rc, o = _git(product, "merge", "--no-ff", "--no-edit", "-m", msg, br)
+    if rc:
+        _git(product, "merge", "--abort")
+        return f"skip: merge of {br} failed: {o[-200:]}"
+    m = _git(product, "rev-parse", "HEAD")[1].strip()
+    rc2, o2 = _git(path, "merge", "--ff-only", m)
+    ledger_add(lane=lane["name"], kind="stranded_merged", tokens=0, gen=gen, branch=br, tip=tip, merge=m,
+               paths=len(theirs), worktree_ff=rc2 == 0, mission=(rec or {}).get("mission_id"))
+    log(f"{lane['name']}: {msg} -> {m[:12]}; worktree {path} ff {'ok' if rc2 == 0 else 'refused: ' + o2[-120:]}")
+    owner_queue(lane["name"], f"NOTICE (no action needed): {msg} -> {m[:12]}")
+    return msg
+
+
+ANSWERS = "answers.jsonl"  # round 3: the Owner's rulings inbox (`autopilot.py answer <LANE> <text>`), under HOME
+RULINGS_MAX = 5  # newest rulings kept per lane
+_RULINGS: dict = {}  # lane -> its rulings, set by tick_lane for plan() (which has no lane state)
+
+
+def record_answer(lane_name: str, text: str, now: float | None = None) -> dict:
+    """Round 3 (Owner 2026-11-26, KSR cohort-exclusion clause: 'autorizo y deberia tener la capacidad'). KSR's
+    mission asked an Owner decision, blocked, and died on age 16 h later; the only way in was a hand-run `decide` on
+    a mission that was already terminal. An answer is now one appended line here; the next tick takes it."""
+    import hashlib  # noqa: PLC0415
+    text = " ".join(str(text or "").split())[:1000]
+    if not text:
+        raise ValueError("empty answer")
+    at = _now() if now is None else now
+    row = {"lane": lane_name, "text": text, "at": at,
+           "id": hashlib.sha1(f"{lane_name}|{text}|{at}".encode()).hexdigest()[:8]}
+    with open(HOME / ANSWERS, "a") as f:
+        f.write(json.dumps(row, sort_keys=True) + "\n")
+    return row
+
+
+def take_answers(st: dict, names) -> int:
+    """Each new complete line of answers.jsonl becomes a binding ruling on its lane (kept, newest RULINGS_MAX). A
+    PARKED/STOPPED lane goes WAITING with its judgment cleared, so its last checkpoint is judged and planned again
+    with the ruling in the planner prompt. The Owner answering is what unparks: an honest stall stays parked until
+    they do. -> rulings taken (the caller saves the state)."""
+    try:
+        raw = (HOME / ANSWERS).read_text()
+    except FileNotFoundError:
+        return 0
+    lines = raw[:raw.rfind("\n") + 1].splitlines()  # a line still being written waits for the next tick
+    seen, n = int(st.get("answers_seen") or 0), 0
+    for line in lines[seen:]:
+        try:
+            a = json.loads(line)
+        except ValueError:
+            log(f"owner answer line unreadable, ignored: {line[:120]!r}")
+            continue
+        ln = a.get("lane")
+        ls = (st.get("lanes") or {}).get(ln)
+        if ln not in names or ls is None or not str(a.get("text") or "").strip() or not a.get("id"):
+            log(f"owner answer for unknown lane {ln!r} ignored")
+            continue
+        rs = [r for r in ls.get("owner_rulings") or [] if r.get("id") != a["id"]]
+        rs.append({"id": a["id"], "text": str(a["text"])[:1000], "at": a.get("at") or _now(), "delivered": []})
+        ls["owner_rulings"] = rs[-RULINGS_MAX:]
+        was = ls.get("status")
+        if was in ALERT_STATUSES:
+            ls.update(status="WAITING", park_kind=None, judged_for=None)
+        ledger_add(lane=ln, kind="owner_answer", tokens=0, ruling=a["id"], was=was)
+        owner_queue(ln, f"NOTICE (no action needed): Owner ruling {a['id']} recorded"
+                        + (f"; lane {was} -> WAITING (last checkpoint judged again with it)" if was in ALERT_STATUSES
+                           else "") + f": {str(a['text'])[:200]}")
+        log(f"{ln}: Owner ruling {a['id']} recorded (lane was {was})")
+        n += 1
+    st["answers_seen"] = len(lines)
+    return n
+
+
+def rulings_block(lane_name: str) -> str:
+    rs = _RULINGS.get(lane_name) or []
+    if not rs:
+        return ""
+    return ("\n\nOWNER RULINGS for this lane (binding, newest last; recorded with `autopilot.py answer`). They settle "
+            "the questions they answer: plan inside them and never plan a generation that asks them again.\n"
+            + "\n".join(f"- {r['id']}: {r['text']}" for r in rs))
+
+
+def decide_ruling(mid: str, rid: str, text: str) -> tuple[bool, str]:
+    rc, out = gm("decide", "--mission", mid, "--id", f"AP-{rid}", "--text", text, timeout=180)
+    return rc == 0, out[-300:]
+
+
+def deliver_rulings(ln: str, ls: dict, dry: bool) -> int:
+    """Each ruling reaches the lane's live mission once, as a durable gsd_mission decision (its launch card carries it;
+    a background owner that stopped to ask is resumed with it). A terminal mission is skipped: the planner carries
+    the ruling into the next generation. 3 refusals per mission -> one notice, no more tries. -> delivery attempts."""
+    mid, rs = ls.get("mission"), ls.get("owner_rulings") or []
+    if dry or not mid or not rs:
+        return 0
+    rec = mission(mid) or {}
+    if not rec or rec.get("state") in TERMINAL:
+        return 0
+    n = 0
+    for r in rs:
+        if mid in (r.get("delivered") or []) or (r.get("failed") or {}).get(mid, 0) >= 3:
+            continue
+        ok, why = decide_ruling(mid, r["id"], f"Owner ruling for lane {ln} ({r['id']}): {r['text']}")
+        n += 1
+        if ok:
+            r["delivered"] = [*(r.get("delivered") or []), mid][-20:]
+            ledger_add(lane=ln, kind="owner_ruling_delivered", tokens=0, ruling=r["id"], mission=mid)
+            log(f"{ln}: Owner ruling {r['id']} delivered to {mid}")
+            continue
+        f = r.setdefault("failed", {})
+        f[mid] = f.get(mid, 0) + 1
+        log(f"{ln}: Owner ruling {r['id']} not delivered to {mid}: {why!r}")
+        if f[mid] >= 3:
+            owner_queue(ln, f"Owner ruling {r['id']} could not reach {mid} after 3 tries ({why[:200]}); "
+                            "the planner still carries it")
+    return n
+
+
+def open_question(ls: dict, rec: dict) -> str:
+    """The Owner decision a lane's mission asked and no ruling has answered since. '' when none."""
+    bi = rec.get("blocked_intent") or {}
+    if bi.get("kind") != "DECISION_REQUEST" or bi.get("answer"):
+        return ""
+    asked = float((rec.get("blocker") or {}).get("at") or 0)
+    if any(float(r.get("at") or 0) >= asked for r in ls.get("owner_rulings") or []):
+        return ""
+    return str(bi.get("needs") or (rec.get("blocker") or {}).get("reason") or "Owner decision requested")[:500]
+
+
+def build_alerts(st: dict) -> list[dict]:
+    """What needs the Owner now. 2026-11-25: every gsd_mission notice on GEX44 ended `incident_notify_failed` (no
+    channel), and KSR/MKW sat PARKED over missions that were still live (one BLOCKED on an Owner decision)."""
+    import hashlib  # noqa: PLC0415
+    q, out = _last_queue_lines(), []
+    dw = st.get("disk_wait")
+    if dw:
+        out.append({"key": f"disk:{int(dw.get('since') or 0)}", "lane": "ALL", "level": "disk",
+                    "since": dw.get("since"), "text": str(dw.get("why"))})
+    for ln, ls in sorted((st.get("lanes") or {}).items()):
+        s = ls.get("status")
+        rec = (mission(ls["mission"]) if ls.get("mission") else None) or {}
+        qa = open_question(ls, rec)
+        if qa:  # round 3: the question itself, and how to answer it
+            out.append({"key": f"{ln}:question:{hashlib.sha1(qa.encode()).hexdigest()[:10]}", "lane": ln,
+                        "level": "question", "since": (rec.get("blocker") or {}).get("at"),
+                        "text": (f"QUESTION from {ls.get('mission')} ({rec.get('state')}): {qa} | answer with: "
+                                 f"autopilot.py answer {ln} \"<ruling>\"")[:700]})
+        if s in ALERT_STATUSES:
+            at, text = q.get(ln, ("", f"{s} (no queue line)"))
+            live = (f" | its mission {ls.get('mission')} is still {rec.get('state')}: {str(rec.get('reason') or '')[:200]}"
+                    if rec and rec.get("state") not in TERMINAL else "")
+            out.append({"key": f"{ln}:{s}:{hashlib.sha1(text.encode()).hexdigest()[:10]}", "lane": ln,
+                        "level": s.lower(), "since": at, "park_kind": ls.get("park_kind"), "text": (text + live)[:700]})
+        wd = ls.get("wd") or {}
+        if s in ("RUNNING", "WAITING") and wd.get("told"):
+            out.append({"key": f"{ln}:idle:{int(wd['since'])}", "lane": ln, "level": "idle", "since": wd["since"],
+                        "text": str(wd.get("why"))[:700]})
+    return out
+
+
+def write_alerts(st: dict) -> None:
+    """alerts.json, rewritten every tick. The laptop task PP-Ascension-Alerts mails new keys, and notices when this
+    file stops being rewritten (the autopilot itself not ticking)."""
+    try:
+        tmpf = OUT / "alerts.json.tmp"
+        tmpf.write_text(json.dumps({"at": _now(), "alerts": build_alerts(st)}, indent=1, default=str))
+        os.replace(tmpf, OUT / "alerts.json")
+    except Exception as exc:  # noqa: BLE001 -- alerts never stop a tick
+        try:
+            log(f"alerts.json not written: {exc!r}")
+        except OSError:
+            pass
+
+
+def tick_lane(st: dict, lane: dict, dry: bool) -> None:
+    """One lane's tick with an on-disk open mark (see recover_interrupted_tick) and the per-lane error park."""
+    ln = lane["name"]
+    ls = st.setdefault("lanes", {}).get(ln)
+    if ls is not None:  # round 3: the lane's Owner rulings, for its planner and its live mission
+        _RULINGS[ln] = list(ls.get("owner_rulings") or [])
+        try:
+            if deliver_rulings(ln, ls, dry):
+                save_state(st)
+        except Exception as exc:  # noqa: BLE001 -- a delivery never stops a tick
+            log(f"{ln}: owner ruling delivery failed: {exc!r}")
+        if ls.get("status") in ("RUNNING", "WAITING") and ls.get("mission"):  # round 4: stranded work, before judging
+            try:
+                rec0 = mission(ls["mission"]) or {}
+                if stranded_due(rec0):
+                    why = reconcile_stranded(lane, ls, rec0, dry)
+                    if why.startswith("autopilot: bring"):
+                        ls["held_grace_until"] = _now() + HELD_REPLAN_S
+                        save_state(st)
+                    if why.startswith("skip") and ls.get("stranded_note") != why:
+                        ls["stranded_note"] = why
+                        owner_queue(ln, f"NOTICE (no action needed): stranded {ls.get('gen')} work not merged: {why[:300]}")
+                        save_state(st)
+            except Exception as exc:  # noqa: BLE001 -- a reconcile never stops a tick
+                log(f"{ln}: stranded-work reconcile failed: {exc!r}")
+    if ls is not None:
+        if ls.get("tick_open"):
+            recover_interrupted_tick(st, ln, ls)
+        ls["tick_open"] = _now()
+        save_state(st)
+    try:
+        lane_tick(st, lane, dry)
+    except Exception as exc:  # noqa: BLE001 -- one lane's failure never stops the other; it is logged and parked
+        log(f"{ln}: ERROR {type(exc).__name__}: {exc}")
+        ls2 = st.setdefault("lanes", {}).setdefault(ln, {})
+        ls2.pop("tick_open", None)
+        ls2["status"] = "PARKED"
+        owner_queue(ln, f"autopilot error {type(exc).__name__}: {str(exc)[:200]}")
+        save_state(st)  # if this save fails too, the open mark stays on disk and the next tick recovers the lane
+        return
+    ls2 = st.get("lanes", {}).get(ln)
+    if ls2 is not None:
+        ls2.pop("tick_open", None)
+        try:
+            watchdog(st, lane, ls2)
+        except Exception as exc:  # noqa: BLE001 -- a watch never stops a tick
+            log(f"{ln}: watchdog failed: {exc!r}")
+        save_state(st)
 
 
 def halt_resumable(ls: dict, mid: str) -> bool:
@@ -1779,6 +2446,29 @@ def checkpoint_from_branch(product: str, base, head) -> str:
     return ""
 
 
+NOPATH_WAIT_S = 1800  # round 2: gsd_mission auto-pivoted KSR S329K's and MKW S338M's holds 4 and 11 min after setting them
+
+
+def checkpoint_from_sha(product: str, hold: dict, base) -> str:
+    """2026-11-25 (KSR S329K `5cb05abd`, MKW S338M `289143e1`): the hold's evidence was the product commit that adds the
+    checkpoint, and both lanes parked "names no path" while their missions went on unwatched. A sha in evidence or
+    residual that is a product commit strictly after the generation base resolves to the checkpoint*/residual*.md it
+    adds or modifies. Reachability from HEAD is NOT required (MKW's sat on its worktree branch; discover_checkpoint
+    fast-forwards). '' when none."""
+    b = _sha(product, base)
+    if not b:
+        return ""
+    for x in (hold.get("evidence"), hold.get("residual")):
+        c = _sha(product, str(x or "").strip())
+        if not c or c == b or _git(product, "merge-base", "--is-ancestor", b, c)[0] != 0:
+            continue
+        rc, out = _git(product, "show", "--format=", "--name-only", "--diff-filter=AM", c)
+        for path in (l.strip() for l in out.splitlines() if rc == 0):
+            if path and CKPT_NAME_RE.search(path):
+                return path
+    return ""
+
+
 # 2026-11-21 (Owner "y", pane b9040a8e): a day-cap WAIT before arming dropped the judgment (judged_for None, pending_plan
 # popped, snap restored), so every later tick re-judged, re-designed and re-planned the same checkpoint (~1-3M tokens)
 # until the caps fitted. Measured before the fix: 0 such waits in cron.out since 11-11 (the judge step reserves GEN_CAP
@@ -1910,22 +2600,45 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
                 log(f"{lane['name']}: {mid} ended {rec['state']} with {tck} committed on its branch; judged as its checkpoint")
             hold = {"kind": "checkpoint", "set_at": "terminal", "evidence": tck}
         if not hold and ls.get("status") == "RUNNING":
+            if held_too_long(rec) and _now() >= float(ls.get("held_grace_until") or 0):
+                # round 2: a launch held for hours is re-planned like a refused cost breaker. Round 4b (MKW 12:15Z): not
+                # within HELD_REPLAN_S of a stranded merge home, which is what lets the held relaunch align
+                return breaker_replan(st, lane, ls, mid, rec, {"set_at": f"held:{rec.get('updated_at')}",
+                                                               "reason": rec.get("reason")}, dry, cause="held")
             return running_watch(st, lane, ls, mid, rec, dry)
         if hold.get("kind") == "cost" and ls.get("status") == "RUNNING":
-            return cost_topup(st, lane, ls, mid, rec, hold, dry)
+            if cost_topup(st, lane, ls, mid, rec, hold, dry) == "REFUSED":
+                return breaker_replan(st, lane, ls, mid, rec, hold, dry)
+            return
         if hold.get("kind") != "checkpoint":
             return
         checkpoint = hold_checkpoint(hold)
+        if SHA_RE.match(checkpoint):  # a bare commit sha in `residual` is not a path either (MKW S338M pivot)
+            checkpoint = ""
         if ls.get("judged_for") == f"{mid}:{hold.get('set_at')}":
             return
+        if not checkpoint:  # 2026-11-25 (KSR S329K, MKW S338M): the hold names the product commit that adds it
+            checkpoint = checkpoint_from_sha(product, hold, ls.get("base"))
+            if checkpoint:
+                log(f"{lane['name']}: hold of {mid} names a commit; its checkpoint is {checkpoint}")
         if not checkpoint:  # 2026-11-17 (S111C): look on the generation branch before parking
-            checkpoint = checkpoint_from_branch(product, ls.get("base"), gen_head(rec))
+            gh = gen_head(rec)  # KSR: a control-repo head the product lacks -> the product HEAD (as terminal_checkpoint)
+            checkpoint = checkpoint_from_branch(product, ls.get("base"), gh if gh and _sha(product, gh) else "HEAD")
             if checkpoint:
                 log(f"{lane['name']}: hold of {mid} names no path; found {checkpoint} on the generation branch")
-        if not checkpoint:  # a judge with no path can only say INCONCLUSIVE: park instead of paying for it
-            ls["judged_for"] = f"{mid}:{hold.get('set_at')}"
-            return _park(st, ls, lane["name"], f"checkpoint hold of {mid} names no evidence or residual path; "
-                                               "not judged")
+        if not checkpoint:  # a judge with no path can only say INCONCLUSIVE: wait for the mission, then park
+            hk = f"{mid}:{hold.get('set_at')}"
+            if ls.get("nopath_for") != hk:
+                ls.update(nopath_for=hk, nopath_since=_now())
+                save_state(st)
+                log(f"{lane['name']}: checkpoint hold of {mid} names no path; waiting up to {NOPATH_WAIT_S // 60} min "
+                    "(the mission may pivot or name it)")
+                return
+            if _now() - float(ls.get("nopath_since") or 0) < NOPATH_WAIT_S:
+                return
+            ls["judged_for"] = hk
+            return _park(st, ls, lane["name"], f"checkpoint hold of {mid} names no evidence or residual path after "
+                                               f"{NOPATH_WAIT_S // 60} min; not judged")
         kept = resumable_plan(ls, f"{mid}:{hold.get('set_at')}")
         if kept and kept.get("checkpoint"):
             # 2026-11-19 (FIFATC S118C, pane 08cba76c): the halted worker sat on a stale side branch, so discovery parked
@@ -1942,6 +2655,7 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
             if wr:  # F3: judged where its gates run, the product (now holding the branch), not the worker's tree
                 checkpoint = os.path.join(product, wr[1])
         ls.pop("continued_from", None)  # a checkpoint was reached: a later halt may be continued again
+        ls.pop("breaker_replans", None)  # ... and a cost-breaker streak is over
         ls["judged_for"] = key = f"{mid}:{hold.get('set_at')}"
     else:
         pat, product = lane["bootstrap_checkpoint"], lane.get("bootstrap_product", lane["product"])
@@ -2033,7 +2747,9 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
             why = design_before_park(st, lane, ls, key, checkpoint, product, v, pbad, why, dry)
             if why is None:
                 return
-        return _park(st, ls, lane["name"], why)
+        # round 5: an escape that demonstrated its limits is an honest stop, not an evo park
+        return _park(st, ls, lane["name"], why,
+                     kind="limits" if str(why).startswith(evolve.ESCAPE_LIMITS_TAG) else None)
     snap = {k: ls.get(k, 0) for k in ("blank", "info_streak", "no_conversion")}  # restored if this judgment is redone
     cls, cnotes = classify_progress(v, product, ls.get("base"), None if dry else lane)
     evo_dir = ""
@@ -2061,7 +2777,8 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
             return
         if d["action"] == "park":
             ls["judged_for"] = None
-            return _park(st, ls, lane["name"], f"EVO: {d['why']}; Owner look before the next one", kind="evo")
+            return _park(st, ls, lane["name"], f"EVO: {d['why']}; Owner look before the next one",
+                         kind=d.get("park_kind") or "evo")
         if d.get("lever"):
             ls["next_lever"] = d["lever"]["id"]
         evo_dir = d.get("directive", "")
@@ -2260,6 +2977,11 @@ def plan_and_arm(st: dict, lane: dict, ls: dict, key: str, checkpoint: str, prod
         save_state(st)
         log(f"{lane['name']}: budget wait before arming {name}: {why}")
         return
+    if not dry:
+        try:  # T2 W2 (b) SHADOW: counted and booked, never refused here (ENFORCE after 3 live agreements, Owner)
+            prearm_shadow(lane, name, product, p)
+        except Exception as e:  # noqa: BLE001 -- a shadow never blocks an arm
+            log(f"{lane['name']}: pre-arm shadow failed: {e!r}")
     res = arm_generation(st, lane, ls, name, text, notes, phases, caps, dry)
     if res == "OK":
         st["next_gen"] += 1
@@ -2271,7 +2993,7 @@ def plan_and_arm(st: dict, lane: dict, ls: dict, key: str, checkpoint: str, prod
         if evo:
             ls["lever"] = ls.pop("next_lever", None) or ls.get("lever")
             if ls.get("mode") == "RESEARCH":
-                ls["research_spent"] = int(ls.get("research_spent") or 0) + caps
+                book_research(ls, name, caps)
             ledger_add(lane=lane["name"], kind="evo_arm", tokens=0, gen=name, mode=ls.get("mode") or "EXPLOIT",
                        lever=ls.get("lever"))
     elif res == "RETRY":
@@ -2370,6 +3092,7 @@ def arm_generation(st, lane, ls, name, text, notes, phases, caps, dry) -> str:
         freed = 0 if dry else settle(ln, old, ls.get("gen"), prior_auth, spent)["freed"]
         if freed:
             log(f"{ln}: released {freed:,} unspent reservation of {ls.get('gen')} ({old}): spent {spent:,} of {prior_auth:,}")
+            credit_research(ln, ls, ls.get("gen"), freed)
     elif old and not dry and ls.get("authority"):
         # the mission ended on its own (terminal): nothing to close, but it is settled: its unspent reservation is
         # released, a spend above its booking is corrected (T2 W1: before, a terminal overrun was never booked), and
@@ -2378,6 +3101,7 @@ def arm_generation(st, lane, ls, name, text, notes, phases, caps, dry) -> str:
         s = settle(ln, old, ls.get("gen"), ls.get("authority"), spent, why="terminal")
         ledger_add(lane=ln, kind="generation_settled", mission=old, gen=ls.get("gen"), tokens=0, spend=spent,
                    measured=spent is not None, why="terminal")
+        credit_research(ln, ls, ls.get("gen"), s["freed"])
         if s["freed"] or s["corrected"]:
             log(f"{ln}: settled {ls.get('gen')} ({old}, terminal): spent {spent:,}; released {s['freed']:,}, "
                 f"corrected {s['corrected']:,}")
@@ -2411,6 +3135,12 @@ def arm_generation(st, lane, ls, name, text, notes, phases, caps, dry) -> str:
     base = None if dry else _sha(lane["product"], "HEAD")  # the window this generation's evidence must fall in
     if not base and not dry:
         log(f"{ln}: product HEAD unreadable at arm; {name}'s progress will classify NONE")
+    prof = worker_profile(lane)
+    if prof:  # T2 W3b: set while the record is still held, so its first launch is already the slim one
+        rc, out = gm("envelope", "--mission", new, "--worker-profile", prof, dry=dry)
+        ledger_add(lane=ln, kind="worker_profile_set", mission=new, gen=name, tokens=0, profile=prof, ok=rc == 0)
+        if rc != 0:
+            return park(f"worker profile {prof} on {new} refused (record stays held): {out[-300:]}")
     rc, out = gm("release", "--mission", new, dry=dry)
     if rc != 0:
         return park(f"release of {new} failed (armed with authority, still held): {out[-300:]}")
@@ -2528,6 +3258,9 @@ def settle_stranded(st: dict, apply: bool) -> dict:
                    spend=spent, measured=spent is not None, why="stranded_sweep")
         rep["freed"] += s["freed"]
         rep["corrected"] += s["corrected"]
+        lsx = (st.get("lanes") or {}).get(g["lane"])
+        if lsx is not None and s["freed"]:
+            credit_research(g["lane"], lsx, g["gen"], s["freed"])
     # already-settled generations whose books do not balance (FIFATC S95C -3M, KSR S53K/S181K owner escrow kept)
     rows = ledger_rows()
     close = {r.get("mission"): r for r in rows if r.get("kind") in SETTLED_KINDS and r.get("measured")}
@@ -2558,6 +3291,19 @@ def main(argv: list[str]) -> int:
         print(f"ledger total {total:,} / {TOTAL_CAP:,}; today {today:,} / {DAY_CAP:,}; "
               f"unmeasured calls {sum(1 for r in rows if r.get('measured') is False)}")
         return 0
+    if cmd == "answer":  # round 3: `autopilot.py answer <LANE> <ruling text>` ('-' reads the text from stdin)
+        names = [l["name"] for l in json.loads((HOME / "lanes.json").read_text())]
+        if len(argv) < 4 or argv[2] not in names:
+            print(f"usage: autopilot.py answer <LANE> <ruling text | ->; lanes: {', '.join(names)}")
+            return 2
+        text = sys.stdin.read() if argv[3:] == ["-"] else " ".join(argv[3:])
+        try:
+            print(json.dumps(record_answer(argv[2], text)))
+        except ValueError as exc:
+            print(f"refused: {exc}")
+            return 2
+        print("recorded; the next autopilot tick (at most ~5 min) applies it")
+        return 0
     if killed():
         return 0
     if not OWNER_TURN.split(":", 1)[1]:
@@ -2566,6 +3312,20 @@ def main(argv: list[str]) -> int:
     lock = _lock()
     if lock is None:
         print("another tick holds the lock; nothing done")
+        return 0
+    if cmd == "reconcile":  # round 4: `autopilot.py reconcile <LANE> [--apply]`, under the tick lock; dry by default
+        lanes_ = {l["name"]: l for l in json.loads((HOME / "lanes.json").read_text())}
+        st_ = load_state()
+        if len(argv) < 3 or argv[2] not in lanes_ or argv[2] not in (st_.get("lanes") or {}):
+            print(f"usage: autopilot.py reconcile <LANE> [--apply]; lanes: {', '.join(lanes_)}")
+            return 2
+        ls_ = st_["lanes"][argv[2]]
+        rec_ = (mission(ls_["mission"]) if ls_.get("mission") else None) or {}
+        res = reconcile_stranded(lanes_[argv[2]], ls_, rec_, "--apply" not in argv) or "nothing stranded"
+        if res.startswith("autopilot: bring"):
+            ls_["held_grace_until"] = _now() + HELD_REPLAN_S
+            save_state(st_)
+        print(res)
         return 0
     if cmd == "settle-stranded":  # T2 W1: under the tick lock; dry unless --apply
         print(json.dumps(settle_stranded(load_state(), "--apply" in argv), indent=1, default=str))
@@ -2579,17 +3339,42 @@ def main(argv: list[str]) -> int:
         print(f"dry-tick: scratch state in {OUT}")
     lanes = json.loads((HOME / "lanes.json").read_text())
     st = load_state()
+    if not dry:
+        try:
+            n = sweep_own_tmp()
+            if n:
+                log(f"tmp sweep: removed {n} own scratch dirs older than {TMP_SWEEP_AGE_S // 3600} h")
+        except Exception as exc:  # noqa: BLE001 -- a sweep never stops a tick
+            log(f"tmp sweep failed: {exc!r}")
+    dwhy = disk_admits()
+    if dwhy:
+        try:
+            if not st.get("disk_wait"):
+                st["disk_wait"] = {"since": _now(), "why": dwhy}
+                log(f"disk floor: {dwhy}; no lane is ticked until it clears")
+                owner_queue("ALL", f"disk floor: {dwhy}; every lane waits (nothing judged, planned or armed)")
+            save_state(st)
+        except OSError:
+            pass  # a full disk: nothing was changed, the next tick tries again
+        write_alerts(st)
+        return 0
+    if st.pop("disk_wait", None) is not None:
+        log("disk floor cleared: lanes are ticked again")
+        save_state(st)
+    seen0 = st.get("answers_seen")
+    try:
+        took = take_answers(st, {l["name"] for l in lanes})
+    except Exception as exc:  # noqa: BLE001 -- an unreadable inbox never stops a tick
+        took = 0
+        log(f"owner answers not taken: {exc!r}")
+    if took or st.get("answers_seen") != seen0:
+        save_state(st)
     for lane in lanes:
         if factory_applying(lane["name"]):
             log(f"{lane['name']}: factory lane mid-apply (factory-apply-{lane['name']}.lock held); lane skipped this tick")
             continue
-        try:
-            lane_tick(st, lane, dry)
-        except Exception as exc:  # noqa: BLE001 -- one lane's failure never stops the other; it is logged and parked
-            log(f"{lane['name']}: ERROR {type(exc).__name__}: {exc}")
-            st.setdefault("lanes", {}).setdefault(lane["name"], {})["status"] = "PARKED"
-            owner_queue(lane["name"], f"autopilot error {type(exc).__name__}: {str(exc)[:200]}")
-            save_state(st)
+        tick_lane(st, lane, dry)
+    write_alerts(st)
     return 0
 
 

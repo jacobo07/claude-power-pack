@@ -41,6 +41,12 @@ blockers, the ranked structural opportunities, their discriminating experiments 
   belong to the Owner; a mention anywhere (even "not pushed") parks the lane. Plain ASCII only, one line per string.
 - A new profile names ALL six S26C conditions IN ITS OWN phase line, each stated positively (a negated or deferred
   condition does not count).
+- Template for a phase that uses a new additive profile (measured 2026-11-19..25: 60 of 72 refused first plans missed
+  one of these clauses). Copy it, fill each <...>, keep every clause:
+  Phase N: <ID> new additive profile <name> (cap <X>M): independent target oracle on original DOL bytes; frozen pilot committed before the draw; pre/post controls; A2 negatives; historical receipts byte-identical; separate counters; <what it certifies>, decision rule <rule>, gate tools/test_<name>.py with planted mutants
+- Name receipts, counters, the certifier and the canonical context only as things read or certified through
+  ("certificates via certify.decide of the S38K profile"). A verb such as update, extend, write, regenerate or replace
+  aimed at one of them is read as an edit of it and the plan is refused.
 - Budget: phase caps must sum to <= 25M processed (include ~1.5M closeout in the last phase); in EVO RESEARCH mode the sum
   must be <= 10M AND fit the lane's remaining research allowance. Fresh model tokens 0 unless a pre-registered experiment
   needs them (<= 1M total, stated as "fresh 0.5M" in that phase).
@@ -74,4 +80,8 @@ condition), say so instead of inventing work.
 
 End your reply with exactly one JSON object and nothing after it:
 {"title": "<short>", "facts": ["<measured fact with file>", ...], "phases": ["Phase 1: ...", ...],
- "command_notes": "<= 500 chars of extra instructions for the worker", "stop": null or "<why no admissible lever>"}
+ "command_notes": "<= 500 chars of extra instructions for the worker", "stop": null or "<why no admissible lever>",
+ "precheck": null or {"name": "<pool>", "tool": "tools/<x>.py", "floor": <F>}}
+Set "precheck" ONLY when a counting tool ALREADY COMMITTED in the product, run bare, prints
+`POOL_FLOOR: <pool> count <N> floor <F>` as its last line for the population this generation floors (a repeat
+population). The autopilot runs it before arming. Never name a tool this generation would write; otherwise null.

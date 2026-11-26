@@ -5,6 +5,7 @@ Every refusal asserts its specific label; every guard has an admitting twin so a
 import importlib.util
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -18,6 +19,7 @@ os.environ.update(AP_WEEKLY_CHECK="off",  # the gate never reads the live accoun
 (tmp / "home").mkdir()
 (tmp / "state").mkdir()
 (tmp / "cwd").mkdir()
+os.environ["AP_SWEEP_ROOT"] = str(tmp / "sweeproot")  # a real tick in the gate never sweeps the real /tmp
 
 
 def load():
@@ -430,6 +432,65 @@ def run_all(ap):
         {"name": "L", "cwd": str(ckd), "product": str(ckd)}, "S9", ckd / "x-PHASES.md", "")
           and "stop the generation there" in ap.command_text({"name": "L", "cwd": str(ckd), "product": str(ckd)}, "S9",
                                                               ckd / "x-PHASES.md", ""))
+    # ---- T2 W2 (a) J0 + (b) pre-arm, SHADOW: a committed counting tool re-counted at HEAD in a scratch worktree
+    jd = Path(tempfile.mkdtemp(prefix="j0git-", dir=tmp))
+
+    def jgit(*a):
+        return subprocess.run(["git", "-C", str(jd), *a], check=True, capture_output=True, text=True).stdout.strip()
+    for a in (["init", "-q"], ["config", "user.email", "t@t"], ["config", "user.name", "t"]):
+        jgit(*a)
+    (jd / "tools").mkdir()
+    (jd / "tools" / "count_ctl.py").write_text("print('warmup')\nprint('POOL_FLOOR: ctl count 4 floor 24')\n")
+    (jd / "tools" / "count_lie.py").write_text("print('POOL_FLOOR: ctl count 30 floor 24')\n")
+    (jd / "tools" / "count_red.py").write_text("print('POOL_FLOOR: ctl count 4 floor 24')\nraise SystemExit(3)\n")
+    for nm, tool in (("jf", "count_ctl"), ("jl", "count_lie"), ("jr", "count_red"), ("ja", "count_absent"),
+                     ("ju", "../count_ctl")):
+        (jd / f"{nm}.md").write_text(f"# S4\nPOOL_FLOOR: ctl count 4 floor 24 via python3 tools/{tool}.py\n"
+                                     "CHECKPOINT_FINAL: true\n")
+    (jd / "jn.md").write_text("# S4\nPOOL_FLOOR: ctl count 4 floor 24\nCHECKPOINT_FINAL: true\n")
+    jgit("add", ".")
+    jgit("commit", "-qm", "base")
+    jl0 = {"name": "J", "cwd": str(jd)}
+    check("V-AP-POOLFLOOR-VIA-READ", ap.pool_floor_below("jf.md", str(jd)) == [
+        {"name": "ctl", "count": 4, "floor": 24, "tool": "tools/count_ctl.py"}]
+          and ap.pool_floor_below("jn.md", str(jd)) == [{"name": "ctl", "count": 4, "floor": 24}])
+    j0s = {nm: (ap.j0_pool_floor(jl0, f"{nm}.md", str(jd)) or {}).get("j0") for nm in ("jf", "jl", "jr", "ja", "ju", "jn")}
+    check("V-AP-J0-RECOUNT-HOLDS", j0s["jf"] == "INSTRUMENT_FAIL(population)"
+          and ap.j0_pool_floor(jl0, "pfok.md", str(ckd)) is None)
+    check("V-AP-J0-ELSE-JUDGE", all(j0s[nm] == "JUDGE" for nm in ("jl", "jr", "ja", "ju", "jn")))
+    check("V-AP-J0-PROTECTED-JUDGE", (ap.j0_pool_floor(dict(jl0, protected=[{"path": str(jd / "gone.bin"),
+                                                                                "sha256_prefix": "00"}]),
+                                                       "jf.md", str(jd)) or {}).get("j0") == "JUDGE")
+    _j0rows = lambda: [r for r in ap.ledger_rows() if r.get("kind") == "j0_shadow"]  # noqa: E731
+    _jn0, _rc0 = len(_j0rows()), len(_rc_calls)
+    _jp_made = not _jp.exists()
+    if _jp_made:
+        _jp.write_text("judge {CHECKPOINT} in {PRODUCT}\n")
+    ap.run_claude = lambda *a, **k: (_rc_calls.append(1), {"ok": True, "tokens": 9, "result": json.dumps(
+        {"verdict": "AGREE", "instrument_failures": [{"instrument": "ctl_pool", "file": "jf.md", "commit": "x"}]})})[1]
+    vj = ap.judge(jl0, "jf.md", str(jd))
+    ap.judge(jl0, "jf.md", str(jd))
+    ap.judge(jl0, "jl.md", str(jd))
+    if _jp_made:
+        _jp.unlink()
+    gj = _j0rows()[_jn0:]
+    check("V-AP-J0-SHADOW-BOOKED-ONCE-STILL-JUDGED", vj["verdict"] == "AGREE" and len(_rc_calls) - _rc0 == 3
+          and [(r["checkpoint"], r["j0"], r["agree"], r["tokens"]) for r in gj]
+          == [("jf.md", "INSTRUMENT_FAIL(population)", True, 0), ("jl.md", "JUDGE", None, 0)]
+          and ap.j0_shadow_agreements(gj) == 1)
+    _pa0 = len([r for r in ap.ledger_rows() if r.get("kind") == "prearm_shadow"])
+    pre = {k: ap.prearm_shadow(jl0, "S9J", str(jd), {"precheck": pc}) for k, pc in (
+        ("below", {"name": "ctl", "tool": "tools/count_ctl.py", "floor": 24}),
+        ("above", {"name": "ctl", "tool": "tools/count_ctl.py", "floor": 3}),
+        ("absent", {"name": "ctl", "tool": "tools/count_absent.py", "floor": 24}),
+        ("bad", {"name": "ctl", "tool": "tools/count_ctl.py", "floor": "many"}))}
+    check("V-AP-PREARM-SHADOW-WOULD", [pre[k]["would"] for k in ("below", "above", "absent", "bad")]
+          == ["REPLAN", "ARM", "UNOBSERVED", "UNOBSERVED"] and pre["below"]["count"] == 4
+          and ap.prearm_shadow(jl0, "S9J", str(jd), {"precheck": None}) is None
+          and len([r for r in ap.ledger_rows() if r.get("kind") == "prearm_shadow" and r["tokens"] == 0]) - _pa0 == 4)
+    check("V-AP-J0-PRECHECK-TOLD", "via python3 tools/<x>.py" in ap.command_text(
+        {"name": "L", "cwd": str(ckd), "product": str(ckd)}, "S9", ckd / "x-PHASES.md", "")
+          and '"precheck"' in (Path(__file__).resolve().parent / "planner_prompt.md").read_text())
     ap.run_claude = _krc
     # ---- T1 O4: the weekly guard is asked before arming and reads as a wait (11-19/20 it was a MissionError per tick)
     _kg, _gcalls = ap._governor, []
@@ -907,6 +968,155 @@ def run_all(ap):
     check("V-AP-TOPUP-ENVELOPE-FULL", not auth_calls() and "envelope" in q_text())
     cost_run(74, lane_env=None)
     check("V-AP-TOPUP-NEEDS-OWNER-ENVELOPE", not auth_calls() and "no Owner envelope" in q_text())
+    # Owner 2026-11-25 (pane 5f1414ed): a refused top-up left the lane RUNNING-idle forever (WSR 11-23, WIIPARTY 11-25).
+    # With a kept judgment it re-plans once per hold, at most BREAKER_REPLAN_MAX in a row; otherwise it parks visibly.
+    bpf = {"checkpoint": str(tmp / "ck.md"), "verdict": {"verdict": "AGREE"}}
+    bseen, keep_pa = [], ap.plan_and_arm
+    ap.plan_and_arm = lambda st, lane, ls, key, ck, prod, v, d, snap, dry: bseen.append((key, ck, d))
+    st, ln = cost_run(75, rc=0, ls_extra={"planned_from": bpf})
+    check("V-AP-BREAKER-REPLANS", len(bseen) == 1 and bseen[0][1] == bpf["checkpoint"] and "COST BREAKER" in bseen[0][2]
+          and st["lanes"]["L"]["status"] == "RUNNING" and st["lanes"]["L"].get("breaker_replans") == 1
+          and any(r["kind"] == "breaker_replan" for r in ledger()))
+    ap.lane_tick(st, ln, False)
+    check("V-AP-BREAKER-ONCE-PER-HOLD", len(bseen) == 1)
+    # round 2: a breaker re-plan that drew a policy refusal resumes from its kept plan at the next tick
+    st["lanes"]["L"].update(judged_for=None, pending_plan={"for": "m-aaaaaaaaaaaa:75", "verdict": {"verdict": "AGREE"},
+                                                          "directive": "COST BREAKER kept", "bad": ["no rival"]})
+    ap.lane_tick(st, ln, False)
+    check("V-AP-BREAKER-RESUMES-KEPT-PLAN", len(bseen) == 2 and "COST BREAKER kept" in bseen[1][2]
+          and "POLICY REFUSED" in bseen[1][2])
+    bseen.clear()
+    st, ln = cost_run(76, rc=0, ls_extra={"planned_from": bpf, "breaker_replans": 2})
+    check("V-AP-BREAKER-CAPPED-PARKS", not bseen and st["lanes"]["L"]["status"] == "PARKED"
+          and st["lanes"]["L"].get("park_kind") == "breaker")
+    st, ln = cost_run(77, rc=0)
+    check("V-AP-BREAKER-NO-JUDGMENT-PARKS", not bseen and st["lanes"]["L"]["status"] == "PARKED"
+          and st["lanes"]["L"].get("park_kind") == "breaker")
+    st, ln = cost_run(78, ls_extra={"planned_from": bpf})  # certificates registered: topped up, never re-planned
+    check("V-AP-BREAKER-NOT-WHEN-TOPPED-UP", not bseen and st["lanes"]["L"]["status"] == "RUNNING")
+    ap.plan_and_arm = keep_pa
+    # 2026-11-25 FIFATC (disk full): a tick that died unsaved left judged_for set; the next tick clears it.
+    tseen, keep_lt = [], ap.lane_tick
+    ap.lane_tick = lambda st, lane, dry: tseen.append(st["lanes"]["L"].get("judged_for"))
+    st = {"lanes": {"L": {"status": "RUNNING", "judged_for": "m-x:1", "tick_open": 1.0}}}
+    ap.tick_lane(st, lanes[0], False)
+    check("V-AP-TICK-INTERRUPTED-REJUDGES", tseen == [None] and "tick_open" not in st["lanes"]["L"]
+          and any(r["kind"] == "tick_recovered" for r in ledger()))
+    tseen.clear()
+    st = {"lanes": {"L": {"status": "RUNNING", "judged_for": "m-x:1"}}}
+    ap.tick_lane(st, lanes[0], False)
+    check("V-AP-TICK-CLEAN-KEEPS-JUDGMENT", tseen == ["m-x:1"] and "tick_open" not in st["lanes"]["L"])
+
+    def _boom(*a, **k):
+        raise OSError(28, "No space left on device")
+    ap.lane_tick = _boom
+    st = {"lanes": {"L": {"status": "RUNNING", "judged_for": "m-x:1"}}}
+    ap.tick_lane(st, lanes[0], False)
+    check("V-AP-TICK-ERROR-PARKS", st["lanes"]["L"]["status"] == "PARKED" and "tick_open" not in st["lanes"]["L"])
+    # round 2 (Owner "hazlas todas"): idle watchdog, one notice when nothing at all changed for WATCHDOG_S
+    ap.lane_tick = lambda st, lane, dry: None
+    fresh(79)
+    st = {"lanes": {"L": {"status": "RUNNING", "gen": "S1K", "mission": "m-aaaaaaaaaaaa"}}}
+    ap.tick_lane(st, lanes[0], False)
+    wd0 = dict(st["lanes"]["L"].get("wd") or {})
+    check("V-AP-WATCHDOG-QUIET-WHEN-NEW", "WATCHDOG" not in q_text() and wd0.get("since") and not wd0.get("told"))
+    st["lanes"]["L"]["wd"]["since"] -= 3 * 3600 + 1  # a fixed 3 h, never the (possibly mutated) constant
+    ap.tick_lane(st, lanes[0], False)
+    check("V-AP-WATCHDOG-ALERTS", q_text().count("WATCHDOG") == 1 and any(r["kind"] == "watchdog_idle" for r in ledger()))
+    ap.tick_lane(st, lanes[0], False)
+    check("V-AP-WATCHDOG-ONCE", q_text().count("WATCHDOG") == 1)
+    rec["cost_mark"] = {"tokens": 5}
+    recp.write_text(json.dumps(rec))
+    ap.tick_lane(st, lanes[0], False)
+    check("V-AP-WATCHDOG-RESETS-ON-CHANGE", q_text().count("WATCHDOG") == 1 and not st["lanes"]["L"]["wd"].get("told"))
+    rec.pop("cost_mark", None)
+    recp.write_text(json.dumps(rec))
+    ap.lane_tick = keep_lt
+    # round 2: alerts.json lists parked lanes (by their last non-notice queue line) and idle hits
+    ap.owner_queue("P", "PARKED: boom reason")
+    ap.owner_queue("P", "NOTICE (no action needed): a later notice")
+    al = ap.build_alerts({"lanes": {"L": {"status": "RUNNING", "wd": {"since": 1.0, "told": 2.0, "why": "idle x"}},
+                                    "P": {"status": "PARKED", "park_kind": "breaker"}}})
+    check("V-AP-ALERTS-LIST-PARKED-AND-IDLE", any(a["lane"] == "P" and "boom reason" in a["text"] for a in al)
+          and any(a["lane"] == "L" and a["level"] == "idle" for a in al) and len(al) == 2)
+    ap.write_alerts({"lanes": {"P": {"status": "PARKED"}}})
+    check("V-AP-ALERTS-WRITTEN", [a["lane"] for a in json.loads((tmp / "home" / "alerts.json").read_text())["alerts"]]
+          == ["P"])
+    # round 3 (Owner 2026-11-26 "autorizo y deberia tener la capacidad"): an Owner answer reaches the lane
+    (tmp / "home" / "answers.jsonl").unlink(missing_ok=True)
+    ap.record_answer("L", "  redefine the pool as census minus receipts  ")
+    _st3 = {"lanes": {"L": {"status": "PARKED", "park_kind": "breaker", "judged_for": "m-x:1",
+                            "mission": "m-bbbbbbbbbbbb"}}}
+    _l3 = _st3["lanes"]["L"]
+    check("V-AP-ANSWER-UNPARKS-AND-RECORDS", ap.take_answers(_st3, {"L"}) == 1 and _l3["status"] == "WAITING"
+          and _l3["judged_for"] is None and _l3["park_kind"] is None
+          and [r["text"] for r in (_l3.get("owner_rulings") or [])] == ["redefine the pool as census minus receipts"]
+          and any(r["kind"] == "owner_answer" for r in ledger()))
+    check("V-AP-ANSWER-TAKEN-ONCE", ap.take_answers(_st3, {"L"}) == 0 and len((_l3.get("owner_rulings") or [])) == 1)
+    ap.record_answer("NOPE", "x")
+    check("V-AP-ANSWER-UNKNOWN-LANE-IGNORED", ap.take_answers(_st3, {"L"}) == 0 and "NOPE" not in _st3["lanes"]
+          and len((_l3.get("owner_rulings") or [])) == 1)
+    _bm = tmp / "state" / "gsd-mission-m-bbbbbbbbbbbb.json"
+    _bm.write_text(json.dumps({"mission_id": "m-bbbbbbbbbbbb", "state": "BLOCKED", "blocker": {"at": 1.0},
+                               "blocked_intent": {"kind": "DECISION_REQUEST", "answer": None, "needs": "pool question?"}}))
+    _calls, keep_dr = [], ap.decide_ruling
+    ap.decide_ruling = lambda mid, rid, text: (_calls.append((mid, rid, text)), (True, ""))[1]
+    ap.deliver_rulings("L", _l3, True)
+    check("V-AP-RULING-NOT-DELIVERED-DRY", _calls == [])
+    ap.deliver_rulings("L", _l3, False)
+    ap.deliver_rulings("L", _l3, False)
+    ap.decide_ruling = keep_dr
+    check("V-AP-RULING-DELIVERED-ONCE", len(_calls) == 1 and _calls[0][0] == "m-bbbbbbbbbbbb"
+          and "census minus receipts" in _calls[0][2])
+    _st4 = {"lanes": {"Q": {"status": "RUNNING", "mission": "m-bbbbbbbbbbbb"}}}
+    check("V-AP-QUESTION-ALERTS", any(a["level"] == "question" and "pool question?" in a["text"]
+                                      and "answer Q" in a["text"] for a in ap.build_alerts(_st4)))
+    _st4["lanes"]["Q"]["owner_rulings"] = [{"id": "r1", "text": "yes", "at": 2.0}]
+    check("V-AP-QUESTION-QUIET-WHEN-ANSWERED", not any(a["level"] == "question" for a in ap.build_alerts(_st4)))
+    _bm.unlink()
+    _pp, _had = Path(ap.HOME) / "planner_prompt.md", (Path(ap.HOME) / "planner_prompt.md").exists()
+    if not _had:
+        _pp.write_text("PLAN {NAME} {LANE} {EVOLUTION}")
+    ap._RULINGS["L"] = list((_l3.get("owner_rulings") or []))
+    _pr = [ap.planner_prompt(dict(lanes[0], name="L"), "S9K", "ck.md", str(tmp), {"verdict": "AGREE"})]
+    ap._RULINGS.pop("L", None)
+    _pr.append(ap.planner_prompt(dict(lanes[0], name="L"), "S9K", "ck.md", str(tmp), {"verdict": "AGREE"}))
+    if not _had:
+        _pp.unlink()
+    check("V-AP-RULING-IN-PLANNER-PROMPT", len(_pr) == 2 and "OWNER RULINGS" in _pr[0]
+          and "census minus receipts" in _pr[0] and "OWNER RULINGS" not in _pr[1])
+    (tmp / "home" / "answers.jsonl").unlink(missing_ok=True)
+    # round 2: the tmp sweep removes only this programme's own old scratch dirs
+    sw = tmp / "sweep"
+    sw.mkdir(exist_ok=True)
+    _sw_old = __import__("time").time() - 2 * 86400
+    for _swn in ("ap-dry-old1", "ap-test-old2", "ap-dry-young", "other-old"):
+        (sw / _swn).mkdir(exist_ok=True)
+        (sw / _swn / "f").write_text("x")
+    (sw / "ap-dry-file").write_text("x")
+    for _swn in ("ap-dry-old1", "ap-test-old2", "other-old", "ap-dry-file"):
+        os.utime(sw / _swn, (_sw_old, _sw_old))
+    gone = ap.sweep_own_tmp(sw)
+    # round 2b (WIIPARTY S357W): a 0-byte MATCH snapshot (disk full mid-write) is quarantined and re-seeded, no crash
+    keep_m100 = ap.match_at100
+    ap.match_at100 = lambda lane, p: ({"u::f"}, None)
+    msnap = Path(ap.OUT) / "match" / "MZ.json"
+    msnap.parent.mkdir(parents=True, exist_ok=True)
+    for _c in msnap.parent.glob("MZ.json.corrupt-*"):
+        _c.unlink()
+    msnap.write_text("")
+    mlane = {"name": "MZ", "match_report": {"cmd": ["true"], "path": "x"}}
+    try:
+        mr = ap.verify_match(mlane, str(tmp / "cwd"), [])
+    except Exception as exc:  # noqa: BLE001 -- a crash here is this check's failure, not a crash-kill
+        mr = f"EXC {exc!r}"
+    finally:
+        ap.match_at100 = keep_m100
+    check("V-AP-MATCH-SNAPSHOT-CORRUPT-RESEEDS", "seeded from HEAD" in str(mr) and json.loads(msnap.read_text())
+          == ["u::f"] and list(msnap.parent.glob("MZ.json.corrupt-*")))
+    msnap.unlink()
+    check("V-AP-SWEEP-OWN-OLD-ONLY", gone == 2 and sorted(p.name for p in sw.iterdir())
+          == ["ap-dry-file", "ap-dry-young", "other-old"])
     # Spec ascension-autopilot-stall-fixes (Owner "y" 2026-11-16). F1: no certificate, but >= 1 new commit on the
     # generation branch AND a cost_mark after the last top-up -> one top-up booked basis=progress. F2: < 1.5 h of wall
     # left -> the same authority act extends the wall. F4: a halt with commits and no checkpoint is continued once.
@@ -1098,6 +1308,29 @@ def run_all(ap):
     check("V-AP-HELD-NOTICE-ONCE", q_text().count("RUNNING with no worker") == 1)
     watch_run(held_s=600)
     check("V-AP-HELD-NOTICE-WAITS", "RUNNING with no worker" not in q_text())
+    # round 2 (Owner "hazlas todas"; MKW S338M held 15 h): held >= HELD_REPLAN_S is re-planned from the kept judgment
+    hseen, keep_pa2 = [], ap.plan_and_arm
+    ap.plan_and_arm = lambda st, lane, ls, key, ck, prod, v, d, snap, dry: hseen.append((key, ck, d))
+    rec["owner_hold"] = {"set_at": 0}
+    H = fresh(0)
+    H["lanes"] = {"L": {"status": "RUNNING", "gen": "S92L", "base": "b0", "blank": 0, "arm_fails": 0,
+                        "mission": "m-aaaaaaaaaaaa", "planned_from": {"checkpoint": str(tmp / "ck.md"),
+                                                                     "verdict": {"verdict": "AGREE"}}}}
+    watch_run(held_s=3 * 3600, st=H)
+    check("V-AP-HELD-REPLANS", len(hseen) == 1 and "LAUNCH HELD" in hseen[0][2] and hseen[0][1] == str(tmp / "ck.md")
+          and H["lanes"]["L"].get("breaker_replans") == 1
+          and any(r["kind"] == "breaker_replan" and r.get("cause") == "held" for r in ledger()))
+    ap.lane_tick(H, dict(lanes[0], envelope=envt), False)
+    check("V-AP-HELD-REPLAN-ONCE", len(hseen) == 1)
+    W = watch_run(held_s=3 * 3600)
+    check("V-AP-HELD-NO-JUDGMENT-PARKS", len(hseen) == 1 and W["lanes"]["L"]["status"] == "PARKED"
+          and W["lanes"]["L"].get("park_kind") == "breaker")
+    ap.plan_and_arm = keep_pa2
+    _hn = __import__("time").time()
+    check("V-AP-HELD-PREPARED-RENEWAL-COUNTS", ap.held_too_long(
+        {"state": "PREPARED", "reason": "launch held: cwd diverged", "updated_at": _hn - 3 * 3600}, _hn)
+          and not ap.held_too_long({"state": "PREPARED", "reason": "owner hold: arming", "updated_at": _hn - 9e3}, _hn)
+          and not ap.held_too_long({"state": "BLOCKED", "reason": "launch held: x", "updated_at": _hn - 9e3}, _hn))
     # 2026-11-17 (S108W, Owner "b"): BLOCKED on a host permission prompt is told once, the lane stays RUNNING
     BLK = {"class": "HOST_GATE", "unblock_condition": {"gate": "permission prompt", "needs": "approve Bash: rm cfg"}}
     W = watch_run(reason="progress moved", state="BLOCKED", blocker=BLK)
@@ -1175,6 +1408,92 @@ def run_all(ap):
     lv2, why2 = E.synthesize({}, "XL", {"synth_streak": 3}, str(tmp), "FAM", lambda fam: {"none": "nothing"}, None)
     check("V-AP-AUTOEXT-SYNTH-MAX", lv is None and "designer proposed no lever" in why and sls["synth_streak"] == 0
           and sls["auto_extend"]["used"] == 1 and lv2 is None and "in a row" in why2)
+
+    # round 5 (Owner 2026-11-26, pane a90ef78f, WSR ruling): a design stall researches a STRATEGY_EXPANSION lever
+    def esc_ls(**k):
+        return dict({"synth_streak": 3, "research_spent": 0, "research_cap": 100_000_000}, **k)
+
+    def esc_levers():
+        return {"XL": [{"id": "lev_a", "family": "FAM_A", "status": "open"}]}
+    none_designer = lambda fam: {"none": "nothing"}  # noqa: E731
+    els, elv = esc_ls(), esc_levers()
+    d = E._synth_or_park(els, elv, "XL", str(tmp), "FAM_A", none_designer, "ck_s1.md", "stall", "src")
+    check("V-AP-ESCAPE-ARMS-INSTEAD-OF-PARK", d["action"] == "research" and d.get("escape") is True
+          and d["lever"]["family"] == E.ESCAPE_FAMILY and d["lever"]["id"] == "xl_strategy_escape_1"
+          and d["lever"]["origin"] == "autopilot" and els["escape_streak"] == 1 and els["synth_streak"] == 0
+          and els["mode"] == "RESEARCH" and "FAM_A" in d["lever"]["what"] and "FUNNEL:" in d["lever"]["what"]
+          and "xl_strategy_escape_1" in d["directive"] and any(x["id"] == "xl_strategy_escape_1" for x in elv["XL"]))
+    d2 = E._synth_or_park(esc_ls(escape_streak=E.ESCAPE_MAX), esc_levers(), "XL", str(tmp), "FAM_A", none_designer,
+                          "ck_s1.md", "stall", "src")
+    check("V-AP-ESCAPE-BOUNDED", d2["action"] == "park" and "in a row" in d2["why"])
+    d3 = E._synth_or_park(esc_ls(research_spent=95_000_000), esc_levers(), "XL", str(tmp), "FAM_A", none_designer,
+                          "ck_s1.md", "stall", "src")
+    check("V-AP-ESCAPE-NEEDS-RESEARCH-ROOM", d3["action"] == "park")
+    os.environ["AP_STRATEGY_ESCAPE"] = "0"
+    try:
+        d4 = E._synth_or_park(esc_ls(), esc_levers(), "XL", str(tmp), "FAM_A", none_designer, "ck_s1.md", "s", "src")
+    finally:
+        os.environ.pop("AP_STRATEGY_ESCAPE", None)
+    d5 = E._synth_or_park(esc_ls(), esc_levers(), "XL", str(tmp), "FAM_A", None, "ck_s1.md", "s", "src")
+    check("V-AP-ESCAPE-KILL-SWITCH-AND-DRY", d4["action"] == "park" and d5["action"] == "park")
+    GOODT = ("FUNNEL: named 1295\nFUNNEL: after evidence exclusion 0\n"
+             "STRATEGY: s1 family BYTE_SIGNATURE_MATCH masked hashes vs unnamed fns\n"
+             "STRATEGY: s2 family NEW_DONOR_CORPUS two new donors\n")
+    POOLT = GOODT + "DISCOVERY_POOL: dp_v1 count 25 floor 20\nHELD_OUT: untouched\n"
+    check("V-AP-ESCAPE-PROBLEMS-ADMITS", E.escape_problems(POOLT, {"FAM_A"}) == []
+          and E.escape_problems(GOODT + "LIMITS: no donor covers it\nREOPEN: a new donor corpus\n", {"FAM_A"}) == [])
+    refs = {
+        "funnel": E.escape_problems(POOLT.replace("FUNNEL: named 1295\n", ""), {"FAM_A"}),
+        "family": E.escape_problems(POOLT, {"FAM_A", "NEW_DONOR_CORPUS"}),
+        "floor": E.escape_problems(POOLT.replace("count 25", "count 5"), {"FAM_A"}),
+        "reopen": E.escape_problems(GOODT + "LIMITS: none\n", {"FAM_A"}),
+        "heldout": E.escape_problems(POOLT.replace("HELD_OUT: untouched\n", ""), {"FAM_A"}),
+        "nothing": E.escape_problems(GOODT, {"FAM_A"}),
+    }
+    check("V-AP-ESCAPE-PROBLEMS-REFUSES", all(refs.values()) and "FUNNEL" in refs["funnel"][0]
+          and "not tried before" in refs["family"][0] and "below its floor" in refs["floor"][0]
+          and "REOPEN" in refs["reopen"][0] and "HELD_OUT" in refs["heldout"][0])
+    (tmp / "ck_lim.md").write_text(GOODT + "LIMITS: every donor-defined fn already used\nREOPEN: a sixth donor corpus\n")
+    elv2 = esc_levers()
+    elv2["XL"].append({"id": "xl_strategy_escape_1", "family": E.ESCAPE_FAMILY, "status": "open"})
+    d6 = E._synth_or_park(esc_ls(escape_streak=1), elv2, "XL", str(tmp), E.ESCAPE_FAMILY, none_designer, "ck_lim.md",
+                          "stall", "src")
+
+    class _G:
+        def prior(self, b):
+            return {}
+
+        def learn(self, *a, **k):
+            pass
+    d7 = E.after_judgment({"lever": "xl_strategy_escape_1", "mode": "RESEARCH"}, "INFORMATION", [], elv2, "XL", str(tmp),
+                          _G(), (3, 3, 3), designer=none_designer, residual="ck_lim.md")
+    check("V-AP-ESCAPE-LIMITS-PARKS-HONESTLY", d6["action"] == "park" and d6.get("park_kind") == "limits"
+          and d6["why"].startswith(E.ESCAPE_LIMITS_TAG) and "sixth donor corpus" in d6["why"]
+          and d7["action"] == "park" and d7.get("park_kind") == "limits")
+    (tmp / "ck_bad.md").write_text("FUNNEL: only one\n")
+    elv3 = esc_levers()
+    elv3["XL"].append({"id": "xl_strategy_escape_1", "family": E.ESCAPE_FAMILY, "status": "open"})
+    d8 = E._synth_or_park(esc_ls(escape_streak=1), elv3, "XL", str(tmp), E.ESCAPE_FAMILY, none_designer, "ck_bad.md",
+                          "stall", "src")
+    check("V-AP-ESCAPE-REFUSAL-FEEDS-NEXT", d8["action"] == "research" and d8["lever"]["id"] == "xl_strategy_escape_2"
+          and "previous escape was refused" in d8["lever"]["what"] and "FUNNEL" in d8["lever"]["what"])
+    cls_ls = {"escape_streak": 2, "synth_streak": 3}
+    E.after_judgment(cls_ls, "CERT", [], {}, "XL", str(tmp), _G(), (3, 3, 3))
+    check("V-AP-ESCAPE-CONVERSION-RESETS", cls_ls["escape_streak"] == 0 and cls_ls["synth_streak"] == 0)
+    check("V-AP-ESCAPE-SNAP-RESTORES", "escape_streak" in ap.DESIGN_SNAP_KEYS)
+    # round 6 (Owner 2026-11-26 "go ahead", pane a90ef78f): a released research reservation returns to the lane's room
+    rc6 = {"research_spent": 100}
+    ap.book_research(rc6, "S1X", 50)
+    n6 = len([r for r in ledger() if r["kind"] == "research_credit"])
+    c6 = [ap.credit_research("XL", rc6, "S1X", 30), ap.credit_research("XL", rc6, "S1X", 30),
+          ap.credit_research("XL", rc6, "S1X", 30), ap.credit_research("XL", rc6, "S9X", 30)]
+    check("V-AP-RESEARCH-CREDIT-BOUNDED-IDEMPOTENT", rc6["research_spent"] == 100 and c6 == [30, 20, 0, 0]
+          and len([r for r in ledger() if r["kind"] == "research_credit"]) == n6 + 2)
+    rk6 = {}
+    for i in range(15):  # fixed count: a mutant that unbounds the keep must fail fast, never loop 10**6 times
+        ap.book_research(rk6, f"S{i}K", 1)
+    check("V-AP-RESEARCH-BOOKED-KEPT", len(rk6["research_booked"]) == 12
+          and "S0K" not in rk6["research_booked"] and "S14K" in rk6["research_booked"] and rk6["research_spent"] == 15)
     pls = {"status": "RUNNING", "judged_for": "m-x:1", "auto_extend": {"max": 1, "used": 0}}
     pend = {"for": "m-x:1", "verdict": {"verdict": "AGREE"}, "directive": "old"}
     ok1 = ap.extend_after_stop("XL", pls, pend, "lever exhausted: 0/97")
@@ -1253,6 +1572,44 @@ def run_all(ap):
     ap.plan = seq_plan({"title": "t", "facts": [], "phases": GOOD})
     ap.lane_tick(st, lanes[0], False)
     check("V-AP-NEW-HOLD-IS-JUDGED", jn["n"] == 2 and any(c[0] == "arm" for c in calls))
+    st = fresh(86)  # T2 W2 (b): the pre-arm shadow is reached from the real arm path, books, and never blocks the arm
+    calls.clear()
+    _pa1 = len([r for r in ledger() if r["kind"] == "prearm_shadow"])
+    ap.plan = seq_plan({"title": "t", "facts": [], "phases": GOOD,
+                        "precheck": {"name": "ctl", "tool": "tools/count_ctl.py", "floor": 24}})
+    ap.lane_tick(st, lanes[0], False)
+    _pa = [r for r in ledger() if r["kind"] == "prearm_shadow"][_pa1:]
+    check("V-AP-PREARM-SHADOW-WIRED-STILL-ARMS", len(_pa) == 1 and _pa[0]["tokens"] == 0
+          and _pa[0]["would"] == "UNOBSERVED" and any(c[0] == "arm" for c in calls))
+    # ---- T2 W3b (Owner "slim-t2 + inline loop", "12-hook list"): slim-asc is set while held, before release
+    _slim_lane = dict(lanes[0], worker_profile="slim-asc")
+    st = fresh(87)
+    ap.plan = seq_plan({"title": "t", "facts": [], "phases": GOOD})
+    ap.lane_tick(st, _slim_lane, False)
+    _ops = [c[0] for c in calls]
+    _env = [c for c in calls if c[0] == "envelope"]
+    check("V-AP-SLIM-PROFILE-SET-WHILE-HELD", bool(_env) and _env[0][-1] == "slim-asc" and "release" in _ops
+          and _ops.index("authority") < _ops.index("envelope") < _ops.index("release")
+          and any(r["kind"] == "worker_profile_set" and r["ok"] is True for r in ledger()))
+    st = fresh(88)
+    fail_on.add("envelope")
+    ap.plan = seq_plan({"title": "t", "facts": [], "phases": GOOD})
+    ap.lane_tick(st, _slim_lane, False)
+    check("V-AP-SLIM-PROFILE-REFUSED-NEVER-RELEASED", any(c[0] == "envelope" for c in calls)
+          and not any(c[0] == "release" for c in calls) and st["lanes"]["L"]["status"] == "PARKED")
+    st = fresh(89)
+    ap.plan = seq_plan({"title": "t", "facts": [], "phases": GOOD})
+    ap.lane_tick(st, dict(lanes[0], worker_profile="slim-t1"), False)
+    check("V-AP-SLIM-ONLY-ASC-KILL-SWITCH", not any(c[0] == "envelope" for c in calls)
+          and any(c[0] == "release" for c in calls) and ap.worker_profile(dict(lanes[0], worker_profile=None)) is None)
+    _set = {"kind": "worker_profile_set", "lane": "L", "ok": True}
+    check("V-AP-SLIM-PILOT-BOUNDED", ap.worker_profile(_slim_lane, rows=[_set]) == "slim-asc"
+          and ap.worker_profile(_slim_lane, rows=[_set, _set]) is None
+          and ap.worker_profile(_slim_lane, rows=[_set, dict(_set, ok=False), dict(_set, lane="M")]) == "slim-asc"
+          and ap.worker_profile(dict(_slim_lane, worker_profile_max=3), rows=[_set, _set]) == "slim-asc")
+    _cmd = lambda ln: ap.command_text(ln, "S9", Path(ln["cwd"]) / "x.md", "")  # noqa: E731
+    check("V-AP-SLIM-COMMAND-INLINES-LOOP", "/gsd-autonomous" not in _cmd(_slim_lane)
+          and "phases yourself" in _cmd(_slim_lane) and "/gsd-autonomous" in _cmd(lanes[0]))
     ap.judge = keep_judge
     st = fresh(4)
     ap.judge = lambda *a: dict(full, new_canonical_certs=3, _tokens=None)
@@ -1441,7 +1798,7 @@ def run_all(ap):
     (tmp / "home" / "ledger.jsonl").write_text('{"kind": "x", "tokens": 1, "ts": 1}\n')
     before = [(tmp / "home" / f).read_bytes() for f in ("state.json", "ledger.jsonl")]
     m2 = load()  # an unstubbed module for the real dry path (gm -> sh(dry=True))
-    for attr in ("killed", "tempfile", "protected_check", "agree_supported"):
+    for attr in ("killed", "tempfile", "protected_check", "agree_supported", "disk_admits"):
         setattr(m2, attr, getattr(ap, attr))  # carry this run's mutation, if any
     m2.sh = lambda cmd, **k: (0, "")
     m2.main(["x", "dry-tick"])
@@ -1449,6 +1806,30 @@ def run_all(ap):
     scratch = json.loads((m2.OUT / "state.json").read_text()) if (m2.OUT / "state.json").exists() else {}
     check("V-AP-DRY-TICK-WRITES-NOTHING-REAL", before == after and m2.OUT != m2.HOME
           and scratch.get("lanes", {}).get("L", {}).get("status") == "RUNNING")
+    # round 2 (Owner "hazlas todas"): below the disk floor no lane is ticked, and alerts.json says so
+    os.environ["AP_DISK_FLOOR_GB"] = "1e12"
+    try:
+        m3 = load()
+        for attr in ("killed", "tempfile", "protected_check", "agree_supported", "disk_admits"):
+            setattr(m3, attr, getattr(ap, attr))
+        m3.sh = lambda cmd, **k: (0, "")
+        (tmp / "home" / "state.json").write_text('{"lanes": {}}')
+        m3.main(["x", "dry-tick"])
+        s3 = json.loads((m3.OUT / "state.json").read_text()) if (m3.OUT / "state.json").exists() else {}
+        al3 = json.loads((m3.OUT / "alerts.json").read_text()) if (m3.OUT / "alerts.json").exists() else {}
+    finally:
+        os.environ.pop("AP_DISK_FLOOR_GB", None)
+    check("V-AP-DISK-FLOOR-SKIPS-LANES", "L" not in s3.get("lanes", {}) and (s3.get("disk_wait") or {}).get("why")
+          and any(a.get("level") == "disk" for a in al3.get("alerts", [])))
+    for mm in (m2, m3):  # 12,382 leaked by 11-25; only the check's own dry scratch, never HOME (mutant dry_writes_real)
+        if Path(mm.OUT).name.startswith("ap-dry-") and Path(mm.OUT) != Path(mm.HOME):
+            shutil.rmtree(mm.OUT, ignore_errors=True)
+    # round 2: the planner prompt's new-profile template passes the unchanged policy filter
+    import re as _re
+    tl = [l.strip() for l in (HERE / "planner_prompt.md").read_text().splitlines() if l.strip().startswith("Phase N:")]
+    tl = [_re.sub(r"<[^>]+>", "x", l.replace("Phase N:", "Phase 1:").replace("<X>", "5")) for l in tl]
+    check("V-AP-PLANNER-TEMPLATE-PASSES", len(tl) == 1 and ap.policy_check(
+        [tl[0], "Phase 2: P2 checkpoint (cap 2M): gates"], "", []) == [])
 
     # ---- EVO (Owner "y" 2026-11-12): instrument failure, stagnation -> research, continuity
     E = ap.evolve
@@ -1512,8 +1893,10 @@ def run_all(ap):
         (tmp / "home" / "levers.json").write_text(json.dumps({"L": levers}))
         seqp = list(plans)
         ap.plan = lambda *a: dict(seqp.pop(0) if len(seqp) > 1 else seqp[0], _tokens=1)
-        return {"lanes": {"L": dict({"status": "WAITING", "mission": "m-aaaaaaaaaaaa", "blank": 0, "arm_fails": 0},
-                                    **(lane_state or {}))}}
+        # round 5: the pre-escape park semantics are pinned on a lane whose strategy escape is already spent; the
+        # V-AP-ESCAPE-* checks and V-EVO-ESCAPE-LIVE-PATH drive the escape itself
+        return {"lanes": {"L": dict({"status": "WAITING", "mission": "m-aaaaaaaaaaaa", "blank": 0, "arm_fails": 0,
+                                     "escape_streak": E.ESCAPE_MAX}, **(lane_state or {}))}}
 
     def evo_run(st, classes, instr=()):
         E.verify_instrument_failures = lambda *a: list(instr)
@@ -1611,7 +1994,8 @@ def run_all(ap):
     check("V-EVO-SYNTH-REDESIGN-ON-REFUSAL", ls["status"] == "RUNNING" and ls.get("lever") == "lev_syn2"
           and len(retold) == 2 and "already exists" in "; ".join(retold[1] or []))
     with_designer(SYN)
-    ls, q = evo_run(evo_fresh([LA, LC], {"lever": "lev_a", "synth_streak": 3}, (RES_S,)), ["INFORMATION", "INFORMATION"])
+    ls, q = evo_run(evo_fresh([LA, LC], {"lever": "lev_a", "synth_streak": 3, "escape_streak": 2}, (RES_S,)),
+                    ["INFORMATION", "INFORMATION"])
     check("V-EVO-SYNTH-BOUNDED", ls["status"] == "PARKED" and "in a row" in q)
     ls, q = evo_run(evo_fresh([LA, LB], {"lever": "lev_b", "mode": "RESEARCH"}, (RES, RES_S)), ["NONE", "NONE"])
     check("V-EVO-SYNTH-RESEARCH-STOP", ls["status"] == "RUNNING" and ls.get("lever") == "lev_syn")
@@ -1759,11 +2143,16 @@ def run_all(ap):
           and "protected file changed" in q)
     ls, q, seen_d, nd = judged_not_agree({"verdict": "INCONCLUSIVE", "notes": "judge timeout", "_judge_failed": True})
     check("V-EVO-JUDGE-FAILED-PARKS", ls["status"] == "PARKED" and nd == 0 and not seen_d and "judge timeout" in q)
-    ls, q, seen_d, nd = judged_not_agree({"verdict": "DISAGREE", "notes": "x"}, {"synth_streak": 3})
+    ls, q, seen_d, nd = judged_not_agree({"verdict": "DISAGREE", "notes": "x"}, {"synth_streak": 3, "escape_streak": 2})
     check("V-EVO-DISAGREE-DESIGN-BOUNDED", ls["status"] == "PARKED" and "in a row" in q and not seen_d)
     with_designer(None)
     ls, q, seen_d, nd = judged_not_agree({"verdict": "DISAGREE", "notes": "x"})
     check("V-EVO-DISAGREE-NO-DESIGN-PARKS", ls["status"] == "PARKED" and "designer proposed no lever" in q and not seen_d)
+    RES_E = dict(RES_S, phases=[x.replace("lev_syn", "l_strategy_escape_1") for x in RES_S["phases"]])
+    ls, q, seen_d, nd = judged_not_agree({"verdict": "DISAGREE", "notes": "x"}, {"escape_streak": 0}, plans=(RES_E,))
+    check("V-EVO-ESCAPE-LIVE-PATH", ls["status"] == "RUNNING" and ls.get("lever") == "l_strategy_escape_1"
+          and ls.get("escape_streak") == 1 and seen_d and "FUNNEL:" in seen_d[-1][1]
+          and any(x.get("id") == "l_strategy_escape_1" and x.get("family") == E.ESCAPE_FAMILY for x in lever_file()))
     # review 0ba4 MEDIUM-1: an envelope park after the design restores what the design moved (the re-judge re-decides)
     with_designer(SYN)
     keep_env = ap.envelope_admits
@@ -1836,6 +2225,12 @@ def run_all(ap):
     judged.clear()
     rec["owner_hold"].update(set_at=7904, evidence=None, residual=None); recp.write_text(json.dumps(rec))
     ap.lane_tick(st, lanes[0], False)
+    ap.lane_tick(st, lanes[0], False)
+    # round 2 (KSR S329K / MKW S338M): gsd_mission pivots such a hold within minutes, so the lane waits before parking
+    check("V-AP-NOPATH-GRACE-WAITS", not judged and st["lanes"]["L"]["status"] != "PARKED"
+          and str(st["lanes"]["L"].get("nopath_for") or "").endswith(":7904"))
+    st["lanes"]["L"]["nopath_since"] = __import__("time").time() - 1801  # a fixed 30 min, not the constant
+    ap.lane_tick(st, lanes[0], False)
     check("V-AP-EMPTY-HOLD-PARKS-UNJUDGED", not judged and st["lanes"]["L"]["status"] == "PARKED")
     # 2026-11-17 (S111C, Owner "b"): an empty hold whose generation branch committed a checkpoint is judged on it
     st = evo_fresh([LA], {"lever": "lev_a"})
@@ -1847,6 +2242,16 @@ def run_all(ap):
     ap.lane_tick(st, lanes[0], False)
     ap.checkpoint_from_branch = keep_cfb
     check("V-AP-EMPTY-HOLD-FINDS-BRANCH-CHECKPOINT", judged == [str(tmp / "ck.md")])
+    # round 2: a hold whose evidence is a commit sha is judged on the checkpoint that commit adds
+    st = evo_fresh([LA], {"lever": "lev_a"})
+    ap.judge = lambda lane, ck, prod, *ruling: judged.append(ck) or dict(full, _tokens=1)
+    judged.clear()
+    keep_cfs = ap.checkpoint_from_sha
+    ap.checkpoint_from_sha = lambda p, h, b: str(tmp / "ck.md") if h.get("evidence") == "5cb05abd" else ""
+    rec["owner_hold"].update(set_at=7906, evidence="5cb05abd", residual=None); recp.write_text(json.dumps(rec))
+    ap.lane_tick(st, lanes[0], False)
+    ap.checkpoint_from_sha = keep_cfs
+    check("V-AP-SHA-HOLD-JUDGES-ITS-CHECKPOINT", judged == [str(tmp / "ck.md")])
     rec["owner_hold"].update(evidence=str(tmp / "ck.md")); rec["owner_hold"].pop("residual", None)
     recp.write_text(json.dumps(rec))
     ap.classify_progress = orig_cls
@@ -1924,6 +2329,77 @@ def run_all(ap):
               and ap.checkpoint_from_branch(str(pr8), None, h8) == "")
         (pr8 / "ev" / "notes.md").write_text("n\n"); git(pr8, "add", "-A"); git(pr8, "commit", "-q", "-m", "n")
         check("V-AP-NOPATH-NONE-NAMED", ap.checkpoint_from_branch(str(pr8), h8, git(pr8, "rev-parse", "HEAD")) == "")
+        # round 2 (KSR S329K `5cb05abd`; MKW S338M `289143e1` on its worktree branch): a hold that names a commit sha
+        n8 = git(pr8, "rev-parse", "HEAD")
+        git(pr8, "checkout", "-q", "-b", "side8")
+        (pr8 / "ev" / "checkpoint_s2.md").write_text("ck2\n"); git(pr8, "add", "-A"); git(pr8, "commit", "-q", "-m", "ck2")
+        c8 = git(pr8, "rev-parse", "HEAD")
+        git(pr8, "checkout", "-q", "main")
+        check("V-AP-SHA-FINDS-CHECKPOINT-OFF-HEAD", ap.checkpoint_from_sha(str(pr8), {"evidence": c8[:8]}, b8)
+              == "ev/checkpoint_s2.md" and ap.checkpoint_from_sha(str(pr8), {"evidence": None, "residual": c8}, b8)
+              == "ev/checkpoint_s2.md")
+        check("V-AP-SHA-WINDOW-ONLY", ap.checkpoint_from_sha(str(pr8), {"evidence": c8}, c8) == ""
+              and ap.checkpoint_from_sha(str(pr8), {"evidence": h8}, n8) == ""
+              and ap.checkpoint_from_sha(str(pr8), {"evidence": n8}, b8) == "")
+        # round 4 (FIFATC S364C in worktree-s359c, MKW S369M in worktree-s362m): stranded generation work comes home
+        def _rs_repo(tag, product_extra=None, overlap=False, own_wt=False):
+            pr = tmp / f"rs-{tag}"
+            __import__("shutil").rmtree(pr, ignore_errors=True)  # run_all re-runs in the same tmp
+            pr.mkdir()
+            git(pr, "init", "-q", "-b", "main")
+            git(pr, "config", "user.email", "t@t"); git(pr, "config", "user.name", "t")
+            (pr / "ev").mkdir(); (pr / "ev" / "old.txt").write_text("o\n")
+            (pr / ".gitignore").write_text(".claude/\n")  # as in the products: worktrees are never tracked
+            git(pr, "add", "-A"); git(pr, "commit", "-q", "-m", "S4K: base")
+            b = git(pr, "rev-parse", "HEAD")
+            wt = pr / ".claude" / "worktrees" / ("s5k" if own_wt else "s4k")
+            git(pr, "worktree", "add", "-q", "-b", "worktree-s4k", str(wt), b)
+            (pr / ".planning").mkdir(); (pr / ".planning" / "STATE.md").write_text("S5K\n")
+            (pr / "vault" / "autopilot").mkdir(parents=True); (pr / "vault" / "autopilot" / "S5K-PHASES.md").write_text("p\n")
+            if product_extra:
+                (pr / product_extra).write_text("x\n")
+            git(pr, "add", "-A"); git(pr, "commit", "-q", "-m", "S5K: autopilot packet + scaffold")
+            (wt / "ev" / "checkpoint_s5k.md").write_text("ck\n")
+            if overlap:
+                (wt / ".planning").mkdir(exist_ok=True); (wt / ".planning" / "STATE.md").write_text("mine\n")
+            git(wt, "add", "-A"); git(wt, "commit", "-q", "-m", "S5K P1: work")
+            return pr, wt
+        _rl = {"name": "RS", "packet_dir": "vault/autopilot"}
+        _halt = {"state": "HALTED", "mission_id": "m-rs"}
+        pr, wt = _rs_repo("ok")
+        _msg = ap.reconcile_stranded(dict(_rl, product=str(pr)), {"gen": "S5K"}, _halt, False)
+        check("V-AP-STRANDED-MERGED-HOME", _msg.startswith("autopilot: bring S5K") and (pr / "ev" / "checkpoint_s5k.md").exists()
+              and git(pr, "rev-parse", "HEAD") == git(wt, "rev-parse", "HEAD")
+              and any(r["kind"] == "stranded_merged" for r in ap.ledger_rows()))
+        check("V-AP-STRANDED-ONCE", ap.reconcile_stranded(dict(_rl, product=str(pr)), {"gen": "S5K"}, _halt, False) == "")
+        pr, wt = _rs_repo("dry")
+        check("V-AP-STRANDED-DRY-MOVES-NOTHING", ap.reconcile_stranded(dict(_rl, product=str(pr)), {"gen": "S5K"}, _halt,
+              True).startswith("DRY ") and not (pr / "ev" / "checkpoint_s5k.md").exists())
+        pr, wt = _rs_repo("beyond", product_extra="ev/peer.txt")
+        check("V-AP-STRANDED-SKIPS-REAL-PRODUCT-WORK", ap.reconcile_stranded(dict(_rl, product=str(pr)), {"gen": "S5K"}, _halt,
+              False).startswith("skip: the product moved") and not (pr / "ev" / "checkpoint_s5k.md").exists())
+        pr, wt = _rs_repo("overlap", overlap=True)
+        check("V-AP-STRANDED-SKIPS-OVERLAP", ap.reconcile_stranded(dict(_rl, product=str(pr)), {"gen": "S5K"}, _halt,
+              False).startswith("skip: worktree-s4k and the product both touch") and not (pr / "ev" / "checkpoint_s5k.md").exists())
+        pr, wt = _rs_repo("own", own_wt=True)
+        check("V-AP-STRANDED-LEAVES-OWN-WORKTREE", ap.reconcile_stranded(dict(_rl, product=str(pr)), {"gen": "S5K"}, _halt,
+              False) == "" and not (pr / "ev" / "checkpoint_s5k.md").exists())
+        pr, wt = _rs_repo("grace")
+        _hl = dict(_rl, product=str(pr), cwd=str(pr))
+        _hst = {"lanes": {"RS": {"status": "RUNNING", "gen": "S5K", "mission": "m-rsgrace0000"}}}
+        (tmp / "state" / "gsd-mission-m-rsgrace0000.json").write_text(json.dumps(
+            {"mission_id": "m-rsgrace0000", "state": "RUNNING", "updated_at": 1.0,
+             "reason": "launch held: cwd not aligned with work_dir (diverged): x"}))
+        _keep_lt = ap.lane_tick
+        ap.lane_tick = lambda st, lane, dry: None
+        ap.tick_lane(_hst, _hl, False)
+        ap.lane_tick = _keep_lt
+        (tmp / "state" / "gsd-mission-m-rsgrace0000.json").unlink()
+        check("V-AP-STRANDED-MERGE-STARTS-HELD-GRACE", (pr / "ev" / "checkpoint_s5k.md").exists()
+              and float(_hst["lanes"]["RS"].get("held_grace_until") or 0) > __import__("time").time() + 3600)
+        check("V-AP-STRANDED-DUE", ap.stranded_due(_halt) and ap.stranded_due(
+            {"state": "RUNNING", "reason": "launch held: cwd not aligned with work_dir (diverged): x"})
+              and not ap.stranded_due({"state": "RUNNING", "reason": "running"}) and not ap.stranded_due({}))
     finally:
         ap.sh = keep_sh8
     # F4b (2026-11-16, S71F/S69T): a continuation fast-forwards the product to the halted branch head before arming;
@@ -2107,6 +2583,57 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "topup_ignores_certificates": lambda m: setattr(m, "certified_since", lambda p, b: True),
          "topup_unbounded": lambda m: setattr(m, "MAX_TOPUPS", 99),
          "topup_never": lambda m: setattr(m, "cost_topup", lambda *a, **k: None),
+         "breaker_never_replans": lambda m: setattr(m, "breaker_replan", lambda *a, **k: None),
+         "breaker_uncapped": lambda m: setattr(m, "BREAKER_REPLAN_MAX", 10**9),
+         "tick_never_recovers": lambda m: setattr(m, "recover_interrupted_tick", lambda st, ln, ls: ls.pop("tick_open", None)),
+         "sha_checkpoint_ignored": lambda m: setattr(m, "checkpoint_from_sha", lambda p, h, b: ""),
+         "sha_checkpoint_needs_head": lambda m: setattr(m, "checkpoint_from_sha", (lambda real: lambda p, h, b: (
+             real(p, h, b) if any(m.in_window(p, b, x) for x in (h.get("evidence"), h.get("residual")) if x) else ""))(
+             m.checkpoint_from_sha)),
+         "sha_checkpoint_any_window": lambda m: setattr(m, "checkpoint_from_sha", (lambda real: lambda p, h, b: real(
+             p, h, m._git(p, "rev-list", "--max-parents=0", "HEAD")[1].strip()[:40]))(m.checkpoint_from_sha)),
+         "nopath_parks_at_once": lambda m: setattr(m, "NOPATH_WAIT_S", 0),
+         "nopath_waits_forever": lambda m: setattr(m, "NOPATH_WAIT_S", 10 ** 9),
+         "held_replan_never": lambda m: setattr(m, "HELD_REPLAN_S", 10 ** 9),
+         "held_replan_immediate": lambda m: setattr(m, "HELD_REPLAN_S", 0),
+         "watchdog_off": lambda m: setattr(m, "WATCHDOG_S", 10 ** 9),
+         "watchdog_immediate": lambda m: setattr(m, "WATCHDOG_S", 0),
+         "watchdog_repeats": lambda m: setattr(m, "watchdog", (lambda real: lambda st, lane, ls: (
+             (ls.get("wd") or {}).pop("told", None), real(st, lane, ls))[1])(m.watchdog)),
+         "alerts_omit_parked": lambda m: setattr(m, "ALERT_STATUSES", ()),
+         "answer_ignored": lambda m: setattr(m, "take_answers", lambda st, names: 0),
+         "answer_retaken": lambda m: setattr(m, "take_answers", (lambda real: lambda st, names: (
+             st.pop("answers_seen", None), real(st, names))[1])(m.take_answers)),
+         "answer_keeps_park": lambda m: setattr(m, "take_answers", (lambda real: lambda st, names: (
+             lambda keep: (real(st, names), [st["lanes"][k].update(v) for k, v in keep.items()])[0])(
+             {k: {"status": v.get("status"), "judged_for": v.get("judged_for")} for k, v in (st.get("lanes") or {}).items()}))(
+             m.take_answers)),
+         "ruling_not_in_prompt": lambda m: setattr(m, "rulings_block", lambda name: ""),
+         "ruling_redelivered": lambda m: setattr(m, "deliver_rulings", (lambda real: lambda ln, ls, dry: (
+             [r.pop("delivered", None) for r in ls.get("owner_rulings") or []], real(ln, ls, dry))[1])(m.deliver_rulings)),
+         "ruling_delivered_dry": lambda m: setattr(m, "deliver_rulings", (lambda real: lambda ln, ls, dry: real(
+             ln, ls, False))(m.deliver_rulings)),
+         "question_alert_off": lambda m: setattr(m, "open_question", lambda ls, rec: ""),
+         "stranded_never": lambda m: setattr(m, "reconcile_stranded", lambda lane, ls, rec, dry: ""),
+         "stranded_any_product": lambda m: setattr(m, "_diff_paths", (lambda real: lambda p, a, b: (
+             [] if b == "HEAD" else real(p, a, b)))(m._diff_paths)),
+         "stranded_ignores_overlap": lambda m: setattr(m, "_diff_paths", (lambda real: lambda p, a, b: (
+             [x for x in (real(p, a, b) or []) if not x.startswith(".planning/")] if b != "HEAD" else real(p, a, b)))(
+             m._diff_paths)),
+         "stranded_dry_merges": lambda m: setattr(m, "reconcile_stranded", (lambda real: lambda lane, ls, rec, dry: real(
+             lane, ls, rec, False))(m.reconcile_stranded)),
+         "stranded_due_never": lambda m: setattr(m, "stranded_due", lambda rec: False),
+         "stranded_no_held_grace": lambda m: setattr(m, "HELD_REPLAN_S", 0),
+         "stranded_no_worktree_ff": lambda m: setattr(m, "_git", (lambda real: lambda p, *a: (
+             (0, "") if a[:2] == ("merge", "--ff-only") else real(p, *a)))(m._git)),
+         "question_never_quiet": lambda m: setattr(m, "open_question", (lambda real: lambda ls, rec: real({}, rec))(
+             m.open_question)),
+         "disk_guard_off": lambda m: setattr(m, "disk_admits", lambda: None),
+         "disk_guard_always": lambda m: setattr(m, "disk_admits", lambda: "disk 0G free < floor 20G"),
+         "sweep_any_prefix": lambda m: setattr(m, "OWN_TMP_RE", m.re.compile(r".")),
+         "sweep_any_age": lambda m: setattr(m, "TMP_SWEEP_AGE_S", 0),
+         "match_snapshot_corrupt_crashes": lambda m: setattr(m, "read_snap", lambda snap, ln: (
+             set(m.json.loads(snap.read_text())) if snap.exists() else None)),
          "topup_progress_ignored": lambda m: setattr(m, "progressed_since", lambda *a: None),
          "topup_progress_any": lambda m: setattr(m, "progressed_since", lambda *a: "x"),
          "topup_fingerprint_unchecked": lambda m: setattr(m, "progressed_since", lambda p, ls, rec: (
@@ -2219,6 +2746,16 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "pool_floor_never_booked": lambda m: setattr(m, "book_pool_floor_halt", lambda lane, ck, prod: 0),
          "notfinal_first_declaration_wins": lambda m: setattr(m, "FINAL_DECL_RE", m.NOT_FINAL_RE),
          "settle_never_corrects": lambda m: setattr(m, "spend_correction", lambda rows, mi, g, s: 0),
+         "j0_trusts_declared": lambda m: setattr(m, "count_via_tool", lambda prod, ref, tool, name, runner=None: (
+             4, 24, "ok")),
+         "j0_ignores_protected": lambda m: setattr(m, "protected_check", lambda lane: None),
+         "j0_shadow_rebooks": lambda m: setattr(m, "ledger_rows", (lambda real: lambda: [
+             r for r in real() if r.get("kind") != "j0_shadow"])(m.ledger_rows)),
+         "prearm_never_called": lambda m: setattr(m, "prearm_shadow", lambda *a, **k: None),
+         "slim_any_profile": lambda m: setattr(m, "worker_profile", lambda lane, rows=None: lane.get("worker_profile")),
+         "slim_never_set": lambda m: setattr(m, "worker_profile", lambda lane, rows=None: None),
+         "slim_pilot_unbounded": lambda m: setattr(m, "SLIM_PILOT_MAX", 99),
+         "slim_command_unchanged": lambda m: setattr(m, "SLIM_LOOP", "Then run /gsd-autonomous on the milestone."),
          "owner_escrow_kept": lambda m: setattr(m, "ESCROW_MISSION_KINDS", ("auto_topup",)),
          "stranded_ignores_live": lambda m: setattr(m, "stranded", (lambda real: lambda rows, sf, live: real(
              rows, sf, set()))(m.stranded)),
@@ -2236,6 +2773,13 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "evo_synth_off": _evo_mut(synthesize=lambda *a, **k: (None, "off")),
          "evo_synth_admits_anything": _evo_mut(synth_problems=lambda *a, **k: []),
          "evo_synth_unbounded": _evo_mut(SYNTH_MAX=99),
+         "evo_escape_unbounded": _evo_mut(ESCAPE_MAX=99),
+         "evo_escape_ignores_room": _evo_mut(lane_research_cap=lambda ls: 10 ** 15),
+         "evo_escape_no_novelty": _evo_mut(escape_problems=_wrap(lambda e: (lambda real: (
+             lambda text, known: [b for b in real(text, known) if "not tried before" not in b]))(e.escape_problems))),
+         "evo_escape_limits_ignored": _evo_mut(escape_review=lambda *a, **k: (None, None)),
+         "research_credit_off": lambda m: setattr(m, "credit_research", lambda *a, **k: 0),
+         "research_booked_unbounded": lambda m: setattr(m, "RESEARCH_BOOKED_KEEP", 10 ** 6),
          "evo_synth_residual_unchecked": _evo_mut(synthesize=_wrap(lambda e: (lambda real: (
              lambda levers, lane, ls, product, family, designer, residual: real(
                  levers, lane, ls, product, family, designer, None)))(e.synthesize))),
@@ -2318,4 +2862,5 @@ print("MUTANTS SURVIVED:", survivors or "none", f"({len(drill) - len(survivors)}
 print("KILLED BY CRASH (not by a check):", crashed or "none")
 ok = not fails and not survivors
 print("AUTOPILOT_GATE_PASS" if ok else "AUTOPILOT_GATE_FAIL")
+shutil.rmtree(tmp, ignore_errors=True)  # 2026-11-25: every gate run used to leave its ap-test-* dir behind
 sys.exit(0 if ok else 1)

@@ -5,6 +5,20 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**2026-11-26 (pane 31498a3e, /kresume of a90ef78f). Owner "Yes, all 3 steps": RESERVATION CREDIT GENERALISED ACROSS PP.**
+- Step 1: the PP mirror `vault/programs/ascension/autopilot` now holds GEX44 r3-r6. Seven files were copied: autopilot,
+  evolve, test_autopilot, and the planner, judge, lever_designer and brief prompts. All sha16 match GEX44 (329a12ea /
+  fce79035 / d9eac1cb). levers.json and lanes.json are live state, so they were not synced.
+- Step 2, review of credit_research: it is bounded by min(freed, booking, counter) and idempotent, because freed comes
+  from a release ledger that books it once. A crash before save fails toward under-credit. Evicting a booking (keep 12)
+  also under-credits. No defect found.
+- Step 3: new HR-BUDGET-RESERVATION-CREDIT-001 in the global `knowledge_vault/core/HARD-RULES.md` (ACTIVE, classes
+  COST-CONTEXT + BILLING-REVENUE), and a "reservation is a debit" section in the monetary-quantity-integrity skill.
+  The digest was recompiled: 149 -> 177 binding. 27 of the new ones are other panes' rules that were never compiled.
+  The digest now reports "REOPEN CONDITION MET: PLUGIN-INSTALL" from someone else's rule (Owner's call).
+  Gates: rule_effects 7/7, test_hard_rules 14/14. Backups `~/.claude/backups/reservation-credit-<ts>/`.
+- NEXT: the escape line-format debt (below), then watch WSR S403R and the FIFA lifter shadow.
+
 **2026-11-26 15:53Z (pane a90ef78f). Owner "go ahead" + "yes": ROUND 6 RESEARCH CREDIT LIVE, incl. retro.**
 - autopilot.py: book_research (remembers each RESEARCH gen's booking, newest 12) + credit_research (settled unspent
   reservation -> research_spent down, bounded by the booking, idempotent, ledger `research_credit`). Wired at close,
