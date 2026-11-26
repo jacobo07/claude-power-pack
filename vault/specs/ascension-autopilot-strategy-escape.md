@@ -54,3 +54,21 @@ test_autopilot.py 444/444, mutants 201/201 killed (4 new: escape_unbounded, esca
 escape_no_novelty, escape_limits_ignored; the same 2 pre-existing crash-kills). The 14 legacy park checks now run on a
 lane whose escape is spent (evo_fresh `escape_streak: ESCAPE_MAX`): reality changed, no assertion deleted.
 V-EVO-ESCAPE-LIVE-PATH drives judge DISAGREE -> design none -> escape -> plan -> arm end to end.
+
+## Round 7: admission reads the evidence where the generation wrote it (Owner 2026-11-26 "go ahead" + "a", pane 31498a3e)
+The first real escape (WSR S395R, judged AGREE) wrote `STRATEGY: S1 SIGNATURE_IDENTIFICATION: ...`, put its funnel
+in `funnel.json` beside the residual, and wrote its reopen condition as `Next route (...): ...` inside LIMITS. The
+round-5 checker refused it three times (0 new families, < 2 FUNNEL lines, LIMITS without REOPEN).
+- `escape_family(line)`: an explicit `family <F>` or `FAMILY: <F>` wins; otherwise an UPPER_SNAKE token after the id
+  and before a colon. `FAMILY` itself is never a family. Novelty is unchanged: >= 2 families this lane has not tried.
+- `escape_funnel_stages(product, residual)`: the integer stages of `funnel.json` beside the residual, counted only if
+  there are >= 2 of them (absent, unreadable or a non-map = 0). They are added to the FUNNEL line count.
+- `escape_reopen(lines)`: the REOPEN lines; when there are none, a `Next route:` / `reopen ...:` clause inside a
+  LIMITS line. LIMITS with neither is still refused. The limits park's `why` carries the derived clause.
+- The directive text is unchanged (it still asks for the machine lines).
+- Real S395R checkpoint: 3 refusals -> 0. It parks `limits` with the "Next route" text.
+- Gate (staging `/tmp/ap-r7-stage-3149`): AUTOPILOT_GATE_PASS, mutants 209/209 killed, 6 of them new
+  (family_lead_off, family_colon_off, funnel_file_ignored, funnel_file_any, reopen_clause_off, reopen_anything).
+  New checks: V-AP-ESCAPE-FAMILY-FORMS, V-AP-ESCAPE-EVIDENCE-WHERE-WRITTEN.
+- Deployed 2026-11-26T17:00:18Z, after the gate and under both locks: evolve 7e89fa2f, test 3860d148. Rollback:
+  `*.bak-3149-famforms-20261126T170018Z`.

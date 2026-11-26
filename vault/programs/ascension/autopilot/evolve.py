@@ -193,8 +193,19 @@ ESCAPE_FAMILY = "STRATEGY_EXPANSION"
 ESCAPE_MAX = 2
 ESCAPE_LIMITS_TAG = "STRATEGY LIMITS DEMONSTRATED"
 _ESC_LINE = re.compile(r"^[ \t>*_`-]*(FUNNEL|STRATEGY|DISCOVERY_POOL|HELD_OUT|LIMITS|REOPEN)[*_`]*\s*:\s*(.+?)\s*$", re.M)
-_ESC_FAMILY = re.compile(r"\bfamily\s+([A-Z][A-Z0-9_]{2,})\b")
+_ESC_FAMILY = re.compile(r"\b(?i:family)\s*:?\s+([A-Z][A-Z0-9_]{2,})\b")
+# round 7 (Owner 2026-11-26 "go ahead", pane 31498a3e): the template asks `STRATEGY: <id> family <F> <what>`, and the
+# first real escape (WSR S395R) wrote `STRATEGY: S1 SIGNATURE_IDENTIFICATION: <what>`. Both are read: an explicit
+# `family <F>` / `FAMILY: <F>` wins, else an UPPER_SNAKE token right after the id and before a colon. The novelty rule
+# (a family not tried by this lane) is unchanged.
+_ESC_FAMILY_LEAD = re.compile(r"^\s*\S+\s+([A-Z][A-Z0-9_]{2,})\s*:")
 _ESC_POOL = re.compile(r"count\s+(\d+)\s+floor\s+(\d+)")
+# round 7b (Owner 2026-11-26 "a", pane 31498a3e): WSR S395R wrote its funnel as funnel.json beside the residual (no
+# FUNNEL lines) and its reopen condition as a `Next route (...):` clause inside LIMITS (no REOPEN line). Both count:
+# a funnel.json with >= 2 integer stages adds its stages to the FUNNEL lines; a LIMITS line's `Next route:` /
+# `reopen ...:` clause stands in for REOPEN only when no REOPEN line exists. A LIMITS with neither is still refused.
+ESCAPE_FUNNEL_FILE = "funnel.json"
+_ESC_REOPEN_IN_LIMITS = re.compile(r"(?i)\b(?:next\s+route|reopen(?:\s+(?:if|when|on))?)\b\s*(?:\([^)]*\))?\s*:\s*(\S.*)$")
 
 
 def escape_lines(text: str) -> dict:
@@ -204,20 +215,50 @@ def escape_lines(text: str) -> dict:
     return out
 
 
-def escape_problems(text: str, known_families) -> list[str]:
+def escape_family(s: str):
+    """The mechanism family a STRATEGY line names, in either written form; None when it names none."""
+    m = _ESC_FAMILY.search(s or "") or _ESC_FAMILY_LEAD.match(s or "")
+    f = m.group(1) if m else None
+    return None if f == "FAMILY" else f
+
+
+def escape_reopen(ln: dict) -> list[str]:
+    """REOPEN lines, else the reopen clause a LIMITS line carries (`Next route (...): <what>`); [] when neither."""
+    if ln.get("REOPEN"):
+        return list(ln["REOPEN"])
+    return [m.group(1) for s in ln.get("LIMITS", []) if (m := _ESC_REOPEN_IN_LIMITS.search(s))]
+
+
+def escape_funnel_stages(product: str, residual) -> int:
+    """Integer stages of the funnel.json beside the residual (0 when absent, unreadable or not a stage map)."""
+    if not residual:
+        return 0
+    p = residual if os.path.isabs(str(residual)) else os.path.join(product or "", str(residual))
+    try:
+        with open(os.path.join(os.path.dirname(p), ESCAPE_FUNNEL_FILE), encoding="utf-8") as f:
+            st = json.load(f).get("stages")
+    except (OSError, ValueError, AttributeError):
+        return 0
+    if not isinstance(st, dict):
+        return 0
+    n = sum(1 for v in st.values() if isinstance(v, int) and not isinstance(v, bool) and v >= 0)
+    return n if n >= 2 else 0
+
+
+def escape_problems(text: str, known_families, funnel_file_stages: int = 0) -> list[str]:
     """Deterministic admission of a STRATEGY_EXPANSION checkpoint. Empty list = it did its job (an eligible discovery
     pool, or demonstrated limits with reopen conditions). A pool below its floor is exploration, never eligible."""
     ln, bad = escape_lines(text), []
     known = {str(f) for f in known_families or ()} | {ESCAPE_FAMILY}
-    if len(ln.get("FUNNEL", [])) < 2:
-        bad.append("fewer than 2 FUNNEL lines (where the candidates disappear)")
-    fams = [m.group(1) for s in ln.get("STRATEGY", []) if (m := _ESC_FAMILY.search(s))]
+    if len(ln.get("FUNNEL", [])) + int(funnel_file_stages or 0) < 2:
+        bad.append(f"fewer than 2 FUNNEL lines (where the candidates disappear) and no {ESCAPE_FUNNEL_FILE} with >= 2 stages")
+    fams = [f for s in ln.get("STRATEGY", []) if (f := escape_family(s))]
     new = sorted(set(fams) - known)
     if len(new) < 2:
         bad.append(f"fewer than 2 STRATEGY hypotheses of a family not tried before (new: {new or 'none'})")
     if ln.get("LIMITS"):
-        if not ln.get("REOPEN"):
-            bad.append("LIMITS without a REOPEN condition")
+        if not escape_reopen(ln):
+            bad.append("LIMITS without a REOPEN condition (a REOPEN line or a `Next route:` clause)")
         return bad
     pools = [(int(m.group(1)), int(m.group(2))) for s in ln.get("DISCOVERY_POOL", []) if (m := _ESC_POOL.search(s))]
     if not pools:
@@ -280,11 +321,11 @@ def escape_review(levers: dict, lane: str, product: str, family, residual):
         return None, None
     text = _read_residual(product, residual)
     known = {x.get("family") for x in levers.get(lane, []) if isinstance(x, dict)}
-    refused, ln = escape_problems(text, known), escape_lines(text)
+    refused, ln = escape_problems(text, known, escape_funnel_stages(product, residual)), escape_lines(text)
     if not refused and ln.get("LIMITS"):
         return ({"action": "park", "park_kind": "limits",
                  "why": f"{ESCAPE_LIMITS_TAG}: {'; '.join(ln['LIMITS'])[:300]} | REOPEN: "
-                        f"{'; '.join(ln.get('REOPEN', []))[:300]}"}, [])
+                        f"{'; '.join(escape_reopen(ln))[:300]}"}, [])
     return None, refused
 
 

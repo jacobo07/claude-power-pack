@@ -5,6 +5,7 @@ Every refusal asserts its specific label; every guard has an admitting twin so a
 import importlib.util
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -1453,6 +1454,17 @@ def run_all(ap):
     check("V-AP-ESCAPE-PROBLEMS-REFUSES", all(refs.values()) and "FUNNEL" in refs["funnel"][0]
           and "not tried before" in refs["family"][0] and "below its floor" in refs["floor"][0]
           and "REOPEN" in refs["reopen"][0] and "HELD_OUT" in refs["heldout"][0])
+    # round 7: the family forms generations actually write (WSR S395R lines verbatim, 2026-11-26)
+    S395T = ("FUNNEL: unnamed 32853\nFUNNEL: after exclusion 74\n"
+             "STRATEGY: S1 SIGNATURE_IDENTIFICATION: control 154/154 (n>=30, >=0.80 seen), unique 134, after exclusion 74.\n"
+             "STRATEGY: S2 CALLGRAPH_PROPAGATION: control 88/90 (seen), unique 48, after exclusion 7.\n"
+             "DISCOVERY_POOL: dp_v1 count 74 floor 20\nHELD_OUT: untouched\n")
+    COLT = POOLT.replace("s1 family BYTE_SIGNATURE_MATCH", "s1 FAMILY: BYTE_SIGNATURE_MATCH")
+    check("V-AP-ESCAPE-FAMILY-FORMS", E.escape_problems(S395T, {"FAM_A"}) == []
+          and E.escape_problems(COLT, {"FAM_A"}) == []
+          and E.escape_family("S1 FAMILY: X_Y") == "X_Y" and E.escape_family("S1 FAMILY: x") is None
+          and E.escape_family("s1 family BYTE_SIG what") == "BYTE_SIG" and E.escape_family("S1 no family here") is None
+          and "not tried before" in E.escape_problems(S395T, {"SIGNATURE_IDENTIFICATION"})[0])
     (tmp / "ck_lim.md").write_text(GOODT + "LIMITS: every donor-defined fn already used\nREOPEN: a sixth donor corpus\n")
     elv2 = esc_levers()
     elv2["XL"].append({"id": "xl_strategy_escape_1", "family": E.ESCAPE_FAMILY, "status": "open"})
@@ -1470,6 +1482,30 @@ def run_all(ap):
     check("V-AP-ESCAPE-LIMITS-PARKS-HONESTLY", d6["action"] == "park" and d6.get("park_kind") == "limits"
           and d6["why"].startswith(E.ESCAPE_LIMITS_TAG) and "sixth donor corpus" in d6["why"]
           and d7["action"] == "park" and d7.get("park_kind") == "limits")
+    # round 7b (Owner "a"): funnel.json beside the residual + a `Next route:` clause in LIMITS (S395R's real shape)
+    sd = tmp / "esc395"
+    sd.mkdir(exist_ok=True)
+    LIM395 = ("STRATEGY: S1 SIGNATURE_IDENTIFICATION: control 154/154, after exclusion 74.\n"
+              "STRATEGY: S2 CALLGRAPH_PROPAGATION: control 88/90, after exclusion 7.\n"
+              "LIMITS: name evidence only, no objdiff oracle. Next route (not an Owner question): transfer the 41 pool "
+              "fns under a link/objdiff oracle.\n")
+    (sd / "ck.md").write_text(LIM395)
+    (sd / "funnel.json").write_text(json.dumps({"stages": {"universe": 34159, "named": 1306, "exclusion": 0}}))
+    elv4 = esc_levers()
+    elv4["XL"].append({"id": "xl_strategy_escape_1", "family": E.ESCAPE_FAMILY, "status": "open"})
+    d9 = E._synth_or_park(esc_ls(escape_streak=1), elv4, "XL", str(tmp), E.ESCAPE_FAMILY, none_designer,
+                          "esc395/ck.md", "stall", "src")
+    one = E.escape_funnel_stages(str(tmp), "esc395/ck.md")
+    (sd / "funnel.json").write_text(json.dumps({"stages": {"universe": 34159}}))
+    one_stage = E.escape_problems(LIM395, {"FAM_A"}, E.escape_funnel_stages(str(tmp), "esc395/ck.md"))
+    (sd / "funnel.json").write_text("not json")
+    bad_json = E.escape_funnel_stages(str(tmp), "esc395/ck.md")
+    no_route = E.escape_problems(LIM395.replace("Next route (not an Owner question):", "then"), {"FAM_A"}, 3)
+    check("V-AP-ESCAPE-EVIDENCE-WHERE-WRITTEN", d9["action"] == "park" and d9.get("park_kind") == "limits"
+          and "link/objdiff oracle" in d9["why"] and one == 3 and bad_json == 0
+          and any("FUNNEL" in b for b in one_stage) and any("REOPEN" in b for b in no_route)
+          and E.escape_funnel_stages(str(tmp), None) == 0
+          and E.escape_reopen({"REOPEN": ["x"], "LIMITS": ["Next route: y"]}) == ["x"])
     (tmp / "ck_bad.md").write_text("FUNNEL: only one\n")
     elv3 = esc_levers()
     elv3["XL"].append({"id": "xl_strategy_escape_1", "family": E.ESCAPE_FAMILY, "status": "open"})
@@ -2778,6 +2814,12 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "evo_escape_no_novelty": _evo_mut(escape_problems=_wrap(lambda e: (lambda real: (
              lambda text, known: [b for b in real(text, known) if "not tried before" not in b]))(e.escape_problems))),
          "evo_escape_limits_ignored": _evo_mut(escape_review=lambda *a, **k: (None, None)),
+         "evo_escape_funnel_file_ignored": _evo_mut(escape_funnel_stages=lambda *a, **k: 0),
+         "evo_escape_funnel_file_any": _evo_mut(escape_funnel_stages=lambda *a, **k: 9),
+         "evo_escape_reopen_clause_off": _evo_mut(_ESC_REOPEN_IN_LIMITS=re.compile(r"(?!x)x")),
+         "evo_escape_reopen_anything": _evo_mut(escape_reopen=lambda ln: ["anything"]),
+         "evo_escape_family_lead_off": _evo_mut(_ESC_FAMILY_LEAD=re.compile(r"(?!x)x")),
+         "evo_escape_family_colon_off": _evo_mut(_ESC_FAMILY=re.compile(r"\bfamily\s+([A-Z][A-Z0-9_]{2,})\b")),
          "research_credit_off": lambda m: setattr(m, "credit_research", lambda *a, **k: 0),
          "research_booked_unbounded": lambda m: setattr(m, "RESEARCH_BOOKED_KEEP", 10 ** 6),
          "evo_synth_residual_unchecked": _evo_mut(synthesize=_wrap(lambda e: (lambda real: (

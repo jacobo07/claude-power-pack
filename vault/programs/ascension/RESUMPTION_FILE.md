@@ -5,6 +5,22 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**2026-11-26 ~17:25Z (pane 31498a3e). ROUND 7 LIVE + Owner "unpark everything" (TENNIS +112.5M, MKW commit, KSR repoint).**
+- Round 7 (Owner "go ahead" + "a"): the escape admission now accepts the evidence in the form the generation wrote it.
+  Families are read as `family F`, `FAMILY: F` or `<id> F:`. A `funnel.json` beside the residual counts as the funnel.
+  A `Next route:` clause inside LIMITS counts as REOPEN.
+  - Real S395R checkpoint: 3 refusals -> 0. Spec §Round 7.
+  - Gate PASS, 209/209 mutants (6 new). Deployed 17:00:18Z (evolve 7e89fa2f, test 3860d148; backups
+    `*.bak-3149-famforms-20261126T170018Z`). The PP mirror holds both files.
+- Unpark via the answer channel (rulings c0eb1d3b / c2a87fac / 4891e97d): KSR, MKW and TENNIS all re-parked on the
+  same tick. The causes were fixed after Owner picks (backups `*.bak-3149-fix3-20261126T171824Z`, 3 ledger rows):
+  - TENNIS: envelope 712.5M -> 825M (it had 711.96M booked; S388T needs 9.8M).
+  - MKW: S311M's 2 leftover evidence edits committed 841f721a on lane/mkw; tracked tree now clean.
+  - KSR: bootstrap_checkpoint -> evidence/ascension/s389k/checkpoint_s389k.md (t1/campaign 7631842a). The dead
+    mission m-bbedee5730f4 was cleared; its residual_pivot_s389k.md was never written.
+- 17:23Z: KSR judged and armed S408K m-5574dfe1ff08 (8M). TENNIS re-judging S385T. MKW WAITING, not yet ticked.
+- NEXT: confirm TENNIS and MKW arm. Watch WSR S405R and the FIFA lifter shadow.
+
 **2026-11-26 (pane 31498a3e, /kresume of a90ef78f). Owner "Yes, all 3 steps": RESERVATION CREDIT GENERALISED ACROSS PP.**
 - Step 1: the PP mirror `vault/programs/ascension/autopilot` now holds GEX44 r3-r6. Seven files were copied: autopilot,
   evolve, test_autopilot, and the planner, judge, lever_designer and brief prompts. All sha16 match GEX44 (329a12ea /
