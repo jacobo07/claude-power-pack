@@ -18,8 +18,14 @@
   - MKW: S311M's 2 leftover evidence edits committed 841f721a on lane/mkw; tracked tree now clean.
   - KSR: bootstrap_checkpoint -> evidence/ascension/s389k/checkpoint_s389k.md (t1/campaign 7631842a). The dead
     mission m-bbedee5730f4 was cleared; its residual_pivot_s389k.md was never written.
-- 17:23Z: KSR judged and armed S408K m-5574dfe1ff08 (8M). TENNIS re-judging S385T. MKW WAITING, not yet ticked.
-- NEXT: confirm TENNIS and MKW arm. Watch WSR S405R and the FIFA lifter shadow.
+- 17:23Z: KSR judged and armed S408K m-5574dfe1ff08 (8M). It halted 17:40Z with its checkpoint, and S411K is planning.
+  17:30Z: TENNIS armed S409T m-84ac347faa44 (9M; 2.02M of S385T released).
+- MKW re-parked 17:30Z, and the cause was my 841f721a: it made worktree-s382m a non-fast-forward, and only
+  factory-lane commits are merged over. Fix: worktree-s382m merged --no-ff as 690dd855 (no shared files), MKW WAITING
+  (backup `state.json.bak-3149-mkwmerge-*`, ledger owner_resume). 17:44Z: S382M checkpoint -> judge.
+- LESSON: a bookkeeping commit on a lane's product while a generation branch is open turns that branch into a
+  non-fast-forward. Commit it on the generation branch instead, or merge the branch first.
+- NEXT: confirm MKW arms. Watch WSR S405R and the FIFA lifter shadow.
 
 **2026-11-26 (pane 31498a3e, /kresume of a90ef78f). Owner "Yes, all 3 steps": RESERVATION CREDIT GENERALISED ACROSS PP.**
 - Step 1: the PP mirror `vault/programs/ascension/autopilot` now holds GEX44 r3-r6. Seven files were copied: autopilot,
