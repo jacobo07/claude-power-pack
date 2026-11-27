@@ -10,6 +10,9 @@ import types
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
+# Hermetic: the cswap auto log of the host (GEX44, 2026-11-27) must not decide these fixtures, in-process or in the
+# CLI subprocesses that inherit this environment. The cswap layer has its own suite, test_account_governor_cswap.py.
+os.environ["CPP_CSWAP_AUTO_LOG"] = os.path.join(tempfile.gettempdir(), "no-such-cswap-auto-%d.log" % os.getpid())
 import account_governor as g  # noqa: E402
 
 passes = fails = 0

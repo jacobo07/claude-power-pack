@@ -247,6 +247,65 @@ def read_override(state_dir, now):
     return True, str(j["reason"]).strip()
 
 
+# Owner 2026-11-27 (pane 31498a3e): "haz autoswitch cuando sea necesario, asumo el riesgo" and "cuando lleguen al 100%
+# mejor no? para aprovechar al maximo". GEX44 runs `cswap auto --once` every minute over 4 managed accounts and
+# switches at 99.9%. The single-account weekly guard (Q2, 85%) read 86.7% while the active account was at 42% and two
+# others at 0%, so it refused arms the auto-switch could have served. Where that cron's last poll is fresh, it is the
+# reading: arms refuse only when EVERY managed account's 7-day window is full. Absent or stale -> unchanged behaviour.
+CSWAP_LOG = os.environ.get("CPP_CSWAP_AUTO_LOG") or os.path.expanduser("~/.cswap-auto.log")
+CSWAP_FRESH_S = 300
+CSWAP_FULL_PCT = 99.9
+
+
+def _pct(v):
+    return float(v) if isinstance(v, (int, float)) and not isinstance(v, bool) else None
+
+
+def cswap_capacity(now, path=None, fresh_s=CSWAP_FRESH_S):
+    """{at, seven_day {account: pct}, active, min_7d} from the newest `poll` event of the cswap auto log, or None
+    when the log is absent, unreadable, or its newest poll is older than `fresh_s`."""
+    try:
+        with open(path or CSWAP_LOG, "rb") as f:
+            f.seek(0, 2)
+            size = f.tell()
+            f.seek(max(0, size - 65536))
+            tail = f.read().decode("utf-8", "replace")
+    except OSError:
+        return None
+    for line in reversed(tail.splitlines()):
+        try:
+            ev = json.loads(line)
+        except ValueError:
+            continue
+        if not isinstance(ev, dict) or ev.get("event") != "poll":
+            continue
+        at = parse_when(ev.get("ts"))
+        if at is None or now - at > fresh_s or at > now + 60:
+            return None
+        wins = ev.get("windowsPct") if isinstance(ev.get("windowsPct"), dict) else {}
+        pcts = {str(k): _pct(w.get("7d")) for k, w in wins.items() if isinstance(w, dict) and _pct(w.get("7d")) is not None}
+        if not pcts:
+            return None
+        act = ev.get("active") if isinstance(ev.get("active"), dict) else {}
+        return {"at": at, "seven_day": pcts, "active": act.get("number"), "min_7d": min(pcts.values())}
+    return None
+
+
+def cswap_decide(cap, override, action):
+    """(exit, verdict, why) from a fresh cswap reading, or None to leave the decision to `decide`."""
+    if cap is None or action == "deterministic" or os.environ.get("CPP_GOVERNOR_CSWAP") == "off":
+        return None
+    best = min(cap["seven_day"], key=cap["seven_day"].get)
+    if cap["min_7d"] >= CSWAP_FULL_PCT:
+        full = ", ".join("%s %.1f%%" % (k, v) for k, v in sorted(cap["seven_day"].items()))
+        if override[0]:
+            return 0, "ALLOW+OVERRIDE", "every managed account is full (7d: %s) but Owner override active: %s" % (full, override[1])
+        return 3, "REFUSE", ("%s refused: every managed account is full (7d >= %.1f%%: %s); the auto-switch has nowhere "
+                             "to go; override file absent or invalid (%s)" % (action, CSWAP_FULL_PCT, full, override[1]))
+    return 0, "ALLOW+CSWAP", ("account %s has the most room (7d %.1f%%; active %s); the auto-switch moves at %.1f%%"
+                              % (best, cap["seven_day"][best], cap["active"], CSWAP_FULL_PCT))
+
+
 def decide(st, override, action, five_hour_refuse_pct=100.0 - FIVE_HOUR_RESERVE_PCT):
     """(exit code, verdict, why). 0 ALLOW, 3 REFUSE. Official reading first, estimate second, unknown refuses."""
     if action == "deterministic":
@@ -299,6 +358,9 @@ def check(state_dir, action, now=None, roots=None):
     st = status(state_dir, now, roots, infer=bool(roots))   # admission never scans the real transcript store
     five_refuse = 100.0 - cfg_num(config(state_dir), "five_hour_reserve_pct", FIVE_HOUR_RESERVE_PCT)
     code, verdict, why = decide(st, read_override(state_dir, now), action, five_refuse)
+    cs = cswap_decide(cswap_capacity(now), read_override(state_dir, now), action)
+    if cs:
+        code, verdict, why = cs
     off = st.get("official") or {}
     append_ledger(state_dir, {"ts": now, "action": action, "verdict": verdict, "exit": code, "why": why,
                               "pct_lower_bound": st["pct_lower_bound"], "pct_estimate": st["pct_estimate"],

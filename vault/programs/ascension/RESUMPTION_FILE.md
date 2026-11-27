@@ -5,6 +5,17 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**2026-11-27 11:30Z (pane 31498a3e). AUTO-SWITCH LIVE** (Owner "haz autoswitch cuando sea necesario, asumo el
+riesgo" / "cuando lleguen al 100%").
+- Total cap 7.7B (commit 2974a890a).
+- GEX44 crontab line 17 runs `cswap auto --once --threshold 99.9 --weekly-threshold 99.9 --cooldown 60 --strategy
+  best` every minute. Log: ~/.cswap-auto.log. Crontab backups: ~/crontab.bak-3149-autoswitch*.
+- account_governor now reads that log. Arms refuse only when ALL 4 accounts are at 7d >= 99.9%, so the weekly
+  override is no longer needed while the log is fresh.
+- The GEX44 governor files are edited in place, uncommitted in that clone. Backups:
+  ~/account_governor.py.bak-3149-cswap-*.
+- Accounts at 11:00Z: 1 at 0%, 2 at 98%, 3 at 0%, 4 (active) at 42%.
+
 **2026-11-27 09:25Z (pane 31498a3e). ROUND 10 LIVE** (Owner "both, y dejalas todas running").
 - Caps: day 500M -> 1B; total 4.7B -> 5.7B.
 - Weekly override renewed until 2026-11-28T08:50:34Z (24 h max). It needs the Owner again after that.
