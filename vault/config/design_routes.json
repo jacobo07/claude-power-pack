@@ -6,7 +6,7 @@
   "default_kind": "web",
   "surfaces": {
     "web": {
-      "prompt": "\\b(landing|home ?page|homepage|p[aá]gina web|sitio web|web ?site|website|web page|webpage|hero section|secci[oó]n hero|pricing page|p[aá]gina de precios|maquetar|redise[ñn]a(r)? (la|el|una|un) (web|p[aá]gina|sitio))\\b",
+      "prompt": "\\b(hero section|secci[oó]n hero|pricing page|p[aá]gina de precios|maquetar|redise[ñn]a(r)? (la|el|una|un|mi|tu|esta|esa) (web|p[aá]gina|sitio|landing))\\b|\\b(landing( page)?|home ?page|homepage|p[aá]gina web|sitio web|web ?site|website|web ?page|portfolio|portafolio|(la|una|mi|tu|esta|esa|nuestra|su) web|p[aá]gina de \\w+)\\b[^!?\\n]{0,160}?\\b(transmit\\w*|parezc\\w*|se vea|feel|top ?bar|nav ?bar|navbar|build|create|make|design\\w*|redesign\\w*|restyle|styl\\w*|looks?|ugly|amateur|beautiful|polish\\w*|layout|hero|decor\\w*|bonit\\w*|fe[oa]|dise[ñn]\\w*|redise[ñn]\\w*|crea(r|me)?|hazme|constru\\w*|maquet\\w*|estilo|slider|galer[ií]a|carrusel|ilustraci\\w*|fotos?|im[aá]gen(es)?|images?|visual\\w*|colou?rs?|colores|tipograf\\w*|fonts?|animaci\\w*|mockups?|secci[oó]n|section)\\b|\\b(build|create|make|design\\w*|redesign\\w*|restyle|styl\\w*|polish\\w*|decor\\w*|dise[ñn]\\w*|redise[ñn]\\w*|crea(r|me)?|hazme|haz una|constru\\w*|maquet\\w*|fotos?|im[aá]gen(es)?|ilustraci\\w*|visual\\w*|colores|tipograf\\w*)\\b[^.!?\\n]{0,80}?\\b(landing( page)?|home ?page|homepage|p[aá]gina web|sitio web|web ?site|website|web ?page|portfolio|portafolio|(la|una|mi|tu|esta|esa|nuestra|su) web|p[aá]gina de \\w+)\\b",
       "required": ["design-md", "design-taste-frontend", "frontend-design"],
       "recommended": ["web-design-guidelines", "ui-ux-pro-max"],
       "taste": true,

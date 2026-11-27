@@ -136,6 +136,19 @@ def test_routes() -> None:
     near = {p: c(p) for p in ("store the phone size in the products table", "the home screen widget count is wrong in the export",
                               "write the onboarding checklist for new hires", "add a screen reader note to the API docs")}
     ok("V-DSR-CLASSIFY-APP-PROTOTYPE-NEAR-MISS", all(v == [] for v in near.values()), {k: v for k, v in near.items() if v})
+    # Gate 3 (resource selection), 2026-11-27: real Owner prompts, paraphrased. A page noun alone routed non-visual
+    # asks to web; Spanish "la web" / "página de X" with a visual verb never routed. The noun now needs visual intent.
+    page_ask = {p: c(p) for p in ("podemos decorar más la web del equipo?",
+                                  "pon esa página de recuerdos como un slider, una galería bonita",
+                                  "reemplaza mi foto en mi portfolio por esta",
+                                  "La landing de index.html es para un despacho pequeño (los datos están en BRIEF.md). "
+                                  "Necesito que transmita confianza")}
+    ok("V-DSR-CLASSIFY-WEB-PAGE-WITH-INTENT", all(v == ["web"] for v in page_ask.values()), page_ask)
+    page_talk = {p: c(p) for p in ("deploy the pdf on the website", "what payment methods does the website support",
+                                   "does the website redirect each user to their system's language automatically?",
+                                   "can we add tags that point to the landing page?", "corregido en la web también?")}
+    ok("V-DSR-CLASSIFY-WEB-NOUN-ALONE-IS-NOT-A-REQUEST", all(v == [] for v in page_talk.values()),
+       {k: v for k, v in page_talk.items() if v})
     pol = dr.policy(dr.effective_kinds([], routes), routes)
     ok("V-DSR-DEFAULT-WEB", pol["kinds"] == ["web"] and pol["review"] and pol["taste"], pol)
     pol = dr.policy(dr.effective_kinds(["dataviz"], routes), routes)
