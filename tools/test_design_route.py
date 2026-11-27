@@ -427,6 +427,32 @@ def test_render() -> None:
     over = got.get("RENDER-HORIZONTAL-OVERFLOW")
     ok("V-DSR-RENDER-SCREEN-FACTS", over is not None and "phone#s2" in over.observed and "#s3" not in over.observed
        and "RENDER-UNRENDERED-SCREEN" not in got, {k: v.observed for k, v in got.items()})
+    # tranche 3, gates 6 and 7: accessibility and weight facts. The clean page above is the negative control (it
+    # carried facts v3 and failed nothing); this page plants one instance of each.
+    a11y_html = (CLEAN.replace('<html lang="en">', "<html>")
+                 .replace("initial-scale=1", "initial-scale=1, maximum-scale=1")
+                 .replace("</header>", '<img src="heavy.svg" width="100" height="10">'
+                                       '<button type="button"><svg width="16" height="16"></svg></button>'
+                                       '<label>Email <input name="email"></label><input name="phone"></header>'))
+    d4, a11y = project(a11y_html)
+    Path(d4, "heavy.svg").write_text('<svg xmlns="http://www.w3.org/2000/svg" width="3000" height="300"><!--%s-->'
+                                     '<rect width="3000" height="300" fill="#246"/></svg>' % ("x" * 2_100_000),
+                                     encoding="utf-8")
+    r = subprocess.run([sys.executable, str(REC), "render", a11y], capture_output=True, text=True, env=env(),
+                       timeout=180, encoding="utf-8")
+    rows = [x for x in dr.read_rows("renders.jsonl") if x.get("file") == dr.canon(a11y)]
+    got = {v.criterion: v.observed for v in rec.facts_verdicts((rows[-1].get("facts") if rows else None) or {})
+           if v.status == "fail"}
+    want = ("RENDER-IMG-NO-ALT", "RENDER-NAMELESS-CONTROL", "RENDER-UNLABELLED-FIELD", "RENDER-ZOOM-BLOCKED",
+            "RENDER-NO-LANG", "RENDER-OVERSIZED-IMAGE", "RENDER-PAGE-WEIGHT")
+    ok("V-DSR-RENDER-A11Y-PERF-SEEDED", all(w in got for w in want)
+       and "phone" in got.get("RENDER-UNLABELLED-FIELD", "") and "email" not in got.get("RENDER-UNLABELLED-FIELD", "")
+       and "heavy.svg" in got.get("RENDER-PAGE-WEIGHT", ""),
+       ([w for w in want if w not in got], got, (r.stdout + r.stderr)[-300:]))
+    # an older render (facts v2) measured none of this: the new criteria are absent, not passed
+    old = {"collected": True, "version": 2, "viewports": {"desktop": {"overflow_px": 0, "viewport_px": 1440}}}
+    ok("V-DSR-RENDER-V2-FACTS-NOT-PASSED", not any(v.criterion in want for v in rec.facts_verdicts(old)),
+       [v.criterion for v in rec.facts_verdicts(old)])
 
 
 def test_wired() -> None:

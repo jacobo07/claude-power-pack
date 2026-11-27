@@ -52,7 +52,7 @@ def _launch(pw):
 # Render facts (V-DSR-RENDER-FACTS, 2026-11-22): what the browser itself observed while rendering, so a defect a
 # machine can see never depends on the reviewer noticing it in a PNG. Six reviewer "pass" verdicts used to APPROVE a
 # page whose images were broken. Images under DUP_MIN_PX wide (icons, logos in a list) do not count as repeats.
-FACTS_VERSION = 2   # 2: dead_links also lists links to missing local files on a file:// render (B-1)
+FACTS_VERSION = 3   # 2: dead_links lists links to missing local files (B-1); 3: accessibility + page weight (gates 6, 7)
 DUP_MIN_PX = 120
 OVERFLOW_TOLERANCE_PX = 1
 FACTS_JS = """() => {
@@ -70,15 +70,72 @@ FACTS_JS = """() => {
   const local = [...document.querySelectorAll('a[href]')].filter(a => a.protocol === 'file:' && (a.textContent || '').trim())
     .map(a => [(a.textContent || '').trim().replace(/\\s+/g, ' ').slice(0, 60), a.href]);
   const de = document.documentElement;
+  // v3 (tranche 3, gates 6 and 7): accessibility and weight facts a browser can observe without judgement
+  const vis = el => el.checkVisibility ? el.checkVisibility({checkVisibilityCSS: true}) : !!el.offsetParent;
+  const txt = s => (s || '').trim().replace(/\\s+/g, ' ');
+  const byIds = el => (el.getAttribute('aria-labelledby') || '').split(/\\s+/)
+      .some(id => id && txt((document.getElementById(id) || {}).textContent));
+  const named = el => !!(txt(el.getAttribute('aria-label')) || txt(el.getAttribute('title')) || byIds(el)
+      || txt(el.textContent) || [...el.querySelectorAll('img[alt]')].some(i => txt(i.getAttribute('alt'))));
+  const decorative = el => el.getAttribute('aria-hidden') === 'true' || /^(presentation|none)$/.test(el.getAttribute('role') || '');
+  const no_alt = imgs.filter(i => vis(i) && !i.hasAttribute('alt') && !decorative(i)).map(src);
+  const nameless = [...document.querySelectorAll('a[href],button,[role="button"]')].filter(e => vis(e) && !named(e))
+      .map(e => e.tagName.toLowerCase() + ' ' + (e.getAttribute('href') || e.id || e.className || '').toString().slice(0, 60));
+  // A field needs a label, aria-label/labelledby or title. Hint text alone does not count: it vanishes on input.
+  const unlabelled = [...document.querySelectorAll('input,select,textarea')].filter(e => vis(e)
+      && !/^(hidden|submit|button|image|reset)$/i.test(e.type || '')
+      && !(e.labels && [...e.labels].some(l => txt(l.textContent))) && !txt(e.getAttribute('aria-label'))
+      && !txt(e.getAttribute('title')) && !byIds(e))
+      .map(e => String(e.name || e.id || e.type || e.tagName).slice(0, 40));
+  const vpm = document.querySelector('meta[name="viewport"]');
+  const vpc = vpm ? (vpm.getAttribute('content') || '').toLowerCase() : '';
+  const maxs = vpc.match(/maximum-scale\\s*=\\s*([\\d.]+)/);
+  const zoom_blocked = /user-scalable\\s*=\\s*(no|0)\\b/.test(vpc) || (!!maxs && parseFloat(maxs[1]) < 2);
+  const oversized = imgs.filter(i => i.naturalWidth >= 1200 && i.width > 0
+      && i.naturalWidth > 2.5 * i.width * window.devicePixelRatio)
+      .map(i => src(i) + ' ' + i.naturalWidth + 'px shown at ' + i.width + 'px');
+  const resources = performance.getEntriesByType('resource').map(e => [e.name, e.encodedBodySize || 0]);
   return {broken_images: broken, duplicate_images: dup, dead_links: dead, local_links: local,
-          overflow_px: Math.max(0, de.scrollWidth - window.innerWidth), viewport_px: window.innerWidth};
+          overflow_px: Math.max(0, de.scrollWidth - window.innerWidth), viewport_px: window.innerWidth,
+          img_no_alt: no_alt, nameless_controls: nameless, unlabelled_fields: unlabelled,
+          lang: de.getAttribute('lang') || '', zoom_blocked: zoom_blocked, oversized_images: oversized,
+          resources: resources, doc_url: location.href};
 }""" % DUP_MIN_PX
+PAGE_WEIGHT_BUDGET = 2_000_000   # bytes; compressed bytes over HTTP, file size on a file:// render
+
+
+def _weigh(seen: dict) -> dict:
+    """Gate 7: page weight from what the browser loaded. A file:// resource is weighed on disk; an HTTP one by its
+    encoded body. A resource the browser would not size (cross-origin without Timing-Allow-Origin reports 0) is
+    COUNTED as unsized, never weighed as 0. The raw list is not kept in the facts."""
+    from urllib.parse import urlsplit
+    from urllib.request import url2pathname
+    total, fonts, unsized, heavy, names = 0, 0, 0, [], set()
+    for name, size in [[seen.pop("doc_url", ""), 0]] + (seen.pop("resources", None) or []):
+        if not name or name in names or name.startswith(("data:", "blob:")):
+            continue
+        names.add(name)
+        u = urlsplit(name)
+        if u.scheme == "file":
+            p = url2pathname(u.path)
+            size = os.path.getsize(p) if os.path.isfile(p) else 0
+        if not size:
+            unsized += 1
+            continue
+        total += size
+        if re.search(r"\.(woff2?|ttf|otf)$", u.path, re.I):
+            fonts += size
+        heavy.append((size, os.path.basename(u.path) or name[:60]))
+    seen.update(page_bytes=total, font_bytes=fonts, unsized_resources=unsized,
+                heaviest=["%s %d KB" % (n, s // 1024) for s, n in sorted(heavy, reverse=True)[:3]])
+    return seen
 
 
 def _missing_local_links(seen: dict) -> dict:
     """B-1 (benchmark 2026-11-22): on a file:// render a link to a local file that does not exist goes nowhere, but
     the browser never requests it, so no fact saw it (reports.html, servicios.html were caught only by a reviewer).
-    Each file: link is checked on disk; a missing target joins dead_links. The raw list is not kept in the facts."""
+    Each file: link is checked on disk; a missing target joins dead_links. The raw list is not kept in the facts.
+    Both render paths post-process FACTS_JS through here, so the page is weighed here too (_weigh, v3)."""
     from urllib.parse import urlsplit
     from urllib.request import url2pathname
     for text, href in seen.pop("local_links", None) or []:
@@ -87,7 +144,7 @@ def _missing_local_links(seen: dict) -> dict:
             entry = "%s -> %s (missing file)" % (text, os.path.basename(path.rstrip("\\/")) or path)
             if entry not in seen.setdefault("dead_links", []):
                 seen["dead_links"].append(entry)
-    return seen
+    return _weigh(seen)
 _IGNORED_URL = re.compile(r"/favicon\.ico(?:$|\?)", re.I)
 
 # One-file apps swap sibling screens by JS state (cross-sector benchmark 2026-11-22, B-8: the nurse app's onboarding
@@ -166,7 +223,10 @@ def counts_as_failed(url: str, failure: str | None) -> bool:
 
 def _observe(page, uri: str) -> dict:
     """Load `uri` in `page` and return what the browser saw. Listeners attach BEFORE navigation."""
-    failed, errors = [], []
+    failed, errors, loaded = [], [], []
+    # Chromium keeps no resource timing for file:// loads (probe 2026-11-27: getEntriesByType('resource') == []), so
+    # _weigh would see only the document. Playwright still reports each finished request; file ones are weighed on disk.
+    page.on("requestfinished", lambda r: loaded.append([r.url, 0]) if r.url.startswith("file:") else None)
     page.on("requestfailed", lambda r: failed.append("%s (%s)" % (r.url, r.failure or "failed"))
             if counts_as_failed(r.url, r.failure) else None)
     page.on("response", lambda r: failed.append("%s (HTTP %d)" % (r.url, r.status)) if r.status >= 400 else None)
@@ -214,7 +274,9 @@ def _observe(page, uri: str) -> dict:
       const faint = [...touched].filter(el => parseFloat(getComputedStyle(el).opacity) < 0.5).length;
       return {n, faint};
     }""")
-    seen = _missing_local_links(page.evaluate(FACTS_JS))
+    raw = page.evaluate(FACTS_JS)
+    raw["resources"] = (raw.get("resources") or []) + loaded
+    seen = _missing_local_links(raw)
     seen["scroll_animations_neutralised"] = neut["n"]
     seen["scroll_animations_still_faint"] = neut["faint"]
     seen["failed_requests"] = [u for u in failed if not _IGNORED_URL.search(u.split(" (")[0])][:20]
@@ -267,7 +329,28 @@ def facts_verdicts(facts: dict) -> list:
         v("RENDER-UNRENDERED-SCREEN", "ux", "major", unrendered, "hidden screen(s) no render could show",
           "the review cannot judge a screen nobody saw: render it (at most %d screens per page, or split the page)"
           % MAX_SCREENS),
-    ] + ([v("RENDER-DOCUMENT-STATUS", "ux", "critical",
+    ] + ([
+        # Facts v3 (tranche 3, gates 6 and 7). Emitted only when the render collected them: an older render
+        # measured none of this, and absent is not a pass.
+        v("RENDER-IMG-NO-ALT", "ux", "major", union("img_no_alt"), "visible image(s) with no alt attribute",
+          "give every image an alt: the words it stands for, or alt=\"\" when it is decoration"),
+        v("RENDER-NAMELESS-CONTROL", "ux", "major", union("nameless_controls"),
+          "link(s)/button(s) with no accessible name", "an icon-only control needs aria-label or an img alt"),
+        v("RENDER-UNLABELLED-FIELD", "ux", "major", union("unlabelled_fields"), "form field(s) with no label",
+          "tie a <label for> (or aria-label) to each field; hint text vanishes as soon as someone types"),
+        v("RENDER-ZOOM-BLOCKED", "ux", "major", [n for n, x in vps.items() if x.get("zoom_blocked")],
+          "viewport(s) forbid pinch zoom", "drop user-scalable=no and any maximum-scale under 2"),
+        v("RENDER-NO-LANG", "ux", "minor", ["<html> has no lang"] if any(not x.get("lang") for x in vps.values()) else [],
+          "page language undeclared", "set <html lang> so screen readers pronounce the copy right"),
+        v("RENDER-OVERSIZED-IMAGE", "ux", "minor", union("oversized_images"),
+          "image(s) over 2.5x the pixels they are shown at", "export at display size x2 at most, or use srcset"),
+        v("RENDER-PAGE-WEIGHT", "ux", "minor",
+          ["%s: %d KB (fonts %d KB; heaviest %s)" % (n, x["page_bytes"] // 1024, x.get("font_bytes", 0) // 1024,
+                                                     ", ".join(x.get("heaviest") or []))
+           for n, x in top.items() if (x.get("page_bytes") or 0) > PAGE_WEIGHT_BUDGET],
+          "viewport(s) over the %d KB page budget" % (PAGE_WEIGHT_BUDGET // 1024),
+          "compress or resize the heaviest assets, subset fonts, lazy-load below the fold"),
+    ] if any("lang" in x for x in vps.values()) else []) + ([v("RENDER-DOCUMENT-STATUS", "ux", "critical",
             ["%s: HTTP %d" % (n, x["document_status"]) for n, x in top.items()
              if (x.get("document_status") or 0) >= 400],
             "viewport(s) served an error page", "the route itself fails; an error page is not the surface")]
