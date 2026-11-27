@@ -1,0 +1,17 @@
+# record_run
+# date_utc: 2026-11-23T13:34:43.845940+00:00
+# head: 2be8486c
+# cmd: python3 -I .planning/workstreams/perf-construction/phases/06-ratchet-ukdl-and-hand-back/ratchet_connect.py connect --entries .planning/workstreams/perf-construction/phases/06-ratchet-ukdl-and-hand-back/ratchet-entries.json
+ENTRY perf_construction-failed-sample-stays-in-denominator PROMOTABLE_UNDER_OWNER_AUTHORITY origin=VERIFIED check=PASS evidence=ok
+ENTRY perf_construction-unknown-pressure-never-judged PROMOTABLE_UNDER_OWNER_AUTHORITY origin=VERIFIED check=PASS evidence=ok
+ENTRY perf_construction-censored-duration-is-not-zero PROMOTABLE_UNDER_OWNER_AUTHORITY origin=VERIFIED check=PASS evidence=ok
+ENTRY perf_construction-unchanged-gate-text-is-not-shown PROMOTABLE_UNDER_OWNER_AUTHORITY origin=VERIFIED check=PASS evidence=ok
+ENTRY perf_construction-laptop-claim-carries-its-plane NOT_PROMOTABLE origin=VERIFIED check=PASS evidence=missing: improvement, negative_controls, before, after
+  note: source: before: no source declared; after: no source declared
+RATCHET_STATUS=CONNECTED_SCRATCH LIVE=BLOCKED generations=4 chain_ok=True promotable=4/5
+LIVE_BLOCKED reasons, in order:
+  1. no family reaches this work: classify_prompt returns no family for the performance-measurement prompts (see CLASSIFY_NO_FAMILY), so a live entry would be unreachable (presence without reachability)
+  2. a live promotion carries an Owner authority and this run has none (the scratch authority text is UNATTENDED and may not contain that word)
+  3. the evidence is from one mission (one campaign, no second independent domain), the precedent for work with no family is a candidates file
+LIVE_TREE_CLEAN=yes
+# exit=0

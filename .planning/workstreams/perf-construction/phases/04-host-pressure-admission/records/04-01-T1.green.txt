@@ -1,0 +1,9 @@
+# record_run
+# date_utc: 2026-11-22T23:54:01.844058+00:00
+# head: 784746d1
+# cmd: python3 tools/test_resource_pressure.py
+  PASS V-PRESS-TRACER-COUNT-OVER-IS-RED: fake /proc tree -> count 3 -> ceiling 2 -> RED; one process fewer -> GREEN
+  PASS V-PRESS-TRACER-RAM-LOW-IS-RED: RAM 800 -> RED ram_below_floor; RAM 9000 -> GREEN
+  PASS V-PRESS-TRACER-UNREADABLE-IS-UNKNOWN: missing proc root -> count None -> UNKNOWN; RAM None -> UNKNOWN
+PRESSURE_PASS=3/3  threshold=3/3
+# exit=0

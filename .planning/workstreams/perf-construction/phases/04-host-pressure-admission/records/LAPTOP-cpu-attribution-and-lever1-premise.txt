@@ -1,0 +1,22 @@
+PLANE: LAPTOP (DESKTOP-PMT5BS8, win32), 2026-11-26. All readings from Win32_PerfRawData_PerfProc_Process deltas (cumulative 100 ns CPU), not formatted snapshots.
+
+1. LEVER-1 PREMISE CHECK (CPU-gated mission admission) -- FALSIFIED for the current host state.
+   claude.exe = 33, grouped by command-line shape and parent:
+     RESUME (--resume <sid>), parent powershell.exe   12
+     RESUME (--dangerously-skip-permissions --resume)  5  (parent cmd.exe)
+     --exclude-dynamic-system-prompt-sections --no-chrome, parent powershell.exe  12
+     --dangerously-skip-permissions, parent powershell.exe  3
+     --chrome-native-host  1
+   No process carries --bg or --session-id: zero mission workers are running. Mission records on disk
+   say RUNNING 19 + LAUNCHING 2 -- those 21 records have no process behind them (stale state).
+   A launch gate for missions would govern none of the processes that load this host today.
+
+2. CPU ATTRIBUTION, 61 s window: 11.49 of 16 cores busy.
+     claude (33 procs) 3.07 | Cursor (38) 2.72 | MsMpEng 2.33 | System 1.24 | Orca X (6) 0.42 |
+     svchost (85) 0.41 | SearchIndexer 0.27 | Memory Compression 0.25 | pythonw (observer) 0.21
+   Per-claude, next 45 s window (total 0.96 cores): top 3 = 0.38; the other 30 = 0.58
+   (idle panes ~0.008-0.019 cores each). claude CPU is bursty (3.07 -> 0.96 in consecutive windows).
+
+READING: Defender alone used ~2.3 cores here; the folder-exclusion ABA (LAPTOP-defender-folder-exclusion-ABA.txt)
+halved its CPU. That is the lever with measured evidence. Idle panes are cheap in claude CPU; the
+Cursor share per pane is not separated yet.

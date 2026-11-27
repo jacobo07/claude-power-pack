@@ -1,0 +1,19 @@
+# record_run
+# date_utc: 2026-11-22T23:01:19.644721+00:00
+# head: 8ef8d339
+# cmd: python3 tools/construction_metrology_report.py --root /home/kobii/.claude/projects --max-files 200 --max-bytes 200000000 --seed 0 --json-out .planning/workstreams/perf-construction/phases/03-construction-metrology-contract/records/03-03-live.json
+construction-metrology report
+plane: GEX44
+host: kobicraft-gex44
+transcript_root: /home/kobii/.claude/projects
+stores: 1919
+sampling: files_read=200/4576 bytes_read=199998680/6189100855 max_files=200 max_bytes=200000000 seed=0 capped=yes
+CAPPED SAMPLE - not the whole population
+scope: this host only; not evidence about any other host
+TTFMC  N_total=218  measured=18  censored=5  p50=111.54  p90=218.91  p95=UNJUDGED (n=18 < 20)
+  states: MEASURED=18 FAILED=2 TIMED_OUT=1 INCONCLUSIVE=0 SKIPPED_BY_POLICY=133 NOT_APPLICABLE=62 UNOBSERVED=2 UNAVAILABLE=0
+TTFUR  N_total=218  measured=80  censored=5  p50=15.53  p90=52.15  p95=83.94
+  states: MEASURED=80 FAILED=1 TIMED_OUT=0 INCONCLUSIVE=0 SKIPPED_BY_POLICY=133 NOT_APPLICABLE=0 UNOBSERVED=4 UNAVAILABLE=0
+TTVD  N_total=218  measured=16  censored=7  p50=124.34  p90=272.84  p95=UNJUDGED (n=16 < 20)
+  states: MEASURED=16 FAILED=2 TIMED_OUT=1 INCONCLUSIVE=0 SKIPPED_BY_POLICY=133 NOT_APPLICABLE=62 UNOBSERVED=4 UNAVAILABLE=0
+# exit=0

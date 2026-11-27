@@ -1,0 +1,20 @@
+# record_run
+# date_utc: 2026-11-22T18:48:03.792664+00:00
+# head: b9611b73
+# cmd: python3 tools/test_ram_optimization.py
+================================================================
+test_ram_optimization -- RAM Optimization Sprint V-gates
+================================================================
+  [OK]   V-RAM-PRUNE-STALE: removed 2 (stale-old+dead-old); kept active + recent-stale
+  [OK]   V-RAM-PRUNE-STALE-IDEMPOTENT: second prune removed 0; state persisted to disk
+  [OK]   V-RAM-WALK-CACHE-GUARD: oversize allowlisted cache truncated; in-bounds + non-allowlisted spared; valid JSON written
+  [OK]   V-RAM-WALK-CACHE-VALID-JSON: truncated list-cache is valid empty []
+  [OK]   V-RAM-GUARD-EVALUATE: ok/warn/critical/no-measurement thresholds + snapshot flags correct across 6 cases
+  [ADV]  V-RAM-PP-OVERHEAD: host-wide reading 2667.9MB -- not attributable to PP (no CIM), advisory only; node 2194.3 + python 473.6; foreign 0.0MB excluded; claude.exe 472.0MB ungated
+  [OK]   V-RAM-GAMING-THRESHOLDS: gaming=(8.0, 12.0) normal=(20.0, 28.0)
+  [OK]   V-RAM-GAMING-ENV-OVERRIDE: PP_RAM_WARN_GB=15 wins; crit stays gaming default 12
+  [OK]   V-RAM-GAMING-DETECT: javaw>0 -> True; 0 -> False; error -> False
+  [OK]   V-RAM-GAMING-EARLIER: 9GB=warn / 13GB=critical at 8/12; 9GB=ok at 20/28
+  [OK]   V-RAM-GAMING-ADVISORY: advisory carries task+commit+resume+/kclear; None -> fail-open
+RAM_PASS=10/10  fails=0
+# exit=0

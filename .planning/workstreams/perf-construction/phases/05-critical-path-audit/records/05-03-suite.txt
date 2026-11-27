@@ -1,0 +1,143 @@
+# record_run
+# date_utc: 2026-11-23T12:45:47.383968+00:00
+# head: aa124969
+# cmd: python3 -I tools/test_hook_critical_path.py
+# pristine: hooks/=yes
+  OK   V-CRIT-LOAD-CROSSCHECK-CHAINS  11 chains, tool count == exported CHAIN_MAP length for each
+  OK   V-CRIT-LOAD-CROSSCHECK-EVENTS  9 EVENT_MAP containers equal the text-scanned and exported name sets
+  OK   V-CRIT-LOAD-CROSSCHECK-TOTAL  total entries 113 in 20 containers
+  OK   V-CRIT-LOAD-NEGATIVE-no-event-map  exit=2, stdout empty=True, reason=AUDIT_LOAD_FAILED: loader exited 3: P5_INVENTORY_JSON:{"ok":false,"error":"EVENT_MAP_MISSI
+  OK   V-CRIT-LOAD-NEGATIVE-throws  exit=2, stdout empty=True, reason=AUDIT_LOAD_FAILED: loader exited 1: Node.js v18.19.1
+  OK   V-CRIT-LOAD-NEGATIVE-empty  exit=2, stdout empty=True, reason=AUDIT_LOAD_FAILED: empty inventory
+  OK   V-CRIT-LOAD-NEGATIVE-CONTROL  valid control dispatcher exit=0, entries=2
+  OK   V-CRIT-SCAN-POLES-PERMISSION_DECISION  positive subject yields ['PERMISSION_DECISION']
+  OK   V-CRIT-SCAN-POLES-DECISION_BLOCK  positive subject yields ['DECISION_BLOCK']
+  OK   V-CRIT-SCAN-POLES-CONTINUE_FALSE  positive subject yields ['CONTINUE_FALSE']
+  OK   V-CRIT-SCAN-POLES-EXIT_2  positive subject yields ['EXIT_2']
+  OK   V-CRIT-SCAN-POLES-CLEAN  clean subject yields deny=[] ctx=[]
+  OK   V-CRIT-SCAN-POLES-CONTEXT  comment-only mention yields [], code emission yields ['ADDITIONAL_CONTEXT']
+  OK   V-CRIT-FLOOR-FLAG-block  block:true + DEFERRABLE row -> BLOCKING-SAFETY/FLAG_BLOCK_OR_CRITICAL, violations=['ROW_CONTRADICTS_FLOOR']
+  OK   V-CRIT-FLOOR-FLAG-critical  critical:true + DEFERRABLE row -> BLOCKING-SAFETY, violations=['ROW_CONTRADICTS_FLOOR']
+  OK   V-CRIT-FLOOR-FLAG-norow  block:true with no row -> BLOCKING-SAFETY/FLAG_BLOCK_OR_CRITICAL, violations=0
+  OK   V-CRIT-FLOOR-DENY  deny-shape source + DEFERRABLE row -> BLOCKING-SAFETY/DENY_SHAPE_IN_SOURCE, violations=['ROW_CONTRADICTS_FLOOR']
+  OK   V-CRIT-FLOOR-DENY-exit2  exit-2 source + DEFERRABLE row -> BLOCKING-SAFETY, violations=['ROW_CONTRADICTS_FLOOR']
+  OK   V-CRIT-DEFERRABLE-GUARDS-accept  fully guarded row accepted: DEFERRABLE/DEF_ACCOUNTING_DUP, violations=0
+  OK   V-CRIT-DEFERRABLE-GUARDS-accept-write-only  DEF_WRITE_ONLY needs no SessionEnd twin: DEFERRABLE/DEF_WRITE_ONLY, violations=0
+  OK   V-CRIT-DEFERRABLE-GUARDS-NO_MODEL_CONTEXT  mutant refused: class=UNKNOWN/TABLE_ROW_REJECTED, guards=NO_MODEL_CONTEXT,EVIDENCE_TARGET
+  OK   V-CRIT-DEFERRABLE-GUARDS-RESOLVABLE  mutant refused: class=UNKNOWN/TABLE_ROW_REJECTED, guards=RESOLVABLE,EVIDENCE_TARGET,NOT_IN_SESSION_END_CHAIN
+  OK   V-CRIT-DEFERRABLE-GUARDS-EVIDENCE_EMPTY  mutant refused: class=UNKNOWN/TABLE_ROW_REJECTED, guards=EVIDENCE_EMPTY
+  OK   V-CRIT-DEFERRABLE-GUARDS-EVIDENCE_FORMAT  mutant refused: class=UNKNOWN/TABLE_ROW_REJECTED, guards=EVIDENCE_FORMAT,EVIDENCE_NOT_ON_ENTRY_SOURCE
+  OK   V-CRIT-DEFERRABLE-GUARDS-EVIDENCE_TARGET  mutant refused: class=UNKNOWN/TABLE_ROW_REJECTED, guards=EVIDENCE_TARGET
+  OK   V-CRIT-DEFERRABLE-GUARDS-EVIDENCE_NOT_ON_ENTRY_SOURCE  mutant refused: class=UNKNOWN/TABLE_ROW_REJECTED, guards=EVIDENCE_NOT_ON_ENTRY_SOURCE
+  OK   V-CRIT-DEFERRABLE-GUARDS-OUTPUTS_UNNAMED  mutant refused: class=UNKNOWN/TABLE_ROW_REJECTED, guards=OUTPUTS_UNNAMED
+  OK   V-CRIT-DEFERRABLE-GUARDS-DURABILITY_NOTE_MISSING  mutant refused: class=UNKNOWN/TABLE_ROW_REJECTED, guards=DURABILITY_NOTE_MISSING
+  OK   V-CRIT-DEFERRABLE-GUARDS-NOT_IN_SESSION_END_CHAIN  mutant refused: class=UNKNOWN/TABLE_ROW_REJECTED, guards=NOT_IN_SESSION_END_CHAIN
+  OK   V-CRIT-COVERAGE-CLOSED  113 entries, each with one of 3 classes and one basis
+  OK   V-CRIT-COVERAGE-RESIDUAL  residual UNKNOWN set is named (51 entries) and equals the UNKNOWN-class entries
+  OK   V-CRIT-COVERAGE-REAL-TABLE-CLEAN  real table: 0 violations
+  OK   V-CRIT-COVERAGE-NEW-ENTRY  synthetic entry absent from the table -> UNKNOWN/NO_TABLE_ROW
+  OK   V-CRIT-COVERAGE-UNRESOLVED  synthetic unresolved entry -> UNKNOWN/UNRESOLVED_LIVE_ONLY
+  OK   V-CRIT-REAL-FLOOR  21 flagged and 44 deny-shape entries are all BLOCKING-SAFETY
+  OK   V-CRIT-REAL-DEFERRABLE-GUARDED  4 DEFERRABLE entries, none flagged, deny-shaped, context-emitting or unresolved
+  OK   V-CRIT-STALE-ROW-control  unmodified real table exits 0
+  OK   V-CRIT-STALE-ROW-row  stale row exits 1 and is named in the output
+  OK   V-CRIT-STALE-ROW-container  stale container note exits 1 and is named
+  OK   V-CRIT-ISOLATION-NOFILES  scratch HOME entries before=5 after=5 (loader created 0)
+  OK   V-CRIT-ISOLATION-READONLY  read-only HOME gives the same 113 entries and holds 0 files
+  OK   V-CRIT-GUARD-SUBJECTS  baseline offers a block-only, a critical-only and an UNKNOWN Stop-chain subject
+  OK   V-CRIT-GUARD-CONTROL-IDENTICAL  identical snapshots: exit=0, moved=0, violations=0
+  OK   V-CRIT-GUARD-M1-block  removed block entry Stop-chain|./zero-issue-gate.js: exit=1, code named=True
+  OK   V-CRIT-GUARD-M1-critical  removed critical entry Stop-chain|../skills/claude-power-pack/modules/zero-crash/hooks/context-watchdog.py: exit=1, code named=True
+  OK   V-CRIT-GUARD-M1-container  whole container PreToolUse-Edit-chain missing: exit=1, MOVED_NON_DEFERRABLE x13 of 13 entries (11 BLOCKING-SAFETY)
+  OK   V-CRIT-GUARD-M2-block  block true->false on Stop-chain|./zero-issue-gate.js: exit=1
+  OK   V-CRIT-GUARD-M2-critical  critical true->false on Stop-chain|../skills/claude-power-pack/modules/zero-crash/hooks/context-watchdog.py: exit=1
+  OK   V-CRIT-GUARD-M2-strengthen-allowed  block false->true on Stop-chain|./session-summary.js: exit=0, violations=0
+  OK   V-CRIT-GUARD-M3  removed UNKNOWN entry Stop-chain|./session-summary.js: exit=1
+  OK   V-CRIT-GUARD-M4  deadline 5000 added to PreToolUse-Bash-chain: exit=1
+  OK   V-CRIT-GUARD-M4-control-no-blocking-entry  deadline added to SessionEnd-chain (no BLOCKING-SAFETY entry): exit=0
+  OK   V-CRIT-GUARD-M4-control-synthetic-chain  SYNTHETIC chain with only an UNKNOWN entry takes a deadline: violations=0
+  OK   V-CRIT-GUARD-CONTROL-DEFERRABLE-MOVED  DEFERRABLE Stop-chain|./trace-flusher.js removed, SessionEnd twin present: exit=0, moved=1, violations=0
+  OK   V-CRIT-GUARD-M5  DEFERRABLE Stop-chain|./trace-flusher.js removed and not in SessionEnd-chain: exit=1, DROPPED_WORK named=True
+  OK   V-CRIT-GUARD-M5-no-session-end-container  DEFERRABLE entry removed and the SessionEnd-chain container absent: exit=1
+  OK   V-CRIT-GUARD-SYNTHETIC-LABEL  SYNTHETIC DEFERRABLE Stop-chain|./SYNTHETIC-deferrable.js: control moved=1 violations=0; M5 codes=['DROPPED_WORK', 'MOVED_NON_DEFERRABLE']
+  OK   V-CRIT-GUARD-EMPTY-BASELINE-REFUSED  empty baseline exits 2
+  OK   V-CRIT-GUARD-MISSING-BASELINE-REFUSED  missing baseline exits 2
+  NOTE V-CRIT-AB constructed inputs only: no timing of any real chain is measured or judged by these gates
+  OK   V-CRIT-AB-IMPORTS-IDENTITY  host_pressure, host_bucket, WINDOW_N, read_host_state, percentile, STATES, CENSORED_STATES are the owners' objects
+  OK   V-CRIT-AB-IMPORTS-NO-REDEFINITION  the tool source redefines none of the owners' names
+  OK   V-CRIT-AB-IMPORTS-MIN-N  the default minimum is bench_all.WINDOW_N (7, PROPOSED and uncalibrated): 6 samples refused, 7 accepted
+  OK   V-CRIT-AB-UNKNOWN-SAMPLES-A-short  6 MEASURED samples in one arm -> UNKNOWN INSUFFICIENT_SAMPLES
+  OK   V-CRIT-AB-UNKNOWN-SAMPLES-A2-short  6 MEASURED samples in one arm -> UNKNOWN INSUFFICIENT_SAMPLES
+  OK   V-CRIT-AB-UNKNOWN-SAMPLES-B-short  6 MEASURED samples in one arm -> UNKNOWN INSUFFICIENT_SAMPLES
+  OK   V-CRIT-AB-UNKNOWN-SAMPLES-CENSORED-DO-NOT-COUNT  4 MEASURED + 3 TIMED_OUT in B is not 7 samples -> UNKNOWN INSUFFICIENT_SAMPLES
+  OK   V-CRIT-AB-UNKNOWN-NO-AA-empty  A_REPLICATE empty -> UNKNOWN NO_AA_CONTROL
+  OK   V-CRIT-AB-UNKNOWN-NO-AA-absent  A_REPLICATE absent -> UNKNOWN NO_AA_CONTROL
+  OK   V-CRIT-AB-UNKNOWN-WORK-false  work_preserved=False -> UNKNOWN WORK_NOT_SHOWN_PRESERVED
+  OK   V-CRIT-AB-UNKNOWN-WORK-none  work_preserved=None -> UNKNOWN WORK_NOT_SHOWN_PRESERVED
+  OK   V-CRIT-AB-UNKNOWN-WORK-truthy-string  work_preserved='yes' -> UNKNOWN WORK_NOT_SHOWN_PRESERVED
+  OK   V-CRIT-AB-UNKNOWN-WORK-one  work_preserved=1 -> UNKNOWN WORK_NOT_SHOWN_PRESERVED
+  OK   V-CRIT-AB-UNKNOWN-WORK-absent  work_preserved key absent -> UNKNOWN WORK_NOT_SHOWN_PRESERVED
+  OK   V-CRIT-AB-UNKNOWN-PLANE-MISMATCH  one sample recorded on another host -> UNKNOWN PLANE_MISMATCH
+  OK   V-CRIT-AB-UNKNOWN-PLANE-NO-HOST-STATE  a sample with no host_state -> UNKNOWN PLANE_MISMATCH
+  OK   V-CRIT-AB-UNKNOWN-PLANE-GEX44  required host = the GEX44 name, samples recorded there -> UNKNOWN PLANE_IS_GEX44
+  OK   V-CRIT-AB-UNKNOWN-CONTROL  a complete laptop input reaches a verdict -> NO_DIFFERENCE_DETECTED WITHIN_AA_SPREAD_OR_MIXED
+  OK   V-CRIT-AB-INCONCLUSIVE-RED  2 RED samples leave B with 5 retained -> INCONCLUSIVE HOST_PRESSURE
+  OK   V-CRIT-AB-INCONCLUSIVE-UNKNOWN-PRESSURE  2 UNKNOWN-pressure samples in A_REPLICATE -> INCONCLUSIVE HOST_PRESSURE
+  OK   V-CRIT-AB-INCONCLUSIVE-FORGED-SCHEMA-1  schema-1 state claiming GREEN never contributes -> INCONCLUSIVE HOST_PRESSURE
+  OK   V-CRIT-AB-INCONCLUSIVE-EXCLUSION-CONTROL  8 samples with 1 RED leave 7 retained and no pressure refusal -> NO_DIFFERENCE_DETECTED WITHIN_AA_SPREAD_OR_MIXED
+  OK   V-CRIT-AB-INCONCLUSIVE-BUCKET-MISMATCH  B at 500 MB available against A at 16000 MB (two buckets) -> INCONCLUSIVE HOST_BUCKET_MISMATCH
+  OK   V-CRIT-AB-INCONCLUSIVE-BUCKET-CONTROL  16000 MB and 20000 MB share a bucket -> NO_DIFFERENCE_DETECTED WITHIN_AA_SPREAD_OR_MIXED
+  OK   V-CRIT-AB-INCONCLUSIVE-CENSORING-TIMED_OUT  B has one TIMED_OUT, A has none -> INCONCLUSIVE CENSORING_ASYMMETRY
+  OK   V-CRIT-AB-INCONCLUSIVE-CENSORING-UNOBSERVED  B has one UNOBSERVED, A has none -> INCONCLUSIVE CENSORING_ASYMMETRY
+  OK   V-CRIT-AB-INCONCLUSIVE-CENSORING-FAILED  B has one FAILED, A has none -> INCONCLUSIVE CENSORING_ASYMMETRY
+  OK   V-CRIT-AB-INCONCLUSIVE-CENSORING-MEASURED-NO-VALUE  a MEASURED sample with no wall_ms is censored, not fast -> INCONCLUSIVE CENSORING_ASYMMETRY
+  OK   V-CRIT-AB-INCONCLUSIVE-CENSORING-EQUAL-CONTROL  one censored sample in each of A and B is not asymmetric -> NO_DIFFERENCE_DETECTED WITHIN_AA_SPREAD_OR_MIXED
+  OK   V-CRIT-AB-INCONCLUSIVE-TIMEOUT-VALUE-NOT-A-MEASUREMENT  TIMED_OUT samples carrying wall_ms=1 never reach a percentile (p50 B == p50 A, verdict NO_DIFFERENCE_DETECTED)
+  OK   V-CRIT-AB-INCONCLUSIVE-COUNTED-NOT-DROPPED  arm B accounts for 9 samples: 7 measured, 2 censored
+  OK   V-CRIT-AB-VERDICTS-FASTER  B 20 ms lower on every sample, noise 1.0 -> B_FASTER
+  OK   V-CRIT-AB-VERDICTS-SLOWER  B 20 ms higher on every sample -> B_SLOWER
+  OK   V-CRIT-AB-VERDICTS-P50-ONLY  p50 improves by 56.0, p95 worsens by 58.6 -> NO_DIFFERENCE_DETECTED
+  OK   V-CRIT-AB-VERDICTS-P95-ONLY  p95 improves by 1.4, p50 worsens by 4.0 -> NO_DIFFERENCE_DETECTED
+  OK   V-CRIT-AB-VERDICTS-EQUAL  B equal to A -> NO_DIFFERENCE_DETECTED
+  OK   V-CRIT-AB-VERDICTS-LARGE-AA-SPREAD  the same 20 ms B gap against an A/A spread of 50.0 ms -> NO_DIFFERENCE_DETECTED (the instrument can answer no)
+  OK   V-CRIT-AB-VERDICTS-GAP-EQUALS-NOISE  a gap equal to the A/A spread (10.0) is not more than it -> NO_DIFFERENCE_DETECTED
+  OK   V-CRIT-AB-VERDICTS-GAP-JUST-OVER-NOISE  a gap of 11 against noise 10 -> B_FASTER
+  OK   V-CRIT-AB-VERDICTS-CLOSED-SET  the verdict vocabulary is the five names
+  OK   V-CRIT-AB-VERDICTS-EMPTY-NEVER-ZERO  empty arms give UNKNOWN and no statistic (never 0)
+  OK   V-CRIT-AB-PLANE-CLI-LAPTOP  laptop name matching every sample: exit 0, plane line and verdict printed
+  OK   V-CRIT-AB-PLANE-CLI-WORK-UNKNOWN  without --work-preserved the verdict is UNKNOWN and the exit is not 0 (exit 1)
+  OK   V-CRIT-AB-PLANE-CLI-REFUSES-GEX44-kobicraft-gex44  --laptop-host kobicraft-gex44: exit 2, refusal on stderr, no verdict on stdout
+  OK   V-CRIT-AB-PLANE-CLI-REFUSES-GEX44-kobicraft-gex44  --laptop-host KOBICRAFT-GEX44: exit 2, refusal on stderr, no verdict on stdout
+  OK   V-CRIT-AB-PLANE-CLI-REFUSES-GEX44-gex44-box  --laptop-host gex44-box: exit 2, refusal on stderr, no verdict on stdout
+  OK   V-CRIT-AB-PLANE-CLI-REFUSES-HOST-MISMATCH  a laptop name that differs from the samples' recorded host: exit 2
+  OK   V-CRIT-AB-PLANE-CLI-REFUSES-GEX44-SAMPLE  one arm recorded on the GEX44 host, judged under a laptop name: exit 2
+  OK   V-CRIT-AB-PLANE-CLI-REFUSES-SHAPE-ONLY  a SHAPE_ONLY file under a laptop name: exit 2
+  OK   V-CRIT-AB-PLANE-CLI-HOST-REQUIRED  no --laptop-host: exit 2
+  OK   V-CRIT-AB-PLANE-CLI-NO-BYPASS-FLAG  the only flags are --help,--json,--laptop-host,--samples,--work-preserved; none overrides the plane refusal
+  OK   V-CRIT-AB-PLANE-CLI-UNKNOWN-FLAG-REJECTED  an invented --plane flag is rejected (exit 2)
+  NOTE V-CRIT-COLLECT decoy dispatchers only: mechanics, never a timing claim
+  OK   V-CRIT-COLLECT-STATES-MEASURED  3 samples, each MEASURED with a numeric wall_ms (states ['MEASURED', 'MEASURED', 'MEASURED'])
+  OK   V-CRIT-COLLECT-STATES-HOST-STATE  every sample carries a schema-2 host_state from bench_all.read_host_state
+  OK   V-CRIT-COLLECT-STATES-TIMED-OUT  a decoy sleeping past the per-sample timeout: 2 TIMED_OUT samples, wall_ms None, none dropped, timeout value not recorded
+  OK   V-CRIT-COLLECT-STATES-FAILED  a decoy exiting 3: 2 FAILED samples, wall_ms None
+  OK   V-CRIT-COLLECT-STATES-VOCABULARY  every state written is in the Phase 3 STATES vocabulary
+  OK   V-CRIT-COLLECT-STATES-REFUSES-MISSING-FILE  a dispatcher path that does not exist: exit 2, no output file
+  OK   V-CRIT-COLLECT-STATES-REFUSES-N-ZERO  n=0: exit 2, no output file (an empty collection is never a result)
+  OK   V-CRIT-COLLECT-ISOLATION-HOME  3 samples ran under 3 distinct temp HOMEs, none the real HOME, USERPROFILE equal, each holding only .claude
+  OK   V-CRIT-COLLECT-ISOLATION-CLEANED  each per-sample HOME was removed after its sample
+  OK   V-CRIT-COLLECT-ISOLATION-SESSION-IDS  3 unique session ids were sent; the output file stores none: none stored
+  OK   V-CRIT-COLLECT-ISOLATION-NOT-STORED  neither a session id nor a temp HOME path appears in the sample document
+  OK   V-CRIT-COLLECT-ISOLATION-ARGV  the dispatcher received exactly --event=Stop-chain (list argv, no shell)
+  OK   V-CRIT-COLLECT-ISOLATION-TIMEOUT-KILLS-CHILD  the timed-out dispatcher process was killed (alive after timeout: 0)
+  OK   V-CRIT-COLLECT-SHAPE-ONLY-LABEL  decoys and the repo dispatcher (not the live install) are labelled SHAPE_ONLY
+  OK   V-CRIT-COLLECT-SHAPE-ONLY-LIVE-POLE  a file equal to the live dispatcher path is labelled LIVE_DISPATCHER (the other pole of the label)
+  OK   V-CRIT-COLLECT-SHAPE-ONLY-PATHS  an outside path is stored as <external>, a repo path repo-relative, sha256 present, no absolute path in the document
+  OK   V-CRIT-COLLECT-SHAPE-ONLY-HINT  the file carries an interleave hint
+  OK   V-CRIT-COLLECT-SHAPE-ONLY-SUMMARY-NO-TIMING  the CLI summary names the scope and the three states, prints none of the 3 wall values and no timing statistic
+  OK   V-CRIT-COLLECT-SHAPE-ONLY-JUDGE-REFUSES-GEX44  the SHAPE_ONLY file with the GEX44 name: exit 2
+  OK   V-CRIT-COLLECT-SHAPE-ONLY-JUDGE-REFUSES-OTHER-NAME  the SHAPE_ONLY file with a name that is not its host: exit 2
+  OK   V-CRIT-COLLECT-SHAPE-ONLY-JUDGE-REFUSES-OWN-HOST  the SHAPE_ONLY file under the host it was recorded on (here the GEX44 host): exit 2
+  OK   V-CRIT-COLLECT-SHAPE-ONLY-JUDGE-REFUSES-SCOPE  host and name agree, only the scope is SHAPE_ONLY: still refused (exit 2), the scope rule fires on its own
+  OK   V-CRIT-COLLECT-SHAPE-ONLY-JUDGE-SCOPE-CONTROL  the same file labelled LIVE_DISPATCHER passes the scope rule and reaches the judge (exit 1, verdict line present: True)
+CRITPATH_PASS=134/134  threshold=134/134
+# exit=0

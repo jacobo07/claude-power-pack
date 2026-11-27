@@ -1,0 +1,49 @@
+# 04-02 mutants of tools/bench_all.py (plane: GEX44). Each target must occur exactly once;
+# the owning check must return no problems on the real module (positive control) and >=1 on the mutant.
+
+## M1
+target      : elif pressure is not None and pressure[0] != PRESSURE_GREEN:
+replacement : elif False:
+occurrences : 1
+owning check: check_red_run
+positive control (real module problems): 0 -> ACCEPTED
+mutant problems: 4 -> REJECTED
+first problem  : RED run regressed=True, expected None
+
+## M2
+target      : pressure=run_pressure
+replacement : pressure=None
+occurrences : 1
+owning check: check_red_run
+positive control (real module problems): 0 -> ACCEPTED
+mutant problems: 4 -> REJECTED
+first problem  : RED run regressed=True, expected None
+
+## M3
+target      : elif entry_pressure(e) != PRESSURE_GREEN:
+replacement : elif False:
+occurrences : 1
+owning check: check_window_exclusion
+positive control (real module problems): 0 -> ACCEPTED
+mutant problems: 3 -> REJECTED
+first problem  : window kept [10.0, 11.0, 500.0, 600.0, 12.0], expected [10.0, 11.0, 12.0]: a RED or UNKNOWN entry entered the window
+
+## M4
+target      : if host_state.get("schema") != HOST_SCHEMA:
+replacement : if False:
+occurrences : 1
+owning check: check_schema1_unknown
+positive control (real module problems): 0 -> ACCEPTED
+mutant problems: 2 -> REJECTED
+first problem  : schema-1 forged GREEN read as 'GREEN', expected UNKNOWN
+
+## M5
+target      : suspect = cls != PRESSURE_GREEN and v.get("met_target") is False
+replacement : suspect = False
+occurrences : 1
+owning check: check_pressure_lines
+positive control (real module problems): 0 -> ACCEPTED
+mutant problems: 4 -> REJECTED
+first problem  : RED miss lacks a SLOW-HOST-SUSPECT line naming the metric: 'HOST PRESSURE: RED (r1) | REGRESSION: INCONCLUSIVE -- host pressure RED; regression verdicts are not judged and this run is excluded from future windows |   COMPONENT FINDING: never_again_ms missed its target on a GREEN host'
+
+RESULT: ALL_FIVE_REJECTED_REAL_ACCEPTED

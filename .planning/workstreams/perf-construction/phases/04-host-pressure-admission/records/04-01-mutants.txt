@@ -1,0 +1,17 @@
+# record_run
+# date_utc: 2026-11-22T23:55:51.604978+00:00
+# head: 5c0e52a6
+# cmd: python3 tools/test_resource_pressure.py --mutants-only
+    M1 target='count > ceiling' replacement='count >= ceiling' occurrences=1
+    M1 flagged_by=check_boundary_ceiling problem="count equal to the ceiling (5) gave 'RED', want GREEN"
+    M2 target='ram_low = ram_verdict == REFUSE_LOW_MEMORY' replacement='ram_low = False' occurrences=1
+    M2 flagged_by=check_pole_table problem="ram low + count fine: 'GREEN' [], want RED ['ram_below_floor']"
+    M3 target='count = _valid_count(count_reading)' replacement='count = _valid_count(count_reading) or 0' occurrences=1
+    M3 flagged_by=check_pole_table problem="ram low + count unreadable: 'RED' ['ram_below_floor'], want RED ['ram_below_floor', 'claude_count_unreadable']"
+    M3 flagged_by=check_tracer_unreadable problem="unreadable count with RAM 9000 gave 'GREEN' [], want UNKNOWN claude_count_unreadable"
+    M4 target='if not pid_dirs:' replacement='if False:' occurrences=1
+    M4 flagged_by=check_no_pid_entries problem='a root with no numeric entries gave count 0, want None (blind, not zero)'
+    M5 target='if switch_off():' replacement='if False:' occurrences=1
+    M5 flagged_by=check_refusal_opt_in problem='CPP_RESOURCE_ADMISSION=off still refused on a count over the ceiling'
+  PASS V-PRESS-MUTANTS-CAUGHT: five one-line mutants rejected by their owning checks; the real module accepted
+# exit=0

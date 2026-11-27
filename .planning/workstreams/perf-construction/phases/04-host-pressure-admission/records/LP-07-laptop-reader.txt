@@ -1,0 +1,5 @@
+# LP-07 laptop record, moment 1 of 3 (the Owner's usual session set; idle and post-revival not yet taken)
+# host: DESKTOP-PMT5BS8 os: win32 taken 2026-11-24T12:00:49+01:00
+# cross-check: Get-Process claude rows = 31 at the same moment (matches tasklist count 31)
+
+{"count": {"count": 31, "source": "tasklist"}, "host": "DESKTOP-PMT5BS8", "os": "win32", "pressure": {"available_mb": 2383.27734375, "class": "RED", "claude_ceiling": 40, "claude_count": 31, "floor_mb": 3000, "profile": "default", "reasons": ["ram_below_floor"]}, "profile": "default", "ram": {"available_mb": 2383.27734375, "source": "GlobalMemoryStatusEx"}}

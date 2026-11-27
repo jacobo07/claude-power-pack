@@ -1,0 +1,4660 @@
+# record_run
+# date_utc: 2026-11-23T12:19:08.860006+00:00
+# head: 7451bd0f
+# cmd: python3 -I modules/liveness/reachability.py --json
+{
+  "passed": false,
+  "offenders": [
+    {
+      "unit": "capability_runtime/agent_bundle",
+      "package": "capability_runtime",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cdio/componentry_catalog",
+      "package": "cdio",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cognitive_os/corpus_delivery",
+      "package": "cognitive_os",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cognitive_os/coverage",
+      "package": "cognitive_os",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cognitive_os/hibernate_runner",
+      "package": "cognitive_os",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "gsd_x/goal/bind_mission",
+      "package": "gsd_x",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "gsd_x/goal/brief",
+      "package": "gsd_x",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "gsd_x/goal/contract",
+      "package": "gsd_x",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "gsd_x/goal/convergence",
+      "package": "gsd_x",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "gsd_x/goal/engine_identity",
+      "package": "gsd_x",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "gsd_x/goal/epoch",
+      "package": "gsd_x",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "gsd_x/goal/git_state",
+      "package": "gsd_x",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "gsd_x/goal/log",
+      "package": "gsd_x",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "gsd_x/goal/providers/__init__",
+      "package": "gsd_x",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "gsd_x/goal/providers/claude",
+      "package": "gsd_x",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "gsd_x/goal/providers/codex",
+      "package": "gsd_x",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "gsd_x/goal/providers/gate",
+      "package": "gsd_x",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "gsd_x/goal/providers/long_run",
+      "package": "gsd_x",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "gsd_x/goal/reconcile",
+      "package": "gsd_x",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "gsd_x/goal/sweep",
+      "package": "gsd_x",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "gsd_x/mission/closure",
+      "package": "gsd_x",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "gsd_x/mission/contract",
+      "package": "gsd_x",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "gsd_x/mission/coverage",
+      "package": "gsd_x",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "gsd_x/mission/obligation",
+      "package": "gsd_x",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "gsd_x/mission/store",
+      "package": "gsd_x",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "gsd_x/mission/structured_facts",
+      "package": "gsd_x",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "keos_qwen/goals/__init__",
+      "package": "keos_qwen",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "keos_qwen/goals/fire",
+      "package": "keos_qwen",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "keos_qwen/goals/seed_goals",
+      "package": "keos_qwen",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "keos_qwen/ledger/__init__",
+      "package": "keos_qwen",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "keos_qwen/ledger/ledger",
+      "package": "keos_qwen",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "keos_qwen/probe/__init__",
+      "package": "keos_qwen",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "keos_qwen/probe/agentic_loop",
+      "package": "keos_qwen",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "keos_qwen/score/score_corpus",
+      "package": "keos_qwen",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "knowledge_acquisition/__init__",
+      "package": "knowledge_acquisition",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "knowledge_acquisition/boundary",
+      "package": "knowledge_acquisition",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "knowledge_acquisition/classifier",
+      "package": "knowledge_acquisition",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "knowledge_acquisition/cli",
+      "package": "knowledge_acquisition",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "knowledge_acquisition/corpus_parser",
+      "package": "knowledge_acquisition",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "knowledge_acquisition/engine3",
+      "package": "knowledge_acquisition",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "knowledge_acquisition/eva_adapter",
+      "package": "knowledge_acquisition",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "knowledge_acquisition/expectation",
+      "package": "knowledge_acquisition",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "knowledge_acquisition/models",
+      "package": "knowledge_acquisition",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "knowledge_acquisition/provenance",
+      "package": "knowledge_acquisition",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "knowledge_acquisition/queues",
+      "package": "knowledge_acquisition",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "knowledge_acquisition/raw_vault",
+      "package": "knowledge_acquisition",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "knowledge_acquisition/routing",
+      "package": "knowledge_acquisition",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "knowledge_acquisition/runlock",
+      "package": "knowledge_acquisition",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "knowledge_acquisition/runner",
+      "package": "knowledge_acquisition",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "knowledge_acquisition/session",
+      "package": "knowledge_acquisition",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "knowledge_acquisition/store",
+      "package": "knowledge_acquisition",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "session_resilience/snapshot_versioning",
+      "package": "session_resilience",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "surface_architecture/verticals/design_md_adapter",
+      "package": "surface_architecture",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "surface_architecture/verticals/prd_adapter",
+      "package": "surface_architecture",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "surface_architecture/verticals/surface_phrases",
+      "package": "surface_architecture",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "tower/evidence",
+      "package": "tower",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    }
+  ],
+  "rows": [
+    {
+      "unit": "ads/__init__",
+      "package": "ads",
+      "status": "REACHABLE",
+      "via": "package-init of ads/doc_updater",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "ads/detector",
+      "package": "ads",
+      "status": "REACHABLE",
+      "via": "tools/ads_backfill.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "ads/doc_generator",
+      "package": "ads",
+      "status": "REACHABLE",
+      "via": "tools/ads_backfill.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "ads/doc_updater",
+      "package": "ads",
+      "status": "REACHABLE",
+      "via": "tools/ads_sync.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "akos_knowledge/__init__",
+      "package": "akos_knowledge",
+      "status": "REACHABLE",
+      "via": "package-init of akos_knowledge/akos",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "akos_knowledge/akos",
+      "package": "akos_knowledge",
+      "status": "REACHABLE",
+      "via": "tools/jit_skill_loader.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "alert_escalation/__init__",
+      "package": "alert_escalation",
+      "status": "REACHABLE",
+      "via": "tools/background_verifier_run.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "alert_escalation/policy",
+      "package": "alert_escalation",
+      "status": "REACHABLE",
+      "via": "tools/background_verifier_run.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "arch-decision/__init__",
+      "package": "arch-decision",
+      "status": "REACHABLE",
+      "via": "tools/usea_ownership_audit.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "arch-decision/arch_check",
+      "package": "arch-decision",
+      "status": "REACHABLE",
+      "via": "commands/arch-decision.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "arch-decision/build_index",
+      "package": "arch-decision",
+      "status": "REACHABLE",
+      "via": "commands/arch-decision.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "arch-decision/test_closed_loop",
+      "package": "arch-decision",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "arch-decision/test_v_block",
+      "package": "arch-decision",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "architecture_horizon/__init__",
+      "package": "architecture_horizon",
+      "status": "REACHABLE",
+      "via": "tools/usea_ownership_audit.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "architecture_horizon/horizon",
+      "package": "architecture_horizon",
+      "status": "REACHABLE",
+      "via": "commands/architecture-horizon.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "auto-testing/__init__",
+      "package": "auto-testing",
+      "status": "REACHABLE",
+      "via": "package-init of auto-testing/vault_io",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "auto-testing/auto_test",
+      "package": "auto-testing",
+      "status": "REACHABLE",
+      "via": "hooks/auto-test-gate.js",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "auto-testing/detectors",
+      "package": "auto-testing",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "LIBRARY",
+      "note": "sibling of auto_test.py (LIVE, hooks/auto-test-gate.js); imported via sys.path-hack bare import (dash in 'auto-testing' forbids normal package import) -- verified by grep of auto_test.py"
+    },
+    {
+      "unit": "auto-testing/generators/__init__",
+      "package": "auto-testing",
+      "status": "REACHABLE",
+      "via": "commands/auto-test.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "auto-testing/generators/_common",
+      "package": "auto-testing",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "LIBRARY",
+      "note": "sibling of auto_test.py (LIVE, hooks/auto-test-gate.js); imported via sys.path-hack bare import (dash in 'auto-testing' forbids normal package import) -- verified by grep of auto_test.py"
+    },
+    {
+      "unit": "auto-testing/generators/java_gen",
+      "package": "auto-testing",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "LIBRARY",
+      "note": "sibling of auto_test.py (LIVE, hooks/auto-test-gate.js); imported via sys.path-hack bare import (dash in 'auto-testing' forbids normal package import) -- verified by grep of auto_test.py"
+    },
+    {
+      "unit": "auto-testing/generators/node_gen",
+      "package": "auto-testing",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "LIBRARY",
+      "note": "sibling of auto_test.py (LIVE, hooks/auto-test-gate.js); imported via sys.path-hack bare import (dash in 'auto-testing' forbids normal package import) -- verified by grep of auto_test.py"
+    },
+    {
+      "unit": "auto-testing/generators/python_gen",
+      "package": "auto-testing",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "LIBRARY",
+      "note": "sibling of auto_test.py (LIVE, hooks/auto-test-gate.js); imported via sys.path-hack bare import (dash in 'auto-testing' forbids normal package import) -- verified by grep of auto_test.py"
+    },
+    {
+      "unit": "auto-testing/llm_bridge",
+      "package": "auto-testing",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "LIBRARY",
+      "note": "sibling of auto_test.py (LIVE, hooks/auto-test-gate.js); imported via sys.path-hack bare import (dash in 'auto-testing' forbids normal package import) -- verified by grep of auto_test.py"
+    },
+    {
+      "unit": "auto-testing/vault_io",
+      "package": "auto-testing",
+      "status": "REACHABLE",
+      "via": "commands/auto-test.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "autonomy_gate/__init__",
+      "package": "autonomy_gate",
+      "status": "REACHABLE",
+      "via": "hooks/gsd_stop_continuation.js",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "autonomy_gate/__main__",
+      "package": "autonomy_gate",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "LIBRARY",
+      "note": "Manual CLI (python -m modules.autonomy_gate classify). Production reads modules/autonomy_gate/rubric.json directly (gsd_mission successor card, Stop hook); proven by tools/test_autonomy_gate.py."
+    },
+    {
+      "unit": "autonomy_gate/gate",
+      "package": "autonomy_gate",
+      "status": "REACHABLE",
+      "via": "modules/autonomy_gate/__init__",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "autonomy_gate/risk_facts",
+      "package": "autonomy_gate",
+      "status": "REACHABLE",
+      "via": "modules/spec_gate/gate",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "backlog_autopilot/__init__",
+      "package": "backlog_autopilot",
+      "status": "REACHABLE",
+      "via": "commands/backlog-to-capability.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "backlog_autopilot/engine",
+      "package": "backlog_autopilot",
+      "status": "REACHABLE",
+      "via": "CLAUDE.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "backlog_autopilot/inventory",
+      "package": "backlog_autopilot",
+      "status": "REACHABLE",
+      "via": "commands/backlog-to-capability.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "backlog_autopilot/ledger",
+      "package": "backlog_autopilot",
+      "status": "REACHABLE",
+      "via": "commands/backlog-to-capability.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "backlog_autopilot/promotion",
+      "package": "backlog_autopilot",
+      "status": "REACHABLE",
+      "via": "commands/backlog-to-capability.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "backlog_autopilot/stop1_queue",
+      "package": "backlog_autopilot",
+      "status": "REACHABLE",
+      "via": "commands/cpp-stop-ledger.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "backlog_autopilot/tracked",
+      "package": "backlog_autopilot",
+      "status": "REACHABLE",
+      "via": "commands/what-now.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "backlog_autopilot/webslice",
+      "package": "backlog_autopilot",
+      "status": "REACHABLE",
+      "via": "commands/backlog-to-capability.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "backup/__init__",
+      "package": "backup",
+      "status": "REACHABLE",
+      "via": "package-init of backup/retention",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "backup/backup",
+      "package": "backup",
+      "status": "REACHABLE",
+      "via": "commands/backup.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "backup/retention",
+      "package": "backup",
+      "status": "REACHABLE",
+      "via": "modules/rollback/source_selector",
+      "klass": "LIBRARY",
+      "note": "sibling of backup.py (LIVE, commands/backup.md); imported via sys.path-hack bare import -- verified by grep of backup.py"
+    },
+    {
+      "unit": "backup/runners/__init__",
+      "package": "backup",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "LIBRARY",
+      "note": "sibling of backup.py (LIVE, commands/backup.md); imported via sys.path-hack bare import -- verified by grep of backup.py"
+    },
+    {
+      "unit": "backup/runners/docker_volume_tar",
+      "package": "backup",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "LIBRARY",
+      "note": "sibling of backup.py (LIVE, commands/backup.md); imported via sys.path-hack bare import -- verified by grep of backup.py"
+    },
+    {
+      "unit": "backup/runners/pg_dump",
+      "package": "backup",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "LIBRARY",
+      "note": "sibling of backup.py (LIVE, commands/backup.md); imported via sys.path-hack bare import -- verified by grep of backup.py"
+    },
+    {
+      "unit": "backup/runners/rsync_dir",
+      "package": "backup",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "LIBRARY",
+      "note": "sibling of backup.py (LIVE, commands/backup.md); imported via sys.path-hack bare import -- verified by grep of backup.py"
+    },
+    {
+      "unit": "backup/test_v_block",
+      "package": "backup",
+      "status": "REACHABLE",
+      "via": "modules/backup/__init__",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "backup/verify_restore",
+      "package": "backup",
+      "status": "REACHABLE",
+      "via": "modules/backup/__init__",
+      "klass": "LIBRARY",
+      "note": "sibling of backup.py (LIVE, commands/backup.md); imported via sys.path-hack bare import -- verified by grep of backup.py"
+    },
+    {
+      "unit": "capability_runtime/__init__",
+      "package": "capability_runtime",
+      "status": "REACHABLE",
+      "via": "tools/test_capability_runtime.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "capability_runtime/agent_bundle",
+      "package": "capability_runtime",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "capability_runtime/agent_resolver",
+      "package": "capability_runtime",
+      "status": "REACHABLE",
+      "via": "modules/capability_runtime/agent_telemetry",
+      "klass": "LIBRARY",
+      "note": "ACV resolver core; imported by capability_runtime/agent_resolver_cli (and agent_telemetry from C5 commit 3). Its main() is a delegating stub for `python -m`. Proven by tools/test_agent_resolver.py."
+    },
+    {
+      "unit": "capability_runtime/agent_resolver_cli",
+      "package": "capability_runtime",
+      "status": "REACHABLE",
+      "via": "modules/capability_runtime/agent_resolver",
+      "klass": "PLANNED",
+      "note": "ACV C5 R2: resolver CLI, an entrypoint (python -m) that no command or agent body names yet. Reopen when C6 dispatch names it. Owner queue: vault/OWNER_QUEUE.md 'ACV resolver CLI'. Proven by V-RES-CLI-DELEGATES."
+    },
+    {
+      "unit": "capability_runtime/agent_spec",
+      "package": "capability_runtime",
+      "status": "REACHABLE",
+      "via": "live:cpp-carrier-investigator.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "capability_runtime/agent_telemetry",
+      "package": "capability_runtime",
+      "status": "REACHABLE",
+      "via": "modules/cognitive_os/co_12_telemetry",
+      "klass": "LIBRARY",
+      "note": "ACV C5 adapter: resolver result -> one CO-12 agent_resolution signal; agent_metrics read by co_12_telemetry.readiness_report (lazy). Imported by agent_resolver_cli. Proven by tools/test_agent_telemetry.py."
+    },
+    {
+      "unit": "capability_runtime/applicability",
+      "package": "capability_runtime",
+      "status": "REACHABLE",
+      "via": "commands/capability.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "capability_runtime/construction_metrology",
+      "package": "capability_runtime",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "DORMANT",
+      "note": "perf-construction Phase 3 construction-metrology adapter (D-07): read-only transcript timing report; reached only by the manual CLI tools/construction_metrology_report.py, which no command names; first planned consumer is perf-construction Phase 5; kept on purpose with no live caller. Proven by tools/test_construction_metrology.py."
+    },
+    {
+      "unit": "capability_runtime/contract",
+      "package": "capability_runtime",
+      "status": "REACHABLE",
+      "via": "tools/seed_capability_contracts.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "capability_runtime/corpus_adapter",
+      "package": "capability_runtime",
+      "status": "REACHABLE",
+      "via": "commands/capability.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "capability_runtime/derivatives",
+      "package": "capability_runtime",
+      "status": "REACHABLE",
+      "via": "tools/seed_signup_derivative.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "capability_runtime/enrichment",
+      "package": "capability_runtime",
+      "status": "REACHABLE",
+      "via": "tools/design_gate.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "capability_runtime/invocation",
+      "package": "capability_runtime",
+      "status": "REACHABLE",
+      "via": "modules/capability_runtime/__init__",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "capability_runtime/retirement",
+      "package": "capability_runtime",
+      "status": "REACHABLE",
+      "via": "commands/capability.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cascade_prevention/__init__",
+      "package": "cascade_prevention",
+      "status": "REACHABLE",
+      "via": "tools/usea_ownership_audit.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cascade_prevention/blocker",
+      "package": "cascade_prevention",
+      "status": "REACHABLE",
+      "via": "modules/cascade_prevention/__init__",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cascade_prevention/dangerous_cmds",
+      "package": "cascade_prevention",
+      "status": "REACHABLE",
+      "via": "hooks/cascade_check_bash.js",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cascade_prevention/engine",
+      "package": "cascade_prevention",
+      "status": "REACHABLE",
+      "via": "hooks/cascade_check_bash.js",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cascade_prevention/pre_mortem",
+      "package": "cascade_prevention",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "PLANNED",
+      "note": "cascade_prevention/__init__.py's public API (blocker/engine/surfaces/types) does not export pre_mortem -- built extension to the now-LIVE cascade gate (Workstream A), not yet exposed"
+    },
+    {
+      "unit": "cascade_prevention/predictive",
+      "package": "cascade_prevention",
+      "status": "REACHABLE",
+      "via": "modules/cascade_prevention/engine",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cascade_prevention/surfaces",
+      "package": "cascade_prevention",
+      "status": "REACHABLE",
+      "via": "modules/cascade_prevention/__init__",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cascade_prevention/types",
+      "package": "cascade_prevention",
+      "status": "REACHABLE",
+      "via": "modules/cascade_prevention/__init__",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cascade_prevention/verification_state",
+      "package": "cascade_prevention",
+      "status": "REACHABLE",
+      "via": "hooks/cascade_check_bash.js",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "ccf/__init__",
+      "package": "ccf",
+      "status": "REACHABLE",
+      "via": "CLAUDE.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "ccf/artifact_compiler",
+      "package": "ccf",
+      "status": "REACHABLE",
+      "via": "modules/ccf/cli",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "ccf/asset_validator",
+      "package": "ccf",
+      "status": "REACHABLE",
+      "via": "modules/ccf/kit_readiness",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "ccf/brand_book",
+      "package": "ccf",
+      "status": "REACHABLE",
+      "via": "modules/ccf/cli",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "ccf/brand_color",
+      "package": "ccf",
+      "status": "REACHABLE",
+      "via": "modules/ccf/creative_checks",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "ccf/brand_release",
+      "package": "ccf",
+      "status": "REACHABLE",
+      "via": "modules/ccf/creative_checks",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "ccf/brand_review",
+      "package": "ccf",
+      "status": "REACHABLE",
+      "via": "modules/ccf/creative_checks",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "ccf/brand_truth",
+      "package": "ccf",
+      "status": "REACHABLE",
+      "via": "modules/ccf/creative_checks",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "ccf/cli",
+      "package": "ccf",
+      "status": "REACHABLE",
+      "via": "CLAUDE.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "ccf/config_schema",
+      "package": "ccf",
+      "status": "REACHABLE",
+      "via": "modules/ccf/cli",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "ccf/contract_engine",
+      "package": "ccf",
+      "status": "REACHABLE",
+      "via": "modules/ccf/cli",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "ccf/creative_checks",
+      "package": "ccf",
+      "status": "REACHABLE",
+      "via": "modules/ccf/cli",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "ccf/critique",
+      "package": "ccf",
+      "status": "REACHABLE",
+      "via": "modules/ccf/creative_checks",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "ccf/evaluation_engine",
+      "package": "ccf",
+      "status": "REACHABLE",
+      "via": "modules/ccf/cli",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "ccf/identity_set",
+      "package": "ccf",
+      "status": "REACHABLE",
+      "via": "modules/ccf/creative_checks",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "ccf/kit_readiness",
+      "package": "ccf",
+      "status": "REACHABLE",
+      "via": "modules/ccf/cli",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "ccf/knowledge_feed",
+      "package": "ccf",
+      "status": "REACHABLE",
+      "via": "modules/ccf/cli",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "ccf/model_adapter",
+      "package": "ccf",
+      "status": "REACHABLE",
+      "via": "modules/ccf/cli",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "ccf/prompt_compiler",
+      "package": "ccf",
+      "status": "REACHABLE",
+      "via": "modules/ccf/cli",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "ccf/provider_policy",
+      "package": "ccf",
+      "status": "REACHABLE",
+      "via": "modules/ccf/creative_checks",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "ccf/release_manager",
+      "package": "ccf",
+      "status": "REACHABLE",
+      "via": "modules/ccf/cli",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "ccf/techniques",
+      "package": "ccf",
+      "status": "REACHABLE",
+      "via": "modules/ccf/creative_checks",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "ccf/territories",
+      "package": "ccf",
+      "status": "REACHABLE",
+      "via": "modules/ccf/creative_checks",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "ccf/test_ccf",
+      "package": "ccf",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "ccf/trace_lane",
+      "package": "ccf",
+      "status": "REACHABLE",
+      "via": "modules/ccf/creative_checks",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "ccf/trademark_scanner",
+      "package": "ccf",
+      "status": "REACHABLE",
+      "via": "modules/ccf/cli",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "ccf/visual_dna",
+      "package": "ccf",
+      "status": "REACHABLE",
+      "via": "modules/ccf/creative_checks",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cdio/__init__",
+      "package": "cdio",
+      "status": "REACHABLE",
+      "via": "commands/cognitive-load.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cdio/bus_bridge",
+      "package": "cdio",
+      "status": "REACHABLE",
+      "via": "live:cdio-core.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cdio/componentry_catalog",
+      "package": "cdio",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cdio/design_route",
+      "package": "cdio",
+      "status": "REACHABLE",
+      "via": "tools/design_donegate_stop.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cdio/legal_surface",
+      "package": "cdio",
+      "status": "REACHABLE",
+      "via": "modules/backlog_autopilot/webslice",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cdio/motion_patterns",
+      "package": "cdio",
+      "status": "REACHABLE",
+      "via": "tools/design_gate.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cdio/scorer",
+      "package": "cdio",
+      "status": "REACHABLE",
+      "via": "commands/liveness.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cdio/taste",
+      "package": "cdio",
+      "status": "REACHABLE",
+      "via": "tools/design_donegate_stop.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cdio/telemetry",
+      "package": "cdio",
+      "status": "REACHABLE",
+      "via": "tools/test_cdio.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cdio/ux_contracts",
+      "package": "cdio",
+      "status": "REACHABLE",
+      "via": "modules/cdio/design_route",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "code-review/__init__",
+      "package": "code-review",
+      "status": "REACHABLE",
+      "via": "package-init of code-review/test_v_block",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "code-review/code_reviewer",
+      "package": "code-review",
+      "status": "REACHABLE",
+      "via": "commands/code-review.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "code-review/test_closed_loop",
+      "package": "code-review",
+      "status": "REACHABLE",
+      "via": "modules/code-review/code_reviewer",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "code-review/test_combined_gate",
+      "package": "code-review",
+      "status": "REACHABLE",
+      "via": "modules/code-review/code_reviewer",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "code-review/test_v_block",
+      "package": "code-review",
+      "status": "REACHABLE",
+      "via": "modules/intent_verified/join",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "code_review/__init__",
+      "package": "code_review",
+      "status": "REACHABLE",
+      "via": "live:pp-code-reviewer.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cognitive_load/__init__",
+      "package": "cognitive_load",
+      "status": "REACHABLE",
+      "via": "tools/usea_ownership_audit.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cognitive_load/load",
+      "package": "cognitive_load",
+      "status": "REACHABLE",
+      "via": "commands/cognitive-load.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cognitive_os/__init__",
+      "package": "cognitive_os",
+      "status": "REACHABLE",
+      "via": "commands/cognitive-load.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cognitive_os/co_12_telemetry",
+      "package": "cognitive_os",
+      "status": "REACHABLE",
+      "via": "tools/jit_skill_loader.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cognitive_os/context",
+      "package": "cognitive_os",
+      "status": "REACHABLE",
+      "via": "modules/wrapper/prelaunch",
+      "klass": "PLANNED",
+      "note": "CO-00 series module, built per spec; not yet composed into the live process_governor.py -- verified process_governor.py does not import it"
+    },
+    {
+      "unit": "cognitive_os/corpus_delivery",
+      "package": "cognitive_os",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cognitive_os/coverage",
+      "package": "cognitive_os",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cognitive_os/economics",
+      "package": "cognitive_os",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "PLANNED",
+      "note": "CO-01/CO-02 series -- see cognitive_os/context note"
+    },
+    {
+      "unit": "cognitive_os/gc",
+      "package": "cognitive_os",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "PLANNED",
+      "note": "CO-0x series -- see cognitive_os/context note"
+    },
+    {
+      "unit": "cognitive_os/governor",
+      "package": "cognitive_os",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "PLANNED",
+      "note": "CO-02 Economics Governor, built per spec; not yet composed into process_governor.py -- see cognitive_os/context note"
+    },
+    {
+      "unit": "cognitive_os/guarantee_ledger",
+      "package": "cognitive_os",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "PLANNED",
+      "note": "CO-0x series -- see cognitive_os/context note"
+    },
+    {
+      "unit": "cognitive_os/hibernate_runner",
+      "package": "cognitive_os",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cognitive_os/hibernation",
+      "package": "cognitive_os",
+      "status": "REACHABLE",
+      "via": "modules/cognitive_os/process_governor",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cognitive_os/loop_budget",
+      "package": "cognitive_os",
+      "status": "REACHABLE",
+      "via": "modules/product_demo/cli",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cognitive_os/memory",
+      "package": "cognitive_os",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "PLANNED",
+      "note": "CO-04 series -- see cognitive_os/context note"
+    },
+    {
+      "unit": "cognitive_os/process_governor",
+      "package": "cognitive_os",
+      "status": "REACHABLE",
+      "via": "CLAUDE.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cognitive_os/registry",
+      "package": "cognitive_os",
+      "status": "REACHABLE",
+      "via": "modules/cognitive_os/router",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cognitive_os/rehydration",
+      "package": "cognitive_os",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "PLANNED",
+      "note": "CO-0x series -- see cognitive_os/context note"
+    },
+    {
+      "unit": "cognitive_os/router",
+      "package": "cognitive_os",
+      "status": "REACHABLE",
+      "via": "modules/cognitive_os/co_12_telemetry",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cognitive_os/scheduler",
+      "package": "cognitive_os",
+      "status": "REACHABLE",
+      "via": "modules/cognitive_os/process_governor",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "context_budget/__init__",
+      "package": "context_budget",
+      "status": "REACHABLE",
+      "via": "tools/gsd_epoch.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "context_budget/meter",
+      "package": "context_budget",
+      "status": "REACHABLE",
+      "via": "modules/context_budget/__init__",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "contract_fabric/__init__",
+      "package": "contract_fabric",
+      "status": "REACHABLE",
+      "via": "tools/usea_ownership_audit.py",
+      "klass": "PLANNED",
+      "note": "DAIF-04 Part XXI runtime -- part of the DAIF corpus, which memory/project_daif_corpus_scs_c95.md records as 'SPEC, not a running system'"
+    },
+    {
+      "unit": "contract_fabric/side_effect_ledger",
+      "package": "contract_fabric",
+      "status": "REACHABLE",
+      "via": "modules/contract_fabric/__init__",
+      "klass": "PLANNED",
+      "note": "DAIF-04 Part XXI runtime -- see contract_fabric/__init__ note"
+    },
+    {
+      "unit": "cost_collapse/__init__",
+      "package": "cost_collapse",
+      "status": "REACHABLE",
+      "via": "package-init of cost_collapse/router",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cost_collapse/router",
+      "package": "cost_collapse",
+      "status": "REACHABLE",
+      "via": "CLAUDE.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cpc_os/__init__",
+      "package": "cpc_os",
+      "status": "REACHABLE",
+      "via": "hooks/session_start_hub.js",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cpc_os/auto_reset_orchestrator",
+      "package": "cpc_os",
+      "status": "REACHABLE",
+      "via": "commands/auto-reset.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cpc_os/backlog",
+      "package": "cpc_os",
+      "status": "REACHABLE",
+      "via": "modules/cpc_os/__init__",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cpc_os/beacon",
+      "package": "cpc_os",
+      "status": "REACHABLE",
+      "via": "hooks/session_start_hub.js",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cpc_os/context_monitor",
+      "package": "cpc_os",
+      "status": "REACHABLE",
+      "via": "commands/auto-reset.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cpc_os/handoff",
+      "package": "cpc_os",
+      "status": "REACHABLE",
+      "via": "modules/cpc_os/__init__",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cpc_os/heartbeat",
+      "package": "cpc_os",
+      "status": "REACHABLE",
+      "via": "modules/cpc_os/__init__",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cpc_os/recovery",
+      "package": "cpc_os",
+      "status": "REACHABLE",
+      "via": "modules/cpc_os/__init__",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cpc_os/registry",
+      "package": "cpc_os",
+      "status": "REACHABLE",
+      "via": "hooks/session_start_hub.js",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cpc_os/restart",
+      "package": "cpc_os",
+      "status": "REACHABLE",
+      "via": "modules/cpc_os/__init__",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cpc_os/router",
+      "package": "cpc_os",
+      "status": "REACHABLE",
+      "via": "modules/cpc_os/__init__",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cpc_os/snapshot",
+      "package": "cpc_os",
+      "status": "REACHABLE",
+      "via": "hooks/session_start_hub.js",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cpc_os/switch",
+      "package": "cpc_os",
+      "status": "REACHABLE",
+      "via": "modules/cpc_os/__init__",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cpc_os/topology_reconcile",
+      "package": "cpc_os",
+      "status": "REACHABLE",
+      "via": "modules/cpc_os/vscode_autorun",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cpc_os/vscode_autorun",
+      "package": "cpc_os",
+      "status": "REACHABLE",
+      "via": "commands/restore-panes.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "cpc_os/work_state_saver",
+      "package": "cpc_os",
+      "status": "REACHABLE",
+      "via": "commands/auto-reset.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "craif/__init__",
+      "package": "craif",
+      "status": "REACHABLE",
+      "via": "package-init of craif/diagnosis",
+      "klass": "PLANNED",
+      "note": "CRAIF Phase 1 (Failure Completeness axis, per OWNERSHIP_OVERLAP_AUDIT.md Group F) -- built early-stage, integration deliberately deferred"
+    },
+    {
+      "unit": "craif/adapter_conformance",
+      "package": "craif",
+      "status": "REACHABLE",
+      "via": "commands/craif-conformance.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "craif/authority",
+      "package": "craif",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "PLANNED",
+      "note": "CRAIF Phase 1 -- see craif/__init__ note"
+    },
+    {
+      "unit": "craif/candidate",
+      "package": "craif",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "PLANNED",
+      "note": "CRAIF Phase 1 -- see craif/__init__ note"
+    },
+    {
+      "unit": "craif/diagnosis",
+      "package": "craif",
+      "status": "REACHABLE",
+      "via": "modules/skill_router/skill_index",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "craif/intake",
+      "package": "craif",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "PLANNED",
+      "note": "CRAIF Phase 1 -- see craif/__init__ note"
+    },
+    {
+      "unit": "craif/ledger",
+      "package": "craif",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "PLANNED",
+      "note": "CRAIF Phase 1 -- see craif/__init__ note"
+    },
+    {
+      "unit": "craif/objects",
+      "package": "craif",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "PLANNED",
+      "note": "CRAIF Phase 1 -- see craif/__init__ note"
+    },
+    {
+      "unit": "craif/oier",
+      "package": "craif",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "DORMANT",
+      "note": "DORMANT by Owner decision 4 (2026-10-04, cognitive-economy pillar T): kept on purpose, no live caller. Proven by tools/test_efaif_residues.py."
+    },
+    {
+      "unit": "craif/runtime",
+      "package": "craif",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "PLANNED",
+      "note": "CRAIF Phase 1 -- see craif/__init__ note"
+    },
+    {
+      "unit": "daif/__init__",
+      "package": "daif",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "PLANNED",
+      "note": "DAIF corpus executable half -- confirmed SPEC-not-running-system (memory/project_daif_corpus_scs_c95.md); no live consumer"
+    },
+    {
+      "unit": "daif/constraint_extractor",
+      "package": "daif",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "PLANNED",
+      "note": "DAIF corpus -- see daif/__init__ note"
+    },
+    {
+      "unit": "daif/decision_extractor",
+      "package": "daif",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "PLANNED",
+      "note": "DAIF corpus -- see daif/__init__ note"
+    },
+    {
+      "unit": "daif/obligation_extractor",
+      "package": "daif",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "PLANNED",
+      "note": "DAIF corpus -- see daif/__init__ note"
+    },
+    {
+      "unit": "daif/resume_reader",
+      "package": "daif",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "PLANNED",
+      "note": "DAIF corpus -- see daif/__init__ note"
+    },
+    {
+      "unit": "daif/session_continuity_compiler",
+      "package": "daif",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "PLANNED",
+      "note": "DAIF-08 Part XI, self-declares gaps in its own docstring (no decision extractor yet) -- see daif/__init__ note"
+    },
+    {
+      "unit": "daif/two_arm_trial",
+      "package": "daif",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "PLANNED",
+      "note": "DAIF corpus -- see daif/__init__ note"
+    },
+    {
+      "unit": "dataset_first/__init__",
+      "package": "dataset_first",
+      "status": "REACHABLE",
+      "via": "package-init of dataset_first/knowledge_sufficiency",
+      "klass": "PLANNED",
+      "note": "Dataset First Protocol, self-declared 'an advisor wired into an authority, never an authority itself' in its own docstring -- built complete, not yet composed into spec_gate/decision_review"
+    },
+    {
+      "unit": "dataset_first/calibrator",
+      "package": "dataset_first",
+      "status": "REACHABLE",
+      "via": "modules/dataset_first/__init__",
+      "klass": "PLANNED",
+      "note": "DFP -- see dataset_first/__init__ note"
+    },
+    {
+      "unit": "dataset_first/classifier",
+      "package": "dataset_first",
+      "status": "REACHABLE",
+      "via": "modules/dataset_first/__init__",
+      "klass": "PLANNED",
+      "note": "DFP -- see dataset_first/__init__ note"
+    },
+    {
+      "unit": "dataset_first/knowledge_sufficiency",
+      "package": "dataset_first",
+      "status": "REACHABLE",
+      "via": "modules/decision_review/decision_kernel",
+      "klass": "PLANNED",
+      "note": "DFP -- see dataset_first/__init__ note"
+    },
+    {
+      "unit": "dataset_first/manifest",
+      "package": "dataset_first",
+      "status": "REACHABLE",
+      "via": "modules/dataset_first/__init__",
+      "klass": "PLANNED",
+      "note": "DFP -- see dataset_first/__init__ note"
+    },
+    {
+      "unit": "dataset_first/necessity_record",
+      "package": "dataset_first",
+      "status": "REACHABLE",
+      "via": "modules/dataset_first/__init__",
+      "klass": "PLANNED",
+      "note": "DFP -- see dataset_first/__init__ note"
+    },
+    {
+      "unit": "dataset_first/transduction",
+      "package": "dataset_first",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "DORMANT",
+      "note": "DORMANT by Owner decision 4 (2026-10-04, cognitive-economy pillar T): kept on purpose, no live caller. Wiring awaits OWNER_QUEUE item (c). Proven by tools/test_transduction.py."
+    },
+    {
+      "unit": "decision_review/__init__",
+      "package": "decision_review",
+      "status": "REACHABLE",
+      "via": "tools/test_uceimr_residues.py",
+      "klass": "PLANNED",
+      "note": "DRK-01 nine-stage review sieve; decision_kernel.py's own docstring states 'the thin live adapters that call those modules are wired separately once their signatures are verified' -- self-declared pending, not forgotten"
+    },
+    {
+      "unit": "decision_review/accountability",
+      "package": "decision_review",
+      "status": "REACHABLE",
+      "via": "modules/decision_review/outcome_recorder",
+      "klass": "PLANNED",
+      "note": "DRK-01 -- see decision_review/__init__ note"
+    },
+    {
+      "unit": "decision_review/decision_kernel",
+      "package": "decision_review",
+      "status": "REACHABLE",
+      "via": "modules/decision_review/__init__",
+      "klass": "PLANNED",
+      "note": "DRK-01 -- see decision_review/__init__ note (self-declared pending wiring)"
+    },
+    {
+      "unit": "decision_review/decision_record",
+      "package": "decision_review",
+      "status": "REACHABLE",
+      "via": "tools/test_uceimr_residues.py",
+      "klass": "PLANNED",
+      "note": "DRK-01 -- see decision_review/__init__ note"
+    },
+    {
+      "unit": "decision_review/epistemic_algebra",
+      "package": "decision_review",
+      "status": "REACHABLE",
+      "via": "modules/decision_review/decision_kernel",
+      "klass": "LIBRARY",
+      "note": "shared ACIS arithmetic (CPCSC Tier-B B2). Pure composition over the E0-E7 ladder -- assigns no level and issues no verdict, so it is a library by construction, never an entrypoint. Imported by its two contract-named siblings decision_kernel (acis_max/acis_rank for the DRK-03 strongest-support join and the E3 floor) and providers (acis_rank + ACIS_LEVELS, replacing a fourth ad hoc regex parse of the same scale). Those siblings are themselves PLANNED, so this cannot be REACHABLE until the DRK stack is wired; LIBRARY is the honest class, and it became TRUE only when the sibling importers landed -- before that this module had zero importers and the claim would have been false."
+    },
+    {
+      "unit": "decision_review/outcome_recorder",
+      "package": "decision_review",
+      "status": "REACHABLE",
+      "via": "tools/test_uceimr_residues.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "decision_review/proactive_scanner",
+      "package": "decision_review",
+      "status": "REACHABLE",
+      "via": "modules/decision_review/__init__",
+      "klass": "PLANNED",
+      "note": "DRK-01 -- see decision_review/__init__ note"
+    },
+    {
+      "unit": "decision_review/providers",
+      "package": "decision_review",
+      "status": "REACHABLE",
+      "via": "modules/decision_review/decision_kernel",
+      "klass": "PLANNED",
+      "note": "DRK-01 -- see decision_review/__init__ note"
+    },
+    {
+      "unit": "decision_review/recurrence",
+      "package": "decision_review",
+      "status": "REACHABLE",
+      "via": "modules/decision_review/decision_kernel",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "dependency_sovereignty/__init__",
+      "package": "dependency_sovereignty",
+      "status": "REACHABLE",
+      "via": "package-init of dependency_sovereignty/sovereignty",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "dependency_sovereignty/sovereignty",
+      "package": "dependency_sovereignty",
+      "status": "REACHABLE",
+      "via": "commands/dependency-sovereignty.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "deployment/__init__",
+      "package": "deployment",
+      "status": "REACHABLE",
+      "via": "tools/usea_ownership_audit.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "deployment/deploy",
+      "package": "deployment",
+      "status": "REACHABLE",
+      "via": "commands/deploy.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "deployment/detectors",
+      "package": "deployment",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "LIBRARY",
+      "note": "sibling of deploy.py (LIVE, commands/deploy.md); imported via sys.path-hack bare import -- verified by grep of deploy.py"
+    },
+    {
+      "unit": "deployment/healthcheck",
+      "package": "deployment",
+      "status": "REACHABLE",
+      "via": "commands/rollback.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "deployment/runners/__init__",
+      "package": "deployment",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "LIBRARY",
+      "note": "sibling of deploy.py (LIVE, commands/deploy.md); imported via sys.path-hack bare import -- verified by grep of deploy.py"
+    },
+    {
+      "unit": "deployment/runners/gh_workflow",
+      "package": "deployment",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "LIBRARY",
+      "note": "sibling of deploy.py (LIVE, commands/deploy.md); imported via sys.path-hack bare import -- verified by grep of deploy.py"
+    },
+    {
+      "unit": "deployment/runners/git_push",
+      "package": "deployment",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "LIBRARY",
+      "note": "sibling of deploy.py (LIVE, commands/deploy.md); imported via sys.path-hack bare import -- verified by grep of deploy.py"
+    },
+    {
+      "unit": "deployment/runners/scp_systemd",
+      "package": "deployment",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "LIBRARY",
+      "note": "sibling of deploy.py (LIVE, commands/deploy.md); imported via sys.path-hack bare import -- verified by grep of deploy.py"
+    },
+    {
+      "unit": "deployment/test_v_block",
+      "package": "deployment",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "done_gate/__init__",
+      "package": "done_gate",
+      "status": "REACHABLE",
+      "via": "tools/seed_capability_contracts.py",
+      "klass": "PLANNED",
+      "note": "Artifact Done-Gate (P2), built complete per its own docstring; no command/hook currently invokes it -- output_contracts/validator.py (LIVE, Stop-chain) currently covers the same Reality Contract concern"
+    },
+    {
+      "unit": "done_gate/architectural_truth",
+      "package": "done_gate",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "DORMANT",
+      "note": "DORMANT by Owner decision 4 (2026-10-04, cognitive-economy pillar T): kept on purpose, no live caller. Doctrine names it the Grader; nothing invokes it. Proven by tools/test_architectural_truth.py."
+    },
+    {
+      "unit": "done_gate/artifact_done_gate",
+      "package": "done_gate",
+      "status": "REACHABLE",
+      "via": "tools/usea_ownership_audit.py",
+      "klass": "PLANNED",
+      "note": "Artifact Done-Gate (P2) -- see done_gate/__init__ note"
+    },
+    {
+      "unit": "done_gate/strength_ladder",
+      "package": "done_gate",
+      "status": "REACHABLE",
+      "via": "commands/surface-architecture.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "drift_registry/__init__",
+      "package": "drift_registry",
+      "status": "REACHABLE",
+      "via": "tools/usea_ownership_audit.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "drift_registry/registry",
+      "package": "drift_registry",
+      "status": "REACHABLE",
+      "via": "commands/drift-registry.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "duplicate_to_advantage/__init__",
+      "package": "duplicate_to_advantage",
+      "status": "REACHABLE",
+      "via": "tools/usea_ownership_audit.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "duplicate_to_advantage/d2a_engine",
+      "package": "duplicate_to_advantage",
+      "status": "REACHABLE",
+      "via": "hooks/d2a_gate.js",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "duplicate_to_advantage/provenance",
+      "package": "duplicate_to_advantage",
+      "status": "REACHABLE",
+      "via": "modules/duplicate_to_advantage/d2a_engine",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "error_prevention/__init__",
+      "package": "error_prevention",
+      "status": "REACHABLE",
+      "via": "tools/usea_ownership_audit.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "error_prevention/premise_verifier",
+      "package": "error_prevention",
+      "status": "REACHABLE",
+      "via": "CLAUDE.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "execution_env/__init__",
+      "package": "execution_env",
+      "status": "REACHABLE",
+      "via": "tools/pre_compact_vault_dump.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "external_assimilation/__init__",
+      "package": "external_assimilation",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "LIBRARY",
+      "note": "Package marker for the one vendored-code bridge. Reached in production through tools/gsd_mission.py -> tools/plan_graph_check.py -> node_bridge, a tool->tool hop this scanner does not follow (red team R2)."
+    },
+    {
+      "unit": "external_assimilation/node_bridge",
+      "package": "external_assimilation",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "LIBRARY",
+      "note": "The single bridge to vendor/genesis-suite. Production edge: tools/plan_graph_check.py:36, called from the tools/gsd_mission.py supervise pass. Proven by tools/test_plan_graph_check.py."
+    },
+    {
+      "unit": "fable_distillation/__init__",
+      "package": "fable_distillation",
+      "status": "REACHABLE",
+      "via": "tools/usea_ownership_audit.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "fable_distillation/epistemic_ladder",
+      "package": "fable_distillation",
+      "status": "REACHABLE",
+      "via": "modules/decision_review/providers",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "fable_distillation/fd_00_gate",
+      "package": "fable_distillation",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "PLANNED",
+      "note": "FD-00 Admission Gate, built and tested (12/12x3 per memory/project_fd_execution_activation.md) but grep confirms NO current import from any live FD/co_12_telemetry surface -- the memory's 'activation' claim is stale and should be corrected"
+    },
+    {
+      "unit": "fable_distillation/fd_04_acceleration",
+      "package": "fable_distillation",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "DORMANT",
+      "note": "DORMANT by Owner decision 4 (2026-10-04, cognitive-economy pillar T): kept on purpose, no live caller. Proven by tools/test_fd04_acceleration.py."
+    },
+    {
+      "unit": "fable_distillation/fd_04_contrast",
+      "package": "fable_distillation",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "PLANNED",
+      "note": "FD-04 validation companion to fd_04_prover (LIVE); not itself imported by any live surface"
+    },
+    {
+      "unit": "fable_distillation/fd_04_prover",
+      "package": "fable_distillation",
+      "status": "REACHABLE",
+      "via": "modules/fable_distillation/epistemic_ladder",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "fable_distillation/fd_07_flywheel",
+      "package": "fable_distillation",
+      "status": "REACHABLE",
+      "via": "hooks/hook-dispatcher.js",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "fable_distillation/federated_ledger",
+      "package": "fable_distillation",
+      "status": "REACHABLE",
+      "via": "modules/frontier_intelligence/token_irr",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "fable_distillation/ukdl_queue",
+      "package": "fable_distillation",
+      "status": "REACHABLE",
+      "via": "commands/ukdl-queue.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "frontier_intelligence/__init__",
+      "package": "frontier_intelligence",
+      "status": "REACHABLE",
+      "via": "package-init of frontier_intelligence/corpus_roi",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "frontier_intelligence/corpus_roi",
+      "package": "frontier_intelligence",
+      "status": "REACHABLE",
+      "via": "modules/decision_review/proactive_scanner",
+      "klass": "PLANNED",
+      "note": "B1 Dataset ROI Ledger, built per vault/plans/d2a-replacement-2026-07-17.md macrofamily B; not yet wired into any live consumer"
+    },
+    {
+      "unit": "frontier_intelligence/evolution_engine",
+      "package": "frontier_intelligence",
+      "status": "REACHABLE",
+      "via": "modules/duplicate_to_advantage/d2a_engine",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "frontier_intelligence/question_harvester",
+      "package": "frontier_intelligence",
+      "status": "REACHABLE",
+      "via": "modules/akos_knowledge/__init__",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "frontier_intelligence/session_compiler",
+      "package": "frontier_intelligence",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "PLANNED",
+      "note": "built per FIOS spec; not yet wired into a live consumer"
+    },
+    {
+      "unit": "frontier_intelligence/token_irr",
+      "package": "frontier_intelligence",
+      "status": "REACHABLE",
+      "via": "hooks/hook-dispatcher.js",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "frontier_intelligence/unknown_unknown_generator",
+      "package": "frontier_intelligence",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "PLANNED",
+      "note": "Future/Opportunity Discovery module (OWNERSHIP_OVERLAP_AUDIT.md Group I); built, not yet wired"
+    },
+    {
+      "unit": "graphify/__init__",
+      "package": "graphify",
+      "status": "REACHABLE",
+      "via": "tools/seed_capability_contracts.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "graphify/global_store",
+      "package": "graphify",
+      "status": "REACHABLE",
+      "via": "tools/test_cdio.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "graphify/indexer",
+      "package": "graphify",
+      "status": "REACHABLE",
+      "via": "hooks/graph_first_gate.js",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "graphify/session_writeback",
+      "package": "graphify",
+      "status": "REACHABLE",
+      "via": "hooks/hook-dispatcher.js",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "gsd_x/__init__",
+      "package": "gsd_x",
+      "status": "REACHABLE",
+      "via": "tools/test_taste_absorption.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "gsd_x/cli",
+      "package": "gsd_x",
+      "status": "REACHABLE",
+      "via": "hooks/gsd_x_tier.js",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "gsd_x/goal/__init__",
+      "package": "gsd_x",
+      "status": "REACHABLE",
+      "via": "package-init of gsd_x/goal/judge",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "gsd_x/goal/bind_mission",
+      "package": "gsd_x",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "gsd_x/goal/brief",
+      "package": "gsd_x",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "gsd_x/goal/contract",
+      "package": "gsd_x",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "gsd_x/goal/convergence",
+      "package": "gsd_x",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "gsd_x/goal/engine_identity",
+      "package": "gsd_x",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "gsd_x/goal/epoch",
+      "package": "gsd_x",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "gsd_x/goal/evidence",
+      "package": "gsd_x",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "PLANNED",
+      "note": "UWCP S1-5 (vault/specs/uwcp.md). Imported by gsd_x/goal/brief.py; the whole goal engine is ORPHAN because its only entrance is tools/gsd_x_goal.py (outside this scanner's aperture) and no command/hook reaches it yet. OWNER_QUEUE: UWCP S6 wires it (placement rule in /cpp-gsd-long + VPS sweep cron); re-classify then"
+    },
+    {
+      "unit": "gsd_x/goal/git_state",
+      "package": "gsd_x",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "gsd_x/goal/intervention",
+      "package": "gsd_x",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "PLANNED",
+      "note": "UWCP S1-7. Imported by gsd_x/goal/reconcile.py -- see gsd_x/goal/evidence note; wired with the engine in UWCP S6"
+    },
+    {
+      "unit": "gsd_x/goal/judge",
+      "package": "gsd_x",
+      "status": "REACHABLE",
+      "via": "modules/keos_qwen/__init__",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "gsd_x/goal/log",
+      "package": "gsd_x",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "gsd_x/goal/providers/__init__",
+      "package": "gsd_x",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "gsd_x/goal/providers/claude",
+      "package": "gsd_x",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "gsd_x/goal/providers/codex",
+      "package": "gsd_x",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "gsd_x/goal/providers/gate",
+      "package": "gsd_x",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "gsd_x/goal/providers/long_run",
+      "package": "gsd_x",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "gsd_x/goal/reconcile",
+      "package": "gsd_x",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "gsd_x/goal/sweep",
+      "package": "gsd_x",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "gsd_x/goal/workspace",
+      "package": "gsd_x",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "PLANNED",
+      "note": "UWCP S2 Workspace Capsule (A6 object model). Driven today only by tools/test_uwcp_workspace.py; OWNER_QUEUE: UWCP S5 (queue provider captures at dispatch, runner hydrates on the node) and S6 wire it; re-classify then"
+    },
+    {
+      "unit": "gsd_x/heartbeat",
+      "package": "gsd_x",
+      "status": "REACHABLE",
+      "via": "hooks/gsd_x_tier.js",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "gsd_x/mission/__init__",
+      "package": "gsd_x",
+      "status": "REACHABLE",
+      "via": "modules/gsd_x/goal/__init__",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "gsd_x/mission/closure",
+      "package": "gsd_x",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "gsd_x/mission/contract",
+      "package": "gsd_x",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "gsd_x/mission/coverage",
+      "package": "gsd_x",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "gsd_x/mission/obligation",
+      "package": "gsd_x",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "gsd_x/mission/store",
+      "package": "gsd_x",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "gsd_x/mission/structured_facts",
+      "package": "gsd_x",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "gsd_x/recall",
+      "package": "gsd_x",
+      "status": "REACHABLE",
+      "via": "modules/gsd_x/cli",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "gsd_x/tier",
+      "package": "gsd_x",
+      "status": "REACHABLE",
+      "via": "hooks/gsd_x_tier.js",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "hard_rules/__init__",
+      "package": "hard_rules",
+      "status": "REACHABLE",
+      "via": "tools/usea_ownership_audit.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "hard_rules/extractor",
+      "package": "hard_rules",
+      "status": "REACHABLE",
+      "via": "tools/bug_to_hardrule.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "hard_rules/residual",
+      "package": "hard_rules",
+      "status": "REACHABLE",
+      "via": "tools/usea_ownership_audit.py",
+      "klass": "PLANNED",
+      "note": "sealed doctrine compiler (PR-PROHIBITIONS-DO-NOT-CONFLICT-001), extensively cited in CLAUDE.md prose but grep confirms zero code import anywhere in modules/hard_rules -- designed to run when a Hard Rule fires; that integration into hook-dispatcher.js's block path has not happened"
+    },
+    {
+      "unit": "hard_rules/writer",
+      "package": "hard_rules",
+      "status": "REACHABLE",
+      "via": "tools/bug_to_hardrule.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "history_check/__init__",
+      "package": "history_check",
+      "status": "REACHABLE",
+      "via": "modules/lease/store",
+      "klass": "PLANNED",
+      "note": "UWCP assimilation R3; consumer = goal/history.py adapter (X3) in the UWCP pane, not yet built. tools/test_history_check.py 16/16 + 13 mutants. Owner queue: vault/specs/uwcp.AMENDMENTS.md"
+    },
+    {
+      "unit": "history_check/checkers",
+      "package": "history_check",
+      "status": "REACHABLE",
+      "via": "modules/history_check/__init__",
+      "klass": "PLANNED",
+      "note": "UWCP assimilation R3 (see history_check/__init__). Owner queue: vault/specs/uwcp.AMENDMENTS.md"
+    },
+    {
+      "unit": "ias_c2/__init__",
+      "package": "ias_c2",
+      "status": "REACHABLE",
+      "via": "package-init of ias_c2/opportunity_cost",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "ias_c2/opportunity_cost",
+      "package": "ias_c2",
+      "status": "REACHABLE",
+      "via": "commands/what-now.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "inference_bench/__init__",
+      "package": "inference_bench",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "PLANNED",
+      "note": "UWCP assimilation R6; consumer = UWCP S6a routing-prior benchmark on GEX44 via the dispatcher, not yet run. tools/test_inference_bench.py 13/13 + 9 mutants. Owner queue: vault/specs/uwcp.AMENDMENTS.md"
+    },
+    {
+      "unit": "inference_bench/bench",
+      "package": "inference_bench",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "PLANNED",
+      "note": "UWCP assimilation R6 (see inference_bench/__init__). Owner queue: vault/specs/uwcp.AMENDMENTS.md"
+    },
+    {
+      "unit": "intent_verified/__init__",
+      "package": "intent_verified",
+      "status": "REACHABLE",
+      "via": "tools/intent_verify.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "intent_verified/criteria",
+      "package": "intent_verified",
+      "status": "REACHABLE",
+      "via": "modules/intent_verified/__init__",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "intent_verified/join",
+      "package": "intent_verified",
+      "status": "REACHABLE",
+      "via": "modules/intent_verified/__init__",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "intent_verified/ratchet",
+      "package": "intent_verified",
+      "status": "REACHABLE",
+      "via": "tools/intent_verify.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "intent_verified/verdict",
+      "package": "intent_verified",
+      "status": "REACHABLE",
+      "via": "modules/intent_verified/__init__",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "keos_qwen/__init__",
+      "package": "keos_qwen",
+      "status": "REACHABLE",
+      "via": "package-init of keos_qwen/outcome",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "keos_qwen/goals/__init__",
+      "package": "keos_qwen",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "keos_qwen/goals/fire",
+      "package": "keos_qwen",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "keos_qwen/goals/seed_goals",
+      "package": "keos_qwen",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "keos_qwen/ledger/__init__",
+      "package": "keos_qwen",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "keos_qwen/ledger/ledger",
+      "package": "keos_qwen",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "keos_qwen/outcome",
+      "package": "keos_qwen",
+      "status": "REACHABLE",
+      "via": "modules/provider_routing/router",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "keos_qwen/probe/__init__",
+      "package": "keos_qwen",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "keos_qwen/probe/agentic_loop",
+      "package": "keos_qwen",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "keos_qwen/score/score_corpus",
+      "package": "keos_qwen",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "knowledge_acquisition/__init__",
+      "package": "knowledge_acquisition",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "knowledge_acquisition/boundary",
+      "package": "knowledge_acquisition",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "knowledge_acquisition/classifier",
+      "package": "knowledge_acquisition",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "knowledge_acquisition/cli",
+      "package": "knowledge_acquisition",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "knowledge_acquisition/corpus_parser",
+      "package": "knowledge_acquisition",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "knowledge_acquisition/engine3",
+      "package": "knowledge_acquisition",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "knowledge_acquisition/eva_adapter",
+      "package": "knowledge_acquisition",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "knowledge_acquisition/expectation",
+      "package": "knowledge_acquisition",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "knowledge_acquisition/models",
+      "package": "knowledge_acquisition",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "knowledge_acquisition/provenance",
+      "package": "knowledge_acquisition",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "knowledge_acquisition/queues",
+      "package": "knowledge_acquisition",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "knowledge_acquisition/raw_vault",
+      "package": "knowledge_acquisition",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "knowledge_acquisition/routing",
+      "package": "knowledge_acquisition",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "knowledge_acquisition/runlock",
+      "package": "knowledge_acquisition",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "knowledge_acquisition/runner",
+      "package": "knowledge_acquisition",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "knowledge_acquisition/session",
+      "package": "knowledge_acquisition",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "knowledge_acquisition/store",
+      "package": "knowledge_acquisition",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "lease/__init__",
+      "package": "lease",
+      "status": "REACHABLE",
+      "via": "package-init of lease/store",
+      "klass": "PLANNED",
+      "note": "UWCP assimilation R2; consumer = UWCP S4-25 VPS lease store (A5), not yet built. Proven by tools/test_lease.py 21/21 + 14 mutants. Owner queue: vault/specs/uwcp.AMENDMENTS.md"
+    },
+    {
+      "unit": "lease/store",
+      "package": "lease",
+      "status": "REACHABLE",
+      "via": "tools/mission_spend.py",
+      "klass": "PLANNED",
+      "note": "UWCP assimilation R2 (see lease/__init__). Also imported by provider_routing/ledger (Exclusive, fsync_dir). Owner queue: vault/specs/uwcp.AMENDMENTS.md"
+    },
+    {
+      "unit": "liveness/__init__",
+      "package": "liveness",
+      "status": "REACHABLE",
+      "via": "tools/osr_audit.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "liveness/callable_reach",
+      "package": "liveness",
+      "status": "REACHABLE",
+      "via": "commands/liveness.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "liveness/dispatch",
+      "package": "liveness",
+      "status": "REACHABLE",
+      "via": "modules/liveness/callable_reach",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "liveness/liveness_ledger",
+      "package": "liveness",
+      "status": "REACHABLE",
+      "via": "commands/liveness.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "liveness/reachability",
+      "package": "liveness",
+      "status": "REACHABLE",
+      "via": "commands/liveness.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "mirror_discovery/__init__",
+      "package": "mirror_discovery",
+      "status": "REACHABLE",
+      "via": "tools/install_global_core.py",
+      "klass": "LIBRARY",
+      "note": "consumed by tools/verify_global_mirrors.py, the Mirror Parity Law done-gate (vault/standards/mirror-parity-law.md sec. 5), which tools/verify_spp.py runs as row 1 of the S++ surface -- verified by grep of both files. Not seed-reachable: the scanner seeds from hooks, commands, agents and scheduled tasks, and no hook or command names a verification tool that other tools invoke."
+    },
+    {
+      "unit": "mirror_discovery/discovery",
+      "package": "mirror_discovery",
+      "status": "REACHABLE",
+      "via": "tools/drift_report.py",
+      "klass": "LIBRARY",
+      "note": "consumed by tools/verify_global_mirrors.py, the Mirror Parity Law done-gate (vault/standards/mirror-parity-law.md sec. 5), which tools/verify_spp.py runs as row 1 of the S++ surface -- verified by grep of both files. Not seed-reachable: the scanner seeds from hooks, commands, agents and scheduled tasks, and no hook or command names a verification tool that other tools invoke."
+    },
+    {
+      "unit": "monitoring/__init__",
+      "package": "monitoring",
+      "status": "REACHABLE",
+      "via": "commands/revenue-ready.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "monitoring/alert",
+      "package": "monitoring",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "PLANNED",
+      "note": "alert emitter, self-describes its consumer as 'the monitor engine' (monitor.py, LIVE) but monitor.py does not yet import it -- built, wiring pending"
+    },
+    {
+      "unit": "monitoring/monitor",
+      "package": "monitoring",
+      "status": "REACHABLE",
+      "via": "modules/uqf/auditor",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "monitoring/observe",
+      "package": "monitoring",
+      "status": "REACHABLE",
+      "via": "live:pp-monitor.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "one_shot/__init__",
+      "package": "one_shot",
+      "status": "REACHABLE",
+      "via": "commands/one-shot-compile.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "one_shot/compiler",
+      "package": "one_shot",
+      "status": "REACHABLE",
+      "via": "commands/one-shot-compile.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "one_shot/escalation",
+      "package": "one_shot",
+      "status": "REACHABLE",
+      "via": "commands/one-shot-compile.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "one_shot/lock",
+      "package": "one_shot",
+      "status": "REACHABLE",
+      "via": "CLAUDE.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "one_shot/reasoning_route",
+      "package": "one_shot",
+      "status": "REACHABLE",
+      "via": "commands/one-shot-compile.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "osa/__init__",
+      "package": "osa",
+      "status": "REACHABLE",
+      "via": "package-init of osa/never_again",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "osa/dispatcher",
+      "package": "osa",
+      "status": "REACHABLE",
+      "via": "live:omni-singularity.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "osa/gpu_eyes",
+      "package": "osa",
+      "status": "REACHABLE",
+      "via": "live:omni-singularity.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "osa/never_again",
+      "package": "osa",
+      "status": "REACHABLE",
+      "via": "live:omni-singularity.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "osa/osa_command",
+      "package": "osa",
+      "status": "REACHABLE",
+      "via": "modules/osa/dispatcher",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "osa/throttle",
+      "package": "osa",
+      "status": "REACHABLE",
+      "via": "live:omni-singularity.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "osr/__init__",
+      "package": "osr",
+      "status": "REACHABLE",
+      "via": "commands/osr.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "osr/align",
+      "package": "osr",
+      "status": "REACHABLE",
+      "via": "tools/osr_audit.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "osr/compare",
+      "package": "osr",
+      "status": "REACHABLE",
+      "via": "tools/osr_audit.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "osr/model",
+      "package": "osr",
+      "status": "REACHABLE",
+      "via": "modules/osr/__init__",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "osr/ordering",
+      "package": "osr",
+      "status": "REACHABLE",
+      "via": "modules/osr/__init__",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "output_contracts/__init__",
+      "package": "output_contracts",
+      "status": "REACHABLE",
+      "via": "tools/usea_ownership_audit.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "output_contracts/preconditions",
+      "package": "output_contracts",
+      "status": "REACHABLE",
+      "via": "modules/output_contracts/__init__",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "output_contracts/validator",
+      "package": "output_contracts",
+      "status": "REACHABLE",
+      "via": "CLAUDE.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "owner_queue/__init__",
+      "package": "owner_queue",
+      "status": "REACHABLE",
+      "via": "hooks/session_start_hub.js",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "owner_queue/owner_queue",
+      "package": "owner_queue",
+      "status": "REACHABLE",
+      "via": "hooks/session_start_hub.js",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "owner_queue/stop_ledger",
+      "package": "owner_queue",
+      "status": "REACHABLE",
+      "via": "commands/cpp-stop-ledger.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "parallel_mesh/__init__",
+      "package": "parallel_mesh",
+      "status": "REACHABLE",
+      "via": "modules/cdio/bus_bridge",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "parallel_mesh/pm_01_brain",
+      "package": "parallel_mesh",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "PLANNED",
+      "note": "PM-01 Repo Shared Brain, part of the same Parallel Mesh spec as pm_03_bus (LIVE); pm_01/02/04/05 not yet wired"
+    },
+    {
+      "unit": "parallel_mesh/pm_02_intent",
+      "package": "parallel_mesh",
+      "status": "REACHABLE",
+      "via": "modules/wrapper/prelaunch",
+      "klass": "PLANNED",
+      "note": "Parallel Mesh spec -- see parallel_mesh/pm_01_brain note"
+    },
+    {
+      "unit": "parallel_mesh/pm_03_bus",
+      "package": "parallel_mesh",
+      "status": "REACHABLE",
+      "via": "modules/cdio/bus_bridge",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "parallel_mesh/pm_04_auction",
+      "package": "parallel_mesh",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "PLANNED",
+      "note": "Parallel Mesh spec -- see parallel_mesh/pm_01_brain note"
+    },
+    {
+      "unit": "parallel_mesh/pm_05_prefetch",
+      "package": "parallel_mesh",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "PLANNED",
+      "note": "Parallel Mesh spec -- see parallel_mesh/pm_01_brain note"
+    },
+    {
+      "unit": "pp_agents/__init__",
+      "package": "pp_agents",
+      "status": "REACHABLE",
+      "via": "package-init of pp_agents/proactive_dispatcher",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "pp_agents/proactive_core",
+      "package": "pp_agents",
+      "status": "REACHABLE",
+      "via": "hooks/bug-hunter-ceps-bridge.js",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "pp_agents/proactive_dispatcher",
+      "package": "pp_agents",
+      "status": "REACHABLE",
+      "via": "tools/jit_skill_loader.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "pp_agents/signals/__init__",
+      "package": "pp_agents",
+      "status": "REACHABLE",
+      "via": "modules/pp_agents/proactive_dispatcher",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "pp_agents/signals/backlog",
+      "package": "pp_agents",
+      "status": "REACHABLE",
+      "via": "modules/pp_agents/proactive_dispatcher",
+      "klass": "PLANNED",
+      "note": "signal module built (docstring: 'Wires modules.backlog_autopilot into the live proactive-dispatch path'); no pp-backlog agent .md exists yet to import it, unlike the 5 sibling signals that ARE live via their own agents/pp-*.md file"
+    },
+    {
+      "unit": "pp_agents/signals/cascade",
+      "package": "pp_agents",
+      "status": "REACHABLE",
+      "via": "live:pp-cascade-guard.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "pp_agents/signals/code_quality",
+      "package": "pp_agents",
+      "status": "REACHABLE",
+      "via": "hooks/uqf_pre_edit_gate.js",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "pp_agents/signals/cost",
+      "package": "pp_agents",
+      "status": "REACHABLE",
+      "via": "modules/pp_agents/proactive_dispatcher",
+      "klass": "PLANNED",
+      "note": "signal module built; no corresponding agents/pp-*.md currently imports it -- see pp_agents/signals/backlog note"
+    },
+    {
+      "unit": "pp_agents/signals/error_recurrence",
+      "package": "pp_agents",
+      "status": "REACHABLE",
+      "via": "live:pp-error-analyst.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "pp_agents/signals/errors",
+      "package": "pp_agents",
+      "status": "REACHABLE",
+      "via": "modules/pp_agents/proactive_dispatcher",
+      "klass": "PLANNED",
+      "note": "signal module built; no corresponding agents/pp-*.md currently imports it -- see pp_agents/signals/backlog note"
+    },
+    {
+      "unit": "pp_agents/signals/health",
+      "package": "pp_agents",
+      "status": "REACHABLE",
+      "via": "modules/pp_agents/proactive_dispatcher",
+      "klass": "PLANNED",
+      "note": "signal module built; no corresponding agents/pp-*.md currently imports it -- see pp_agents/signals/backlog note"
+    },
+    {
+      "unit": "pp_agents/signals/lessons",
+      "package": "pp_agents",
+      "status": "REACHABLE",
+      "via": "modules/pp_agents/proactive_dispatcher",
+      "klass": "PLANNED",
+      "note": "signal module built; no corresponding agents/pp-*.md currently imports it -- see pp_agents/signals/backlog note"
+    },
+    {
+      "unit": "pp_agents/signals/premise_risk",
+      "package": "pp_agents",
+      "status": "REACHABLE",
+      "via": "live:pp-premise-guardian.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "pp_agents/signals/quality",
+      "package": "pp_agents",
+      "status": "REACHABLE",
+      "via": "modules/pp_agents/proactive_dispatcher",
+      "klass": "PLANNED",
+      "note": "signal module built; no corresponding agents/pp-*.md currently imports it -- see pp_agents/signals/backlog note"
+    },
+    {
+      "unit": "pp_agents/signals/sdd_tier",
+      "package": "pp_agents",
+      "status": "REACHABLE",
+      "via": "modules/pp_agents/proactive_dispatcher",
+      "klass": "LIBRARY",
+      "note": "REACHABLE via modules/pp_agents/proactive_dispatcher.py (dispatch plan slot 'pp-sdd-tier'), which tools/jit_skill_loader.py invokes on the live UserPromptSubmit chain. The prior PLANNED note reasoned from agents/pp-*.md imports and missed the dispatcher path. Note that reachable-on-paper was not enough: until 2026-07-26 the loader never put PP_ROOT on sys.path, so every modules.* import in it raised ModuleNotFoundError and was swallowed fail-open -- this signal had ZERO production firings despite being wired (T-JIT-MODULES-UNIMPORTABLE-001). Superseded in the dispatch plan by modules/sdd_os/activation.py, which is not subject to the 3-advisory cap."
+    },
+    {
+      "unit": "pp_agents/signals/setup_scan",
+      "package": "pp_agents",
+      "status": "REACHABLE",
+      "via": "modules/pp_agents/proactive_dispatcher",
+      "klass": "PLANNED",
+      "note": "signal module built; no corresponding agents/pp-*.md currently imports it -- see pp_agents/signals/backlog note"
+    },
+    {
+      "unit": "pp_agents/signals/spec_compliance",
+      "package": "pp_agents",
+      "status": "REACHABLE",
+      "via": "live:pp-spec-guardian.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "pp_eval/__init__",
+      "package": "pp_eval",
+      "status": "REACHABLE",
+      "via": "tools/pp_eval.py",
+      "klass": "SCHEDULED",
+      "note": "PP Self-Eval (vault/specs/pp-self-eval.md). Driven nightly by the Windows scheduled task PP-SelfEval -> tools/hidden_launch.vbs -> tools/pp_eval.py night; gate tools/test_pp_eval.py"
+    },
+    {
+      "unit": "pp_eval/common",
+      "package": "pp_eval",
+      "status": "REACHABLE",
+      "via": "tools/pp_eval.py",
+      "klass": "SCHEDULED",
+      "note": "PP Self-Eval -- see pp_eval/__init__ note"
+    },
+    {
+      "unit": "pp_eval/floor",
+      "package": "pp_eval",
+      "status": "REACHABLE",
+      "via": "commands/cost-autopsy.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "pp_eval/harvest",
+      "package": "pp_eval",
+      "status": "REACHABLE",
+      "via": "tools/pp_eval.py",
+      "klass": "SCHEDULED",
+      "note": "PP Self-Eval -- see pp_eval/__init__ note (also tools/pp_eval.py harvest)"
+    },
+    {
+      "unit": "pp_eval/nightly",
+      "package": "pp_eval",
+      "status": "REACHABLE",
+      "via": "tools/pp_eval.py",
+      "klass": "SCHEDULED",
+      "note": "PP Self-Eval -- see pp_eval/__init__ note"
+    },
+    {
+      "unit": "pp_eval/runner",
+      "package": "pp_eval",
+      "status": "REACHABLE",
+      "via": "modules/pp_eval/nightly",
+      "klass": "SCHEDULED",
+      "note": "PP Self-Eval -- see pp_eval/__init__ note"
+    },
+    {
+      "unit": "pp_eval/verdict",
+      "package": "pp_eval",
+      "status": "REACHABLE",
+      "via": "modules/pp_eval/nightly",
+      "klass": "SCHEDULED",
+      "note": "PP Self-Eval -- see pp_eval/__init__ note"
+    },
+    {
+      "unit": "product_demo/__init__",
+      "package": "product_demo",
+      "status": "REACHABLE",
+      "via": "commands/product-demo.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "product_demo/capture",
+      "package": "product_demo",
+      "status": "REACHABLE",
+      "via": "commands/product-demo.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "product_demo/cli",
+      "package": "product_demo",
+      "status": "REACHABLE",
+      "via": "commands/product-demo.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "product_demo/manifest",
+      "package": "product_demo",
+      "status": "REACHABLE",
+      "via": "tools/test_product_demo.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "product_demo/runner",
+      "package": "product_demo",
+      "status": "REACHABLE",
+      "via": "commands/product-demo.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "product_demo/spec",
+      "package": "product_demo",
+      "status": "REACHABLE",
+      "via": "tools/test_product_demo.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "product_demo/stage",
+      "package": "product_demo",
+      "status": "REACHABLE",
+      "via": "tools/test_product_demo.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "product_demo/timeline",
+      "package": "product_demo",
+      "status": "REACHABLE",
+      "via": "tools/test_product_demo.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "product_demo/validate",
+      "package": "product_demo",
+      "status": "REACHABLE",
+      "via": "tools/test_product_demo.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "provider_routing/__init__",
+      "package": "provider_routing",
+      "status": "REACHABLE",
+      "via": "tools/mission_spend.py",
+      "klass": "PLANNED",
+      "note": "UWCP assimilation R4; consumer = goal/route.py (S6-37) + VPS account ledger (S6-38), not yet built. tools/test_provider_routing.py 33/33 + 17 mutants. Owner queue: vault/specs/uwcp.AMENDMENTS.md"
+    },
+    {
+      "unit": "provider_routing/capital_authority",
+      "package": "provider_routing",
+      "status": "REACHABLE",
+      "via": "tools/mission_spend.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "provider_routing/ledger",
+      "package": "provider_routing",
+      "status": "REACHABLE",
+      "via": "tools/gsd_mission.py",
+      "klass": "PLANNED",
+      "note": "UWCP assimilation R4 (see provider_routing/__init__). Owner queue: vault/specs/uwcp.AMENDMENTS.md"
+    },
+    {
+      "unit": "provider_routing/router",
+      "package": "provider_routing",
+      "status": "REACHABLE",
+      "via": "modules/provider_routing/__init__",
+      "klass": "PLANNED",
+      "note": "UWCP assimilation R4 (see provider_routing/__init__). Owner queue: vault/specs/uwcp.AMENDMENTS.md"
+    },
+    {
+      "unit": "provider_routing/workspace_registry",
+      "package": "provider_routing",
+      "status": "REACHABLE",
+      "via": "tools/mission_spend.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "recall_roi/__init__",
+      "package": "recall_roi",
+      "status": "REACHABLE",
+      "via": "tools/usea_ownership_audit.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "recall_roi/recall_roi",
+      "package": "recall_roi",
+      "status": "REACHABLE",
+      "via": "modules/recall_roi/__init__",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "refcheck/__init__",
+      "package": "refcheck",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "PLANNED",
+      "note": "Reference Integrity Linter (P4), built and measured (136+ instances found per its own docstring); no command/hook currently wires it into a check surface"
+    },
+    {
+      "unit": "refcheck/linter",
+      "package": "refcheck",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "PLANNED",
+      "note": "Reference Integrity Linter (P4) -- see refcheck/__init__ note"
+    },
+    {
+      "unit": "repo_identity/__init__",
+      "package": "repo_identity",
+      "status": "REACHABLE",
+      "via": "package-init of repo_identity/identity",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "repo_identity/identity",
+      "package": "repo_identity",
+      "status": "REACHABLE",
+      "via": "tools/usea_ownership_audit.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "rollback/__init__",
+      "package": "rollback",
+      "status": "REACHABLE",
+      "via": "modules/monitoring/observe",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "rollback/rollback",
+      "package": "rollback",
+      "status": "REACHABLE",
+      "via": "commands/rollback.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "rollback/runners/__init__",
+      "package": "rollback",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "LIBRARY",
+      "note": "sibling of rollback.py (LIVE, commands/rollback.md); imported via sys.path-hack bare import -- verified by grep of rollback.py"
+    },
+    {
+      "unit": "rollback/runners/restore_docker_volume",
+      "package": "rollback",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "LIBRARY",
+      "note": "sibling of rollback.py (LIVE, commands/rollback.md); imported via sys.path-hack bare import -- verified by grep of rollback.py"
+    },
+    {
+      "unit": "rollback/runners/restore_pg_dump",
+      "package": "rollback",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "LIBRARY",
+      "note": "sibling of rollback.py (LIVE, commands/rollback.md); imported via sys.path-hack bare import -- verified by grep of rollback.py"
+    },
+    {
+      "unit": "rollback/runners/restore_rsync_dir",
+      "package": "rollback",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "LIBRARY",
+      "note": "sibling of rollback.py (LIVE, commands/rollback.md); imported via sys.path-hack bare import -- verified by grep of rollback.py"
+    },
+    {
+      "unit": "rollback/source_selector",
+      "package": "rollback",
+      "status": "REACHABLE",
+      "via": "modules/rollback/rollback",
+      "klass": "LIBRARY",
+      "note": "sibling of rollback.py (LIVE, commands/rollback.md); imported via sys.path-hack bare import -- verified by grep of rollback.py"
+    },
+    {
+      "unit": "rollback/test_v_block",
+      "package": "rollback",
+      "status": "REACHABLE",
+      "via": "modules/deployment/deploy",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "ruflo_gate/__init__",
+      "package": "ruflo_gate",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "LIBRARY",
+      "note": "empty package marker for ruflo_gate/gate (see that entry)"
+    },
+    {
+      "unit": "ruflo_gate/gate",
+      "package": "ruflo_gate",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "LIBRARY",
+      "note": "CPP-owned Ruflo HOLD controls (BCAP-2 Phase 9). Imported by vault/programs/bcap-2/ruflo/install_sandbox.py (the only sanctioned Ruflo install path) and driven by tools/test_bcap2_ruflo.py; it is a gateway a future Ruflo capability must pass through, not a hook. Not wired into a live hook: nothing of Ruflo is activated, so there is nothing to intercept yet"
+    },
+    {
+      "unit": "rule_compiler/__init__",
+      "package": "rule_compiler",
+      "status": "REACHABLE",
+      "via": "tools/hardrule_compile.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "rule_compiler/compiler",
+      "package": "rule_compiler",
+      "status": "REACHABLE",
+      "via": "tools/hardrule_compile.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "rule_compiler/counterfactual",
+      "package": "rule_compiler",
+      "status": "REACHABLE",
+      "via": "tools/test_uceimr_residues.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "rule_compiler/detectors",
+      "package": "rule_compiler",
+      "status": "REACHABLE",
+      "via": "modules/rule_compiler/counterfactual",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "rule_compiler/digest",
+      "package": "rule_compiler",
+      "status": "REACHABLE",
+      "via": "tools/hardrule_compile.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "rule_compiler/effect_harness",
+      "package": "rule_compiler",
+      "status": "REACHABLE",
+      "via": "tools/test_uceimr_residues.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "rule_compiler/parser",
+      "package": "rule_compiler",
+      "status": "REACHABLE",
+      "via": "tools/hardrule_compile.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "rule_compiler/reconcile",
+      "package": "rule_compiler",
+      "status": "REACHABLE",
+      "via": "tools/hardrule_compile.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "rule_compiler/schema",
+      "package": "rule_compiler",
+      "status": "REACHABLE",
+      "via": "tools/hardrule_compile.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "sdd_os/__init__",
+      "package": "sdd_os",
+      "status": "REACHABLE",
+      "via": "commands/sdd-os.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "sdd_os/activation",
+      "package": "sdd_os",
+      "status": "REACHABLE",
+      "via": "tools/jit_skill_loader.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "sdd_os/prd_generator",
+      "package": "sdd_os",
+      "status": "REACHABLE",
+      "via": "commands/prd-generate.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "sdd_os/pre_exec_gate",
+      "package": "sdd_os",
+      "status": "REACHABLE",
+      "via": "tools/sdd_os_cli.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "sdd_os/readiness",
+      "package": "sdd_os",
+      "status": "REACHABLE",
+      "via": "modules/sdd_os/pre_exec_gate",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "sdd_os/scaffold",
+      "package": "sdd_os",
+      "status": "REACHABLE",
+      "via": "tools/sdd_os_cli.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "sdd_os/spec_binding",
+      "package": "sdd_os",
+      "status": "REACHABLE",
+      "via": "tools/sdd_os_cli.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "secret_firewall/__init__",
+      "package": "secret_firewall",
+      "status": "REACHABLE",
+      "via": "CLAUDE.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "secret_firewall/allowlist",
+      "package": "secret_firewall",
+      "status": "REACHABLE",
+      "via": "tools/secret_scan_repo.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "secret_firewall/detector",
+      "package": "secret_firewall",
+      "status": "REACHABLE",
+      "via": "hooks/secret_firewall_gate.js",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "secret_firewall/redactor",
+      "package": "secret_firewall",
+      "status": "REACHABLE",
+      "via": "tools/ceps.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "secret_firewall/reporter",
+      "package": "secret_firewall",
+      "status": "REACHABLE",
+      "via": "modules/secret_firewall/__init__",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "session_delta/__init__",
+      "package": "session_delta",
+      "status": "REACHABLE",
+      "via": "package-init of session_delta/delta",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "session_delta/delta",
+      "package": "session_delta",
+      "status": "REACHABLE",
+      "via": "hooks/session_delta_stop.js",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "session_resilience/__init__",
+      "package": "session_resilience",
+      "status": "REACHABLE",
+      "via": "tools/recovery_epoch_gate.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "session_resilience/acceptance",
+      "package": "session_resilience",
+      "status": "REACHABLE",
+      "via": "commands/recovery-verdict.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "session_resilience/epoch",
+      "package": "session_resilience",
+      "status": "REACHABLE",
+      "via": "hooks/session_start_hub.js",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "session_resilience/integration",
+      "package": "session_resilience",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "session_resilience/models",
+      "package": "session_resilience",
+      "status": "REACHABLE",
+      "via": "tools/recovery_verdict.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "session_resilience/multi_window",
+      "package": "session_resilience",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "session_resilience/power_beacon",
+      "package": "session_resilience",
+      "status": "REACHABLE",
+      "via": "hooks/session_start_hub.js",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "session_resilience/reentry",
+      "package": "session_resilience",
+      "status": "REACHABLE",
+      "via": "tools/recovery_epoch_gate.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "session_resilience/resume_identity",
+      "package": "session_resilience",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "session_resilience/snapshot_versioning",
+      "package": "session_resilience",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "session_resilience/telemetry",
+      "package": "session_resilience",
+      "status": "REACHABLE",
+      "via": "modules/session_resilience/reentry",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "session_resilience/ui_state",
+      "package": "session_resilience",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "setup_os/__init__",
+      "package": "setup_os",
+      "status": "REACHABLE",
+      "via": "package-init of setup_os/registry",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "setup_os/backlog_generator",
+      "package": "setup_os",
+      "status": "REACHABLE",
+      "via": "commands/setup-backlog.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "setup_os/drift_detector",
+      "package": "setup_os",
+      "status": "REACHABLE",
+      "via": "commands/setup-drift.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "setup_os/graph",
+      "package": "setup_os",
+      "status": "REACHABLE",
+      "via": "commands/capability.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "setup_os/registry",
+      "package": "setup_os",
+      "status": "REACHABLE",
+      "via": "modules/pp_agents/signals/setup_scan",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "setup_os/roi_analyzer",
+      "package": "setup_os",
+      "status": "REACHABLE",
+      "via": "commands/analyze-roi.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "setup_os/scanner",
+      "package": "setup_os",
+      "status": "REACHABLE",
+      "via": "commands/scan-repo.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "setup_os/secure_installer",
+      "package": "setup_os",
+      "status": "REACHABLE",
+      "via": "commands/setup-repo.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "skill_router/__init__",
+      "package": "skill_router",
+      "status": "REACHABLE",
+      "via": "package-init of skill_router/skill_index",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "skill_router/intent_classifier",
+      "package": "skill_router",
+      "status": "REACHABLE",
+      "via": "tools/jit_skill_loader.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "skill_router/skill_index",
+      "package": "skill_router",
+      "status": "REACHABLE",
+      "via": "tools/jit_skill_loader.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "sleepless_qa/__init__",
+      "package": "sleepless_qa",
+      "status": "REACHABLE",
+      "via": "tools/usea_ownership_audit.py",
+      "klass": "LIBRARY",
+      "note": "standalone Owner-invoked CLI verification pipeline (README.md, Ley 25 enforcement); no harness surface currently invokes it automatically -- entrypoint is manual `python -m modules.sleepless_qa.cli`"
+    },
+    {
+      "unit": "sleepless_qa/__main__",
+      "package": "sleepless_qa",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "LIBRARY",
+      "note": "CLI entrypoint of the standalone sleepless_qa pipeline -- see sleepless_qa/__init__ note"
+    },
+    {
+      "unit": "sleepless_qa/cli",
+      "package": "sleepless_qa",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "LIBRARY",
+      "note": "CLI entrypoint of the standalone sleepless_qa pipeline -- see sleepless_qa/__init__ note"
+    },
+    {
+      "unit": "sleepless_qa/dumpers/__init__",
+      "package": "sleepless_qa",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "LIBRARY",
+      "note": "internal to the standalone sleepless_qa pipeline -- see sleepless_qa/__init__ note"
+    },
+    {
+      "unit": "sleepless_qa/dumpers/base",
+      "package": "sleepless_qa",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "LIBRARY",
+      "note": "internal to the standalone sleepless_qa pipeline -- see sleepless_qa/__init__ note"
+    },
+    {
+      "unit": "sleepless_qa/dumpers/cli",
+      "package": "sleepless_qa",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "LIBRARY",
+      "note": "internal to the standalone sleepless_qa pipeline -- see sleepless_qa/__init__ note"
+    },
+    {
+      "unit": "sleepless_qa/dumpers/minecraft",
+      "package": "sleepless_qa",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "LIBRARY",
+      "note": "internal to the standalone sleepless_qa pipeline -- see sleepless_qa/__init__ note"
+    },
+    {
+      "unit": "sleepless_qa/dumpers/python_daemon",
+      "package": "sleepless_qa",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "LIBRARY",
+      "note": "internal to the standalone sleepless_qa pipeline -- see sleepless_qa/__init__ note"
+    },
+    {
+      "unit": "sleepless_qa/dumpers/web",
+      "package": "sleepless_qa",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "LIBRARY",
+      "note": "internal to the standalone sleepless_qa pipeline -- see sleepless_qa/__init__ note"
+    },
+    {
+      "unit": "sleepless_qa/healer/__init__",
+      "package": "sleepless_qa",
+      "status": "REACHABLE",
+      "via": "package-init of sleepless_qa/healer/orchestrator",
+      "klass": "LIBRARY",
+      "note": "internal to the standalone sleepless_qa pipeline -- see sleepless_qa/__init__ note"
+    },
+    {
+      "unit": "sleepless_qa/healer/dispatcher_bridge",
+      "package": "sleepless_qa",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "LIBRARY",
+      "note": "internal to the standalone sleepless_qa pipeline -- see sleepless_qa/__init__ note"
+    },
+    {
+      "unit": "sleepless_qa/healer/lock",
+      "package": "sleepless_qa",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "LIBRARY",
+      "note": "internal to the standalone sleepless_qa pipeline -- see sleepless_qa/__init__ note"
+    },
+    {
+      "unit": "sleepless_qa/healer/orchestrator",
+      "package": "sleepless_qa",
+      "status": "REACHABLE",
+      "via": "modules/execution_env/__init__",
+      "klass": "LIBRARY",
+      "note": "internal to the standalone sleepless_qa pipeline -- see sleepless_qa/__init__ note"
+    },
+    {
+      "unit": "sleepless_qa/healer/pattern_cache",
+      "package": "sleepless_qa",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "LIBRARY",
+      "note": "internal to the standalone sleepless_qa pipeline -- see sleepless_qa/__init__ note"
+    },
+    {
+      "unit": "sleepless_qa/healer/run_log",
+      "package": "sleepless_qa",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "LIBRARY",
+      "note": "internal to the standalone sleepless_qa pipeline -- see sleepless_qa/__init__ note"
+    },
+    {
+      "unit": "sleepless_qa/heartbeat",
+      "package": "sleepless_qa",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "LIBRARY",
+      "note": "internal to the standalone sleepless_qa pipeline -- see sleepless_qa/__init__ note"
+    },
+    {
+      "unit": "sleepless_qa/verdict/__init__",
+      "package": "sleepless_qa",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "LIBRARY",
+      "note": "internal to the standalone sleepless_qa pipeline -- see sleepless_qa/__init__ note"
+    },
+    {
+      "unit": "sleepless_qa/verdict/contract",
+      "package": "sleepless_qa",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "LIBRARY",
+      "note": "internal to the standalone sleepless_qa pipeline -- see sleepless_qa/__init__ note"
+    },
+    {
+      "unit": "sleepless_qa/verdict/engine",
+      "package": "sleepless_qa",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "LIBRARY",
+      "note": "internal to the standalone sleepless_qa pipeline -- see sleepless_qa/__init__ note"
+    },
+    {
+      "unit": "sleepless_qa/verdict/log_pattern",
+      "package": "sleepless_qa",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "LIBRARY",
+      "note": "internal to the standalone sleepless_qa pipeline -- see sleepless_qa/__init__ note"
+    },
+    {
+      "unit": "sleepless_qa/verdict/schema",
+      "package": "sleepless_qa",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "LIBRARY",
+      "note": "internal to the standalone sleepless_qa pipeline -- see sleepless_qa/__init__ note"
+    },
+    {
+      "unit": "sleepless_qa/verdict/visual",
+      "package": "sleepless_qa",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "LIBRARY",
+      "note": "internal to the standalone sleepless_qa pipeline -- see sleepless_qa/__init__ note"
+    },
+    {
+      "unit": "spec_gate/__init__",
+      "package": "spec_gate",
+      "status": "REACHABLE",
+      "via": "tools/seed_capability_contracts.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "spec_gate/gate",
+      "package": "spec_gate",
+      "status": "REACHABLE",
+      "via": "CLAUDE.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "sqi/__init__",
+      "package": "sqi",
+      "status": "REACHABLE",
+      "via": "tools/usea_ownership_audit.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "sqi/baseline_guardian",
+      "package": "sqi",
+      "status": "REACHABLE",
+      "via": "modules/sqi/__init__",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "sqi/environment_qualifier",
+      "package": "sqi",
+      "status": "REACHABLE",
+      "via": "tools/usea_outcome_contrast.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "sqi/floor_guard",
+      "package": "sqi",
+      "status": "REACHABLE",
+      "via": "modules/skill_router/skill_index",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "sqi/ratchet",
+      "package": "sqi",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "DORMANT",
+      "note": "DORMANT by Owner decision 4 (2026-10-04, cognitive-economy pillar T): kept on purpose, no live caller. Reached only by the manual tools/run_sqi.py. Proven by tools/test_sqi_ratchet.py."
+    },
+    {
+      "unit": "sqi/reconcile",
+      "package": "sqi",
+      "status": "REACHABLE",
+      "via": "modules/sqi/__init__",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "sqi/repo_reality_scanner",
+      "package": "sqi",
+      "status": "REACHABLE",
+      "via": "modules/sqi/__init__",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "sqi/weakening_baseline",
+      "package": "sqi",
+      "status": "REACHABLE",
+      "via": "modules/sqi/__init__",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "sqi/weakening_detectors",
+      "package": "sqi",
+      "status": "REACHABLE",
+      "via": "modules/sqi/__init__",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "surface_architecture/__init__",
+      "package": "surface_architecture",
+      "status": "REACHABLE",
+      "via": "tools/seed_surface_architecture_contract.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "surface_architecture/archetypes",
+      "package": "surface_architecture",
+      "status": "REACHABLE",
+      "via": "tools/test_surface_architecture.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "surface_architecture/boundaries",
+      "package": "surface_architecture",
+      "status": "REACHABLE",
+      "via": "tools/test_surface_architecture.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "surface_architecture/context",
+      "package": "surface_architecture",
+      "status": "REACHABLE",
+      "via": "tools/test_surface_architecture.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "surface_architecture/resolver",
+      "package": "surface_architecture",
+      "status": "REACHABLE",
+      "via": "commands/surface-architecture.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "surface_architecture/verticals/__init__",
+      "package": "surface_architecture",
+      "status": "REACHABLE",
+      "via": "tools/seed_signup_derivative.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "surface_architecture/verticals/design_md_adapter",
+      "package": "surface_architecture",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "surface_architecture/verticals/prd_adapter",
+      "package": "surface_architecture",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "surface_architecture/verticals/signup",
+      "package": "surface_architecture",
+      "status": "REACHABLE",
+      "via": "commands/surface-architecture.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "surface_architecture/verticals/surface_phrases",
+      "package": "surface_architecture",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "sweep_enforcer/__init__",
+      "package": "sweep_enforcer",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "LIBRARY",
+      "note": "manual sweep tool invoked by an agent/Owner performing a specific prevention-rule sweep (P3); self-contained, no standing harness consumer required"
+    },
+    {
+      "unit": "sweep_enforcer/rule_sweep",
+      "package": "sweep_enforcer",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "LIBRARY",
+      "note": "manual sweep tool invoked by an agent/Owner performing a specific prevention-rule sweep (P3); self-contained, no standing harness consumer required"
+    },
+    {
+      "unit": "tower/__init__",
+      "package": "tower",
+      "status": "REACHABLE",
+      "via": "tools/family_baseline.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "tower/baselines",
+      "package": "tower",
+      "status": "REACHABLE",
+      "via": "tools/family_baseline.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "tower/capsule",
+      "package": "tower",
+      "status": "REACHABLE",
+      "via": "modules/tower/__init__",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "tower/checks",
+      "package": "tower",
+      "status": "REACHABLE",
+      "via": "tools/test_taste_absorption.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "tower/donegate",
+      "package": "tower",
+      "status": "REACHABLE",
+      "via": "tools/family_baseline.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "tower/evidence",
+      "package": "tower",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "tower/families",
+      "package": "tower",
+      "status": "REACHABLE",
+      "via": "tools/family_donegate_stop.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "tower/ratchet",
+      "package": "tower",
+      "status": "REACHABLE",
+      "via": "tools/family_baseline.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "tower/select",
+      "package": "tower",
+      "status": "REACHABLE",
+      "via": "tools/family_baseline.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "trace_context/__init__",
+      "package": "trace_context",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "PLANNED",
+      "note": "UWCP assimilation R5; consumer = uwcp.control/1 + epoch spans (A8), not yet built. tools/test_trace_context.py 11/11 + 9 mutants. Owner queue: vault/specs/uwcp.AMENDMENTS.md"
+    },
+    {
+      "unit": "trace_context/context",
+      "package": "trace_context",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "PLANNED",
+      "note": "UWCP assimilation R5 (see trace_context/__init__). Owner queue: vault/specs/uwcp.AMENDMENTS.md"
+    },
+    {
+      "unit": "uqf/__init__",
+      "package": "uqf",
+      "status": "REACHABLE",
+      "via": "commands/cognitive-load.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "uqf/anti_patterns",
+      "package": "uqf",
+      "status": "REACHABLE",
+      "via": "live:pp-uqf-auditor.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "uqf/auditor",
+      "package": "uqf",
+      "status": "REACHABLE",
+      "via": "tools/uqf_audit.py",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "uqf/gates",
+      "package": "uqf",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "LIBRARY",
+      "note": "decorator/assert utility library (uqf_gate, assert_uqf) for opt-in use by test files and other modules -- no default consumer required by design"
+    },
+    {
+      "unit": "uqf/principles/__init__",
+      "package": "uqf",
+      "status": "REACHABLE",
+      "via": "live:pp-uqf-auditor.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "uqf/principles/aaa_test_pattern",
+      "package": "uqf",
+      "status": "REACHABLE",
+      "via": "modules/uqf/principles/__init__",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "uqf/principles/error_never_silent",
+      "package": "uqf",
+      "status": "REACHABLE",
+      "via": "modules/uqf/principles/__init__",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "uqf/principles/false_positives_catalog",
+      "package": "uqf",
+      "status": "REACHABLE",
+      "via": "live:pp-code-reviewer.md",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "uqf/principles/pre_report_gate",
+      "package": "uqf",
+      "status": "REACHABLE",
+      "via": "modules/uqf/principles/__init__",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "uqf/principles/prompt_defense_baseline",
+      "package": "uqf",
+      "status": "REACHABLE",
+      "via": "modules/uqf/principles/__init__",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "uqf/principles/proof_triad",
+      "package": "uqf",
+      "status": "REACHABLE",
+      "via": "modules/uqf/principles/__init__",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "uqf/principles/severity_table",
+      "package": "uqf",
+      "status": "REACHABLE",
+      "via": "modules/uqf/principles/__init__",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "uqf/principles/tdd_workflow",
+      "package": "uqf",
+      "status": "REACHABLE",
+      "via": "modules/skill_router/skill_index",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "uqf/principles/zero_findings_valid",
+      "package": "uqf",
+      "status": "REACHABLE",
+      "via": "modules/uqf/principles/__init__",
+      "klass": null,
+      "note": ""
+    },
+    {
+      "unit": "wrapper/__init__",
+      "package": "wrapper",
+      "status": "REACHABLE",
+      "via": "package-init of wrapper/prelaunch",
+      "klass": "LIBRARY",
+      "note": "kclaude wrapper modules (W1-W5), consumed by tools/kclaude.ps1 (W6) per its own docstring -- a .ps1 consumer is outside the scanner's current text-surface coverage (.js/.md/CLAUDE.md/settings.json only); tracked separately as the 'kclaude' surface in the liveness ledger"
+    },
+    {
+      "unit": "wrapper/auto_resumer",
+      "package": "wrapper",
+      "status": "REACHABLE",
+      "via": "modules/wrapper/prelaunch",
+      "klass": "LIBRARY",
+      "note": "kclaude wrapper module, consumed by tools/kclaude.ps1 -- see wrapper/__init__ note"
+    },
+    {
+      "unit": "wrapper/cost_gate",
+      "package": "wrapper",
+      "status": "REACHABLE",
+      "via": "modules/wrapper/prelaunch",
+      "klass": "LIBRARY",
+      "note": "kclaude wrapper module, consumed by tools/kclaude.ps1 -- see wrapper/__init__ note"
+    },
+    {
+      "unit": "wrapper/prelaunch",
+      "package": "wrapper",
+      "status": "REACHABLE",
+      "via": "modules/cognitive_os/scheduler",
+      "klass": "LIBRARY",
+      "note": "kclaude wrapper module, consumed by tools/kclaude.ps1 -- see wrapper/__init__ note"
+    },
+    {
+      "unit": "wrapper/repo_coordinator",
+      "package": "wrapper",
+      "status": "REACHABLE",
+      "via": "modules/wrapper/prelaunch",
+      "klass": "LIBRARY",
+      "note": "kclaude wrapper module, consumed by tools/kclaude.ps1 -- see wrapper/__init__ note"
+    },
+    {
+      "unit": "wrapper/session_namer",
+      "package": "wrapper",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "LIBRARY",
+      "note": "kclaude wrapper module, consumed by tools/kclaude.ps1 -- see wrapper/__init__ note"
+    },
+    {
+      "unit": "wrapper/turn_counter",
+      "package": "wrapper",
+      "status": "REACHABLE",
+      "via": "modules/wrapper/prelaunch",
+      "klass": "LIBRARY",
+      "note": "kclaude wrapper module, consumed by tools/kclaude.ps1 -- see wrapper/__init__ note"
+    },
+    {
+      "unit": "wrapper/verify_before_emit",
+      "package": "wrapper",
+      "status": "ORPHAN",
+      "via": "",
+      "klass": "LIBRARY",
+      "note": "kclaude wrapper module, consumed by tools/kclaude.ps1 -- see wrapper/__init__ note"
+    }
+  ]
+}
+# exit=1

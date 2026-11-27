@@ -1,0 +1,55 @@
+# record_run
+# date_utc: 2026-11-23T13:26:48.366424+00:00
+# head: aed9cb00
+# cmd: python3 -I .planning/workstreams/perf-construction/phases/06-ratchet-ukdl-and-hand-back/inherit_check.py matrix
+SCRATCH copy of: tools modules vault/config vault/benchmarks vault/liveness hooks tests vault/specs .planning/workstreams/perf-construction/phases/05-critical-path-audit/records/05-01-inventory-baseline.json (git archive HEAD, read-only source; mutants exist only in the scratch copy)
+ADDED_PATHS (F2, control needed them): hooks tests vault/specs .planning/workstreams/perf-construction/phases/05-critical-path-audit/records/05-01-inventory-baseline.json
+CONTROL standing_gate python3 tools/test_bench_gate.py exit=0 PASS
+CONTROL owning_suite tools/test_bench_integrity.py exit=0 PASS
+CONTROL owning_suite tools/test_resource_pressure.py exit=0 PASS
+CONTROL owning_suite tools/test_construction_metrology.py exit=0 PASS
+CONTROL owning_suite -I tools/test_hook_critical_path.py exit=0 PASS
+CONTROL_RESULT PASS
+MX1 owner=tools/bench_all.py phase=4 pressure judge
+  target='elif pressure is not None and pressure[0] != PRESSURE_GREEN:'
+  replacement='elif False:'
+  occurrences=1
+  compile=OK
+  standing_gate exit=1 first_fail=FAIL V-BENCH-INTEGRITY-SUITE-WIRED: suite_ok=False decoys_accepted=[]
+  own_suite tools/test_bench_integrity.py exit=1 first_fail=FAIL V-BENCHINT-RED-RUN-INCONCLUSIVE: RED run regressed=True, expected None; RED run evidence_sufficient=True, expected False; regressed reason '18 vs window median 10 (n=3, regression above x1.15)' names neither RED nor
+VERDICT MX1 ENFORCED
+MX2 owner=tools/resource_admission.py phase=4 pressure reader
+  target='count > ceiling'
+  replacement='count >= ceiling'
+  occurrences=1
+  compile=OK
+  standing_gate exit=1 first_fail=FAIL V-BENCH-PRESSURE-SUITE-WIRED: suite_ok=False decoys_accepted=[]
+  own_suite tools/test_resource_pressure.py exit=1 first_fail=FAIL V-PRESS-TRACER-COUNT-OVER-IS-RED: count 2 at ceiling 2 with RAM 9000 gave 'RED', want GREEN (opposite input)
+VERDICT MX2 ENFORCED
+MX3 owner=tools/bench_all.py phase=2 benchmark integrity
+  target='               or v.get("met_target") is False\n'
+  replacement='               or False\n'
+  occurrences=1
+  compile=OK
+  standing_gate exit=1 first_fail=FAIL V-BENCH-INTEGRITY-SUITE-WIRED: suite_ok=False decoys_accepted=[]
+  own_suite tools/test_bench_integrity.py exit=1 first_fail=FAIL V-BENCHINT-EXIT-FROM-VERDICTS: miss: rc=0, expected 1; miss: rc=0 disagrees with the exit the verdicts prescribe (1)
+VERDICT MX3 ENFORCED
+MX4 owner=modules/capability_runtime/construction_metrology.py phase=3 metrology censoring
+  target='CENSORED_STATES = frozenset({"TIMED_OUT", "UNOBSERVED", "FAILED"})'
+  replacement='CENSORED_STATES = frozenset({"TIMED_OUT", "UNOBSERVED"})'
+  occurrences=1
+  compile=OK
+  standing_gate exit=0 first_fail=-
+  own_suite tools/test_construction_metrology.py exit=1 first_fail=FAIL V-METRO-CONTRACT-MATCHES-CODE: FAILED: censored 'yes' != 'no'
+VERDICT MX4 OWN_SUITE_ONLY
+MX5 owner=tools/hook_critical_path_audit.py phase=5 critical-path guard
+  target='if b.get(flag) and not c.get(flag):'
+  replacement='if b.get(flag) and c.get(flag):'
+  occurrences=1
+  compile=OK
+  standing_gate exit=0 first_fail=-
+  own_suite -I tools/test_hook_critical_path.py exit=1 first_fail=FAIL V-CRIT-GUARD-CONTROL-IDENTICAL  identical snapshots: exit=1, moved=0, violations=26
+VERDICT MX5 OWN_SUITE_ONLY
+MATRIX: ENFORCED=3 OWN_SUITE_ONLY=2 SURVIVED_ALL=0 NOT_DISCRIMINATING=0
+SCRATCH removed=True
+# exit=0

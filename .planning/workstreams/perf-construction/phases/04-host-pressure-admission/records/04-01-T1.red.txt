@@ -1,0 +1,10 @@
+# record_run
+# date_utc: 2026-11-22T23:53:10.731157+00:00
+# head: 2cdf1a7d
+# cmd: python3 tools/test_resource_pressure.py
+# pristine: tools/resource_admission.py=yes
+  FAIL V-PRESS-TRACER-COUNT-OVER-IS-RED: module lacks read_claude_process_count, pressure
+  FAIL V-PRESS-TRACER-RAM-LOW-IS-RED: module lacks pressure
+  FAIL V-PRESS-TRACER-UNREADABLE-IS-UNKNOWN: module lacks read_claude_process_count, pressure
+PRESSURE_PASS=0/3  threshold=3/3
+# exit=1

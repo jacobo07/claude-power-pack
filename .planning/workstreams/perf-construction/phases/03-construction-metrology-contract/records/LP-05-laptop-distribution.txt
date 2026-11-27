@@ -1,0 +1,20 @@
+# LP-05 laptop record
+# plane: LAPTOP (DESKTOP-PMT5BS8, win32) taken 2026-11-24T12:00:49+01:00 by pane 8fd6ace9
+# command: python tools/construction_metrology_report.py --root %USERPROFILE%\.claude\projects --max-files 200 --max-bytes 200000000 --seed 0 (rc=0)
+# host at the moment: 31 claude.exe, 2383 MB available (LP-07a, RED ram_below_floor)
+# units: seconds
+
+construction-metrology report
+plane: UNDECLARED
+host: DESKTOP-PMT5BS8
+transcript_root: C:\Users\User\.claude\projects
+stores: 272
+sampling: files_read=114/3127 bytes_read=199995756/5450264598 max_files=200 max_bytes=200000000 seed=0 capped=yes
+CAPPED SAMPLE - not the whole population
+scope: this host only; not evidence about any other host
+TTFMC  N_total=313  measured=152  censored=3  p50=85.26  p90=476.81  p95=724.65
+  states: MEASURED=152 FAILED=1 TIMED_OUT=1 INCONCLUSIVE=0 SKIPPED_BY_POLICY=87 NOT_APPLICABLE=71 UNOBSERVED=1 UNAVAILABLE=0
+TTFUR  N_total=313  measured=208  censored=18  p50=25.77  p90=134.28  p95=213.80
+  states: MEASURED=208 FAILED=0 TIMED_OUT=0 INCONCLUSIVE=0 SKIPPED_BY_POLICY=87 NOT_APPLICABLE=0 UNOBSERVED=18 UNAVAILABLE=0
+TTVD  N_total=313  measured=3  censored=151  p50=UNJUDGED (n=3 < 5)  p90=UNJUDGED (n=3 < 10)  p95=UNJUDGED (n=3 < 20)
+  states: MEASURED=3 FAILED=2 TIMED_OUT=4 INCONCLUSIVE=0 SKIPPED_BY_POLICY=87 NOT_APPLICABLE=72 UNOBSERVED=145 UNAVAILABLE=0

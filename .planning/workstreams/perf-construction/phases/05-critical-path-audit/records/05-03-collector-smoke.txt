@@ -1,0 +1,13 @@
+# record_run
+# date_utc: 2026-11-23T12:39:08.737936+00:00
+# head: afff74cb
+# cmd: python3 -I tools/hook_critical_path_audit.py collect --dispatcher /tmp/p5-home/decoy-ok.js --event Stop-chain --arm A --n 3 --timeout-ms 5000 --out /tmp/p5-home/smoke.json
+# pristine: hooks/=yes
+COLLECT arm=A event=Stop-chain n=3 scope: SHAPE_ONLY
+dispatcher: <external> sha256=0329f6bd457f
+states: MEASURED=3
+sample states in order: MEASURED,MEASURED,MEASURED
+host_state fields present on every sample: available_mb,claude_count,cpu_count,host,load1,os,pressure,schema
+host_state schema: 2
+SHAPE_ONLY: this run proves mechanics only; it is not a timing and no timing statistic is printed
+# exit=0

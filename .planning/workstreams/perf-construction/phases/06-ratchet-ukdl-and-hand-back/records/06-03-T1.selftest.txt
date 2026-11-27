@@ -1,0 +1,18 @@
+# record_run
+# date_utc: 2026-11-23T13:48:48.304247+00:00
+# head: 0c5a1436
+# cmd: python3 -I .planning/workstreams/perf-construction/phases/06-ratchet-ukdl-and-hand-back/handoff_check.py selftest
+PASS V-HO-GOOD-PASSES: the synthetic document passes every code: []
+PASS V-HO-INVENTORY: real inventory unknowns=[4, 6, 6, 8, 7] lp=12 owner_decisions=13 changed_files=173 head=0c5a1436ff77
+PASS V-HO-UNKNOWNS-PARSER: [] -> 0, three quoted entries -> 3 (later key and body not counted), absent key -> None
+PASS V-HO-INVENTORY-ABSENT-IS-NOT-ZERO: an empty phases dir yields None per phase and named problems, never 0; duplicate decision ids count once
+PASS V-HO-SECTIONS: each missing heading and an order swap refused (Owner:refused,Engineering:refused,Laptop-only:refused,Known:refused,Exact:refused, swap:True)
+PASS V-HO-FIRSTLINE: 5 wrong first lines refused
+PASS V-HO-COUNT: each INVENTORY field and each prose count changed by one is refused (F2)
+PASS V-HO-COUNT-MUTANT-CONTROL: with the number comparison disabled in memory the same wrong INVENTORY lines are accepted, so the comparison is what refuses
+PASS V-HO-LP: drop LP-02:refused; add LP-99:refused; status changed:refused; number in laptop slot:refused; pointer path missing:refused; pointer line wrong:refused; no pointer:refused; duplicate row:refused
+PASS V-HO-CLAIM: 20 forbidden phrases, a case and line-break variant refused (none accepted); scope control passes outside the owner summary; the conditional phrase passes with UNJUDGED nearby
+PASS V-HO-PATH: missing path:refused; absolute home path:refused; windows user path:refused; NEW path that exists:refused; NEW path without parent:refused; missing path in a command:refused; ratios such as 53/53 are not read as paths
+PASS V-HO-NEXT: companion dropped:refused; two commands:refused; wrong first task:refused; no falsifier:refused; no record:refused
+HANDOFF_SELFTEST=12/12
+# exit=0

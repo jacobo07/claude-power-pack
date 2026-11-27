@@ -1,0 +1,34 @@
+# record_run
+# date_utc: 2026-11-22T22:51:22.669590+00:00
+# head: 555b2baf
+# cmd: python3 tools/test_construction_metrology.py
+V-METRO -- construction metrology (events, states, connected percentile)
+  OK   V-METRO-TRACER-TTFUR-MEASURED: one human turn -> TTFUR 2.5 s (request copy ignored), N_total=1 measured=1 censored=0, 'plane: GEX44', no canary in output
+  OK   V-METRO-TRACER-UNOBSERVED-CENSORED: a transcript cut mid-turn is one UNOBSERVED censored sample in N_total, value null (not 0)
+  OK   V-METRO-POLICY-ID-UNMOVED: policy id identical with the file, without it and edited: f113a59d0dc99c56; equals live; in NOT_POLICY
+  OK   V-METRO-PERCENTILE-CONNECTED: percentile and store_dirs are the owners' objects; the module defines no copy
+  OK   V-METRO-TTFMC-MEASURED: first material change is the Edit at 7.25 s (the Read is not a material change)
+  OK   V-METRO-TTFMC-NOT-APPLICABLE: closed turns without a change are NOT_APPLICABLE (not censored); the open one is UNOBSERVED
+  OK   V-METRO-TTVD-MEASURED: TTVD end is the first ok Bash result after the first change (12.0 s; absent is_error on Bash = ok; errors and pre-change results are not the end; an unverified closed turn is UNOBSERVED)
+  OK   V-METRO-NOT-A-START: tool_result-only, isMeta and isCompactSummary user lines open no turn: exactly one turn
+  OK   V-METRO-CONTRACT-MATCHES-CODE: definitions rows, state table and MIN_N line agree with METRICS, HORIZON_S, STATES, CENSORED_STATES and MIN_N
+  OK   V-METRO-STATE-MEASURED: human turn then assistant text at 4.0 s -> TTFUR MEASURED 4.0
+  OK   V-METRO-STATE-FAILED: an API-error line (model <synthetic>, isApiErrorMessage, a TEXT block) is FAILED and censored, never the TTFUR end
+  OK   V-METRO-STATE-TIMED_OUT: end at +901 s -> TTFUR TIMED_OUT; open turn last seen at +3700 s -> TTFMC TIMED_OUT; no value
+  OK   V-METRO-STATE-INCONCLUSIVE: unparseable start timestamp and end-before-start are INCONCLUSIVE, not censored
+  OK   V-METRO-STATE-SKIPPED_BY_POLICY: task_notification origin and no-origin sdk-cli entrypoint are SKIPPED_BY_POLICY with origin_ reasons
+  OK   V-METRO-STATE-NOT_APPLICABLE: a closed turn without a write is NOT_APPLICABLE for TTFMC and TTVD, not censored
+  OK   V-METRO-STATE-UNOBSERVED: EOF before assistant text -> TTFUR UNOBSERVED, censored
+  OK   V-METRO-STATE-UNAVAILABLE: a non-JSON file and a directory named x.jsonl each give one UNAVAILABLE sample per metric; the sibling file is still measured
+  OK   V-METRO-POLE-MEASURED: MEASURED -> UNOBSERVED by removing the text line: measured -1, censored +1, 4.0 leaves values
+  OK   V-METRO-POLE-FAILED: FAILED moves when the error flags are removed: to UNOBSERVED (both censored) or, with a real text block, to MEASURED
+  OK   V-METRO-POLE-TIMED_OUT: TIMED_OUT -> MEASURED at 899 s (values gains 899.0, censored -1); the open-turn case leaves TIMED_OUT
+  OK   V-METRO-POLE-INCONCLUSIVE: INCONCLUSIVE -> MEASURED once the timestamp is valid: values gains a number
+  OK   V-METRO-POLE-SKIPPED_BY_POLICY: SKIPPED_BY_POLICY -> MEASURED when the origin is human (or cli without origin)
+  OK   V-METRO-POLE-NOT_APPLICABLE: NOT_APPLICABLE -> UNOBSERVED when the closing line is removed: censored +1
+  OK   V-METRO-POLE-UNOBSERVED: UNOBSERVED -> MEASURED when the text line is added
+  OK   V-METRO-POLE-UNAVAILABLE: UNAVAILABLE count falls to 0 once the file is a valid transcript; measured +1
+  OK   V-METRO-UNKNOWN-NEVER-MEASURED: unknown line/block/content shapes never become start or end events; summarize raises ValueError on a state outside STATES and on a MEASURED sample with a missing, negative or NaN elapsed
+  OK   V-METRO-MUTANT-HORIZON: the real module reaches TIMED_OUT; each mutant with a horizon comparison replaced by constant False is rejected by the reach check
+METRO_PASS=27/27  threshold=27/27
+# exit=0

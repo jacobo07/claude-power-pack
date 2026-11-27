@@ -1,0 +1,13 @@
+# record_run
+# date_utc: 2026-11-22T22:36:31.447273+00:00
+# head: 57dc895b
+# cmd: python3 tools/test_construction_metrology.py
+# pristine: modules/capability_runtime/agent_resolver.py=yes
+V-METRO -- construction metrology (events, states, connected percentile)
+  NOTE module import failed: ModuleNotFoundError: No module named 'modules.capability_runtime.construction_metrology'
+  FAIL V-METRO-TRACER-TTFUR-MEASURED: CLI --json did not print JSON: rc=2 err="/usr/bin/python3: can't open file '/home/kobii/missions/perf-construction/.claude/worktrees/agent-a3e908db461be7ab4/tools/construction_metrology_report.py': [Errno 2] No such file or directory\n"
+  FAIL V-METRO-TRACER-UNOBSERVED-CENSORED: CLI --json did not print JSON: rc=2 err="/usr/bin/python3: can't open file '/home/kobii/missions/perf-construction/.claude/worktrees/agent-a3e908db461be7ab4/tools/construction_metrology_report.py': [Errno 2] No such file or directory\n"
+  FAIL V-METRO-POLICY-ID-UNMOVED: with=cd354ea6f17b608b without=169abc7fce15ce84 edited=b69fb09ba4f3bc4b live=169abc7fce15ce84 in_not_policy=False
+  FAIL V-METRO-PERCENTILE-CONNECTED: module absent: ModuleNotFoundError: No module named 'modules.capability_runtime.construction_metrology'
+METRO_PASS=0/4  threshold=4/4
+# exit=1

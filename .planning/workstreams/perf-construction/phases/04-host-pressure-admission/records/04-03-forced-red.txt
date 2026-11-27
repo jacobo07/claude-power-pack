@@ -1,0 +1,56 @@
+# record_run
+# date_utc: 2026-11-23T08:53:53.551665+00:00
+# head: c4752b59
+# cmd: python3 -I .planning/workstreams/perf-construction/phases/04-host-pressure-admission/smoke_pressure.py --forced-red
+plane: GEX44 host: kobicraft-gex44
+step0 real ledger sha256=cef10a592e567e06fa43529966061bc223600475526fa2f435741f11582e32f4
+step0 real floors sha256=54a5f2af2c4d2a46151bc751000819aafcfa67d69e43e0b95fdf1ed884cfdc09
+PASS SMOKE-PLANE: plane_line pins four pairs and names this host GEX44
+temp ledger: /tmp/smoke_pressure_5yj881m8/ledger.json
+temp floors (count pole): /tmp/smoke_pressure_5yj881m8/floors_count.json
+temp floors (RAM pole): /tmp/smoke_pressure_5yj881m8/floors_ram.json
+step2 control runs (stub 10.0, declared floors, 3 seeded runs)
+  run 1 rc=0 pressure=GREEN ram_mb=52423.51953125 count=29 source=proc:exe+comm
+  run 2 rc=0 pressure=GREEN ram_mb=52423.03125 count=29 source=proc:exe+comm
+  run 3 rc=0 pressure=GREEN ram_mb=52414.27734375 count=29 source=proc:exe+comm
+PASS SMOKE-LIVE-GREEN: classes of the three control entries ['GREEN', 'GREEN', 'GREEN'] from the shipped read_host_state under the declared floors (resource-floors.json)
+step3 control GREEN run (stub 18.0 vs window of 10.0)
+  REGRESSION WINDOW: 3 matched entries (excluded: no_host_state=0, other_mode=0, other_host_state=0, under_pressure=0); judged 1 of 1 primary metrics
+  REGRESSIONS (1):
+    never_again_ms: 10 -> 18 ms (+80%)
+  VERDICTS (non-passing: 1 of 1 metrics):
+  VERDICTS: 1/1 ran, 1 met, 1 regressed, 0 UNJUDGED
+  HOST PRESSURE: GREEN
+  bench_all exit rc=1  at_target=1/17
+PASS SMOKE-CONTROL-REGRESSES: regressed=True rc=1 REGRESSIONS block=True
+step4 forced RED by the count pole (stub 18.0, same data as the control)
+  host_state: pressure=RED reasons=claude_count_over_ceiling count=29 ram_mb=52419.86328125
+  verdict: regressed=None evidence_sufficient=False met_target=True
+  REGRESSION WINDOW: 4 matched entries (excluded: no_host_state=0, other_mode=0, other_host_state=0, under_pressure=0); judged 0 of 1 primary metrics
+  VERDICTS (non-passing: 1 of 1 metrics):
+  VERDICTS: 1/1 ran, 1 met, 0 regressed, 1 UNJUDGED
+  HOST PRESSURE: RED (claude_count_over_ceiling)
+  REGRESSION: INCONCLUSIVE -- host pressure RED; regression verdicts are not judged and this run is excluded from future windows
+  bench_all exit rc=0  at_target=1/17
+PASS SMOKE-FORCED-RED-COUNT: RED via claude_count_over_ceiling only, regressed None, evidence_sufficient False, INCONCLUSIVE printed, no REGRESSIONS block, rc=0, entry kept (ledger entries=5)
+step5 forced RED by the RAM pole (stub 18.0, same data as the control)
+  host_state: pressure=RED reasons=ram_below_floor count=29 ram_mb=52411.98828125
+  verdict: regressed=None evidence_sufficient=False met_target=True
+  REGRESSION WINDOW: 4 matched entries (excluded: no_host_state=0, other_mode=0, other_host_state=0, under_pressure=1); judged 0 of 1 primary metrics
+  VERDICTS (non-passing: 1 of 1 metrics):
+  VERDICTS: 1/1 ran, 1 met, 0 regressed, 1 UNJUDGED
+  HOST PRESSURE: RED (ram_below_floor)
+  REGRESSION: INCONCLUSIVE -- host pressure RED; regression verdicts are not judged and this run is excluded from future windows
+  bench_all exit rc=0  at_target=1/17
+PASS SMOKE-FORCED-RED-RAM: RED via ram_below_floor only, same checks, rc=0, entry kept (ledger entries=6)
+step6 GREEN run after the RED entries (stub 10.0, declared floors)
+  REGRESSION WINDOW: 4 matched entries (excluded: no_host_state=0, other_mode=0, other_host_state=0, under_pressure=2); judged 1 of 1 primary metrics
+  VERDICTS: 1/1 ran, 1 met, 0 regressed, 0 UNJUDGED
+  HOST PRESSURE: GREEN
+  bench_all exit rc=0  at_target=1/17
+PASS SMOKE-RED-EXCLUDED-FROM-WINDOW: window matched=4 under_pressure=2 (4 GREEN entries: 3 controls and the 18.0 control; 2 RED entries excluded), this run's own regressed=False
+step7 real ledger sha256=cef10a592e567e06fa43529966061bc223600475526fa2f435741f11582e32f4
+step7 real floors sha256=54a5f2af2c4d2a46151bc751000819aafcfa67d69e43e0b95fdf1ed884cfdc09
+PASS SMOKE-REAL-FILES-UNTOUCHED: sha256 of vault/benchmarks/ledger.json and vault/config/resource-floors.json equal before and after; bench_all.LEDGER_PATH restored to the real path
+SMOKE_PASS=7/7  threshold=7/7
+# exit=0

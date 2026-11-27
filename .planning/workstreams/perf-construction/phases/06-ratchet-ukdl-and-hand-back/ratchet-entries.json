@@ -1,0 +1,288 @@
+{
+  "schema": "perf-construction ratchet entries, plan 06-02",
+  "note": "Proposed entries only. origin.line and evidence are written by `ratchet_connect.py fill` from the cited records (nothing typed); status_note is written by `connect --write-status`. 'sources' says where each evidence value is read from.",
+  "entries": [
+    {
+      "id": "perf_construction-failed-sample-stays-in-denominator",
+      "requirement": "A FAILED or TIMED_OUT sample stays in the denominator of a benchmark verdict and is never recorded as a fast sample.",
+      "why": "Phase 2 P03: bench_pytest reported 19.9 ms against a target of 8000 because pytest was missing and python died at once; a failed run read as a very fast one.",
+      "origin": {
+        "file": "tools/bench_all.py",
+        "line": 119,
+        "quote": "(P03: bench_pytest reported 19.9 ms against a target of 8000 because pytest"
+      },
+      "class": "C",
+      "check": "regex:tools/bench_all.py::P03: bench_pytest reported",
+      "source_phase": 2,
+      "evidence": {
+        "improvement": {
+          "run": "02-01-T3.red.txt -> 02-01-T3.green.txt",
+          "measure": "tools/test_bench_integrity.py gates passing (of 28)",
+          "before": 24,
+          "after": 28
+        },
+        "negative_controls": [
+          {
+            "name": "MX3 (06-01 matrix): met_target removed from verdicts_fail, owning suite",
+            "rc": 1
+          },
+          {
+            "name": "02-01-T3.red.txt: the integrity suite on the code before the fix",
+            "rc": 1
+          }
+        ],
+        "reuse": {
+          "run": "06-01-T3.matrix (standing gate fails on the MX3 mutant)",
+          "pointer": ".planning/workstreams/perf-construction/phases/06-ratchet-ukdl-and-hand-back/records/06-01-T3.matrix.txt:36"
+        }
+      },
+      "sources": {
+        "before": {
+          "file": ".planning/workstreams/perf-construction/phases/02-benchmark-integrity/records/02-01-T3.red.txt",
+          "pattern": "BENCHINT_PASS=(\\d+)/28"
+        },
+        "after": {
+          "file": ".planning/workstreams/perf-construction/phases/02-benchmark-integrity/records/02-01-T3.green.txt",
+          "pattern": "BENCHINT_PASS=(\\d+)/28"
+        },
+        "negative_controls": [
+          {
+            "name": "MX3 (06-01 matrix): met_target removed from verdicts_fail, owning suite",
+            "file": ".planning/workstreams/perf-construction/phases/06-ratchet-ukdl-and-hand-back/records/06-01-T3.matrix.txt",
+            "pattern": "MX3 owner=.*?own_suite [^\\n]*? exit=(\\d+)"
+          },
+          {
+            "name": "02-01-T3.red.txt: the integrity suite on the code before the fix",
+            "file": ".planning/workstreams/perf-construction/phases/02-benchmark-integrity/records/02-01-T3.red.txt",
+            "pattern": "# exit=(\\d+)"
+          }
+        ],
+        "reuse_run": {
+          "name": "06-01-T3.matrix (standing gate fails on the MX3 mutant)",
+          "file": ".planning/workstreams/perf-construction/phases/06-ratchet-ukdl-and-hand-back/records/06-01-T3.matrix.txt",
+          "pattern": "VERDICT MX3 ENFORCED"
+        },
+        "reuse_pointer": {
+          "file": ".planning/workstreams/perf-construction/phases/06-ratchet-ukdl-and-hand-back/records/06-01-T3.matrix.txt",
+          "pattern": "VERDICT MX3 ENFORCED"
+        }
+      },
+      "status_note": "PROMOTABLE_UNDER_OWNER_AUTHORITY"
+    },
+    {
+      "id": "perf_construction-unknown-pressure-never-judged",
+      "requirement": "A host whose pressure class is UNKNOWN is never judged and never enters a regression window; a schema-1 entry reads UNKNOWN and nothing upgrades it to GREEN.",
+      "why": "Phase 4 D4-05: a RED or UNKNOWN host makes regression verdicts INCONCLUSIVE; an unreadable reading is never zero and never green.",
+      "origin": {
+        "file": "tools/bench_all.py",
+        "line": 55,
+        "quote": "pressure class (GREEN / RED / UNKNOWN, read through tools/resource_admission"
+      },
+      "class": "C",
+      "check": "regex:tools/bench_all.py::PRESSURE_UNKNOWN",
+      "source_phase": 4,
+      "evidence": {
+        "improvement": {
+          "run": "04-02-T2.red.txt -> 04-02-T2.green.txt",
+          "measure": "tools/test_bench_integrity.py gates passing (of 53)",
+          "before": 48,
+          "after": 53
+        },
+        "negative_controls": [
+          {
+            "name": "MX1 (06-01 matrix): pressure judge disabled in bench_all, owning suite",
+            "rc": 1
+          },
+          {
+            "name": "MX2 (06-01 matrix): count > ceiling relaxed in resource_admission, owning suite",
+            "rc": 1
+          }
+        ],
+        "reuse": {
+          "run": "05-03-suite.txt (Phase 5 critical-path suite, a later phase)",
+          "pointer": "tools/hook_critical_path_audit.py:56"
+        }
+      },
+      "sources": {
+        "before": {
+          "file": ".planning/workstreams/perf-construction/phases/04-host-pressure-admission/records/04-02-T2.red.txt",
+          "pattern": "BENCHINT_PASS=(\\d+)/53"
+        },
+        "after": {
+          "file": ".planning/workstreams/perf-construction/phases/04-host-pressure-admission/records/04-02-T2.green.txt",
+          "pattern": "BENCHINT_PASS=(\\d+)/53"
+        },
+        "negative_controls": [
+          {
+            "name": "MX1 (06-01 matrix): pressure judge disabled in bench_all, owning suite",
+            "file": ".planning/workstreams/perf-construction/phases/06-ratchet-ukdl-and-hand-back/records/06-01-T3.matrix.txt",
+            "pattern": "MX1 owner=.*?own_suite [^\\n]*? exit=(\\d+)"
+          },
+          {
+            "name": "MX2 (06-01 matrix): count > ceiling relaxed in resource_admission, owning suite",
+            "file": ".planning/workstreams/perf-construction/phases/06-ratchet-ukdl-and-hand-back/records/06-01-T3.matrix.txt",
+            "pattern": "MX2 owner=.*?own_suite [^\\n]*? exit=(\\d+)"
+          }
+        ],
+        "reuse_run": {
+          "name": "05-03-suite.txt (Phase 5 critical-path suite, a later phase)",
+          "file": ".planning/workstreams/perf-construction/phases/05-critical-path-audit/records/05-03-suite.txt",
+          "pattern": "CRITPATH_PASS=134/134"
+        },
+        "reuse_pointer": {
+          "file": "tools/hook_critical_path_audit.py",
+          "pattern": "from tools.bench_all import WINDOW_N, host_bucket, host_pressure"
+        }
+      },
+      "status_note": "PROMOTABLE_UNDER_OWNER_AUTHORITY"
+    },
+    {
+      "id": "perf_construction-censored-duration-is-not-zero",
+      "requirement": "A censored or absent duration (TIMED_OUT, UNOBSERVED, FAILED) is never written as zero; it stays inside N_total with its state.",
+      "why": "Phase 3: a turn whose end event was not observed would read as a very fast turn if it were dropped or zeroed.",
+      "origin": {
+        "file": "modules/capability_runtime/construction_metrology.py",
+        "line": 61,
+        "quote": "CENSORED_STATES = frozenset({\"TIMED_OUT\", \"UNOBSERVED\", \"FAILED\"})"
+      },
+      "class": "C",
+      "check": "regex:modules/capability_runtime/construction_metrology.py::CENSORED_STATES",
+      "source_phase": 3,
+      "evidence": {
+        "improvement": {
+          "run": "03-01-T2.red.txt -> 03-01-T2.green.txt",
+          "measure": "tools/test_construction_metrology.py gates passing (of 9)",
+          "before": 5,
+          "after": 9
+        },
+        "negative_controls": [
+          {
+            "name": "MX4 (06-01 matrix): FAILED dropped from CENSORED_STATES, owning suite",
+            "rc": 1
+          }
+        ],
+        "reuse": {
+          "run": "05-03-suite.txt (Phase 5 critical-path suite, a later phase)",
+          "pointer": "tools/hook_critical_path_audit.py:58"
+        }
+      },
+      "sources": {
+        "before": {
+          "file": ".planning/workstreams/perf-construction/phases/03-construction-metrology-contract/records/03-01-T2.red.txt",
+          "pattern": "METRO_PASS=(\\d+)/9"
+        },
+        "after": {
+          "file": ".planning/workstreams/perf-construction/phases/03-construction-metrology-contract/records/03-01-T2.green.txt",
+          "pattern": "METRO_PASS=(\\d+)/9"
+        },
+        "negative_controls": [
+          {
+            "name": "MX4 (06-01 matrix): FAILED dropped from CENSORED_STATES, owning suite",
+            "file": ".planning/workstreams/perf-construction/phases/06-ratchet-ukdl-and-hand-back/records/06-01-T3.matrix.txt",
+            "pattern": "MX4 owner=.*?own_suite [^\\n]*? exit=(\\d+)"
+          }
+        ],
+        "reuse_run": {
+          "name": "05-03-suite.txt (Phase 5 critical-path suite, a later phase)",
+          "file": ".planning/workstreams/perf-construction/phases/05-critical-path-audit/records/05-03-suite.txt",
+          "pattern": "CRITPATH_PASS=134/134"
+        },
+        "reuse_pointer": {
+          "file": "tools/hook_critical_path_audit.py",
+          "pattern": "from modules.capability_runtime.construction_metrology import CENSORED_STATES"
+        }
+      },
+      "status_note": "PROMOTABLE_UNDER_OWNER_AUTHORITY"
+    },
+    {
+      "id": "perf_construction-unchanged-gate-text-is-not-shown",
+      "requirement": "A before and after comparison that is green on both sides but whose gate text differs is NOT_SHOWN, never PASS; a guard is shown by planted mutants over a recorded baseline.",
+      "why": "Phase 5 G4: PASS needs every gate line to match; text drift or a before run that was not green cannot be rounded up to PASS.",
+      "origin": {
+        "file": ".planning/workstreams/perf-construction/phases/05-critical-path-audit/05-02-SUMMARY.md",
+        "line": 31,
+        "quote": "A comparison that is green on both sides but whose gate lines differ in text is NOT_SHOWN, not PASS"
+      },
+      "class": "C",
+      "check": "regex:.planning/workstreams/perf-construction/phases/05-critical-path-audit/05-02-SUMMARY.md::NOT_SHOWN, not PASS",
+      "source_phase": 5,
+      "evidence": {
+        "improvement": {
+          "run": "05-01-suite.txt -> 05-02-suite.txt",
+          "measure": "tools/test_hook_critical_path.py gates passing, a coverage count not a latency (41 gates before the guard, 59 with it)",
+          "before": 41,
+          "after": 59
+        },
+        "negative_controls": [
+          {
+            "name": "MX5 (06-01 matrix): FLAG_WEAKENED condition inverted in hook_critical_path_audit, owning suite",
+            "rc": 1
+          }
+        ],
+        "reuse": {
+          "run": "05-03-suite.txt (final Phase 5 suite run)",
+          "pointer": "tools/test_hook_critical_path.py:177"
+        }
+      },
+      "sources": {
+        "before": {
+          "file": ".planning/workstreams/perf-construction/phases/05-critical-path-audit/records/05-01-suite.txt",
+          "pattern": "CRITPATH_PASS=(\\d+)/41"
+        },
+        "after": {
+          "file": ".planning/workstreams/perf-construction/phases/05-critical-path-audit/records/05-02-suite.txt",
+          "pattern": "CRITPATH_PASS=(\\d+)/59"
+        },
+        "negative_controls": [
+          {
+            "name": "MX5 (06-01 matrix): FLAG_WEAKENED condition inverted in hook_critical_path_audit, owning suite",
+            "file": ".planning/workstreams/perf-construction/phases/06-ratchet-ukdl-and-hand-back/records/06-01-T3.matrix.txt",
+            "pattern": "MX5 owner=.*?own_suite [^\\n]*? exit=(\\d+)"
+          }
+        ],
+        "reuse_run": {
+          "name": "05-03-suite.txt (final Phase 5 suite run)",
+          "file": ".planning/workstreams/perf-construction/phases/05-critical-path-audit/records/05-03-suite.txt",
+          "pattern": "CRITPATH_PASS=134/134"
+        },
+        "reuse_pointer": {
+          "file": "tools/test_hook_critical_path.py",
+          "pattern": "V-CRIT-GUARD-CONTROL-IDENTICAL"
+        }
+      },
+      "status_note": "PROMOTABLE_UNDER_OWNER_AUTHORITY"
+    },
+    {
+      "id": "perf_construction-laptop-claim-carries-its-plane",
+      "requirement": "A laptop claim carries the plane that observed it, and a GEX44 number never fills a laptop one; anything not observed on the laptop is LAPTOP-ONLY / UNJUDGED.",
+      "why": "The Owner's complaint is the laptop; every campaign measurement was taken on GEX44. Cross-phase rule, no before and after record and no mutant control for it exist (only a single 4/4 plane selftest run).",
+      "origin": {
+        "file": ".planning/workstreams/perf-construction/ROADMAP.md",
+        "line": 18,
+        "quote": "PLANE RULE: the Owner's complaint is the LAPTOP."
+      },
+      "class": "C",
+      "check": "regex:.planning/workstreams/perf-construction/ROADMAP.md::PLANE RULE",
+      "source_phase": "cross-phase",
+      "evidence": {
+        "negative_controls": [],
+        "reuse": {
+          "run": "05-03-suite.txt (final Phase 5 suite run)",
+          "pointer": "tools/test_hook_critical_path.py:472"
+        }
+      },
+      "sources": {
+        "reuse_run": {
+          "name": "05-03-suite.txt (final Phase 5 suite run)",
+          "file": ".planning/workstreams/perf-construction/phases/05-critical-path-audit/records/05-03-suite.txt",
+          "pattern": "CRITPATH_PASS=134/134"
+        },
+        "reuse_pointer": {
+          "file": "tools/test_hook_critical_path.py",
+          "pattern": "V-CRIT-AB-PLANE-CLI-WORK-UNKNOWN"
+        }
+      },
+      "status_note": "NOT_PROMOTABLE: origin=VERIFIED check=PASS evidence=missing: improvement, negative_controls, before, after"
+    }
+  ]
+}

@@ -1,0 +1,2119 @@
+{
+ "schema": 1,
+ "plane": "GEX44",
+ "git_head": "69e27e195a499e7912533c22f2b119f93964d9cb",
+ "hooks_clean": true,
+ "dispatcher_sha256": "465234ea08c5d8e6bae49bfd2f63445367d151f690cf39d1f56d97dfd867c8ae",
+ "dispatcher": "hooks/hook-dispatcher.js",
+ "settings_layer": "UNKNOWN (LAPTOP-ONLY, LP-09): ~/.claude/settings.json is not read",
+ "containers": {
+  "Stop-chain": {
+   "kind": "chain",
+   "entries": [
+    {
+     "container": "Stop-chain",
+     "script": "./closer-guard.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 8000,
+     "block": true,
+     "critical": true,
+     "resolved": "repo",
+     "repo_path": "hooks/closer-guard.js",
+     "deny_shape": [
+      "DECISION_BLOCK"
+     ],
+     "model_context": [],
+     "class": "BLOCKING-SAFETY",
+     "basis": "FLAG_BLOCK_OR_CRITICAL"
+    },
+    {
+     "container": "Stop-chain",
+     "script": "../skills/claude-power-pack/hooks/gsd_stop_continuation.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 5000,
+     "block": true,
+     "critical": true,
+     "resolved": "repo",
+     "repo_path": "hooks/gsd_stop_continuation.js",
+     "deny_shape": [
+      "DECISION_BLOCK"
+     ],
+     "model_context": [],
+     "class": "BLOCKING-SAFETY",
+     "basis": "FLAG_BLOCK_OR_CRITICAL"
+    },
+    {
+     "container": "Stop-chain",
+     "script": "./zero-issue-gate.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 70000,
+     "block": true,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/zero-issue-gate.js",
+     "deny_shape": [],
+     "model_context": [],
+     "class": "BLOCKING-SAFETY",
+     "basis": "FLAG_BLOCK_OR_CRITICAL"
+    },
+    {
+     "container": "Stop-chain",
+     "script": "./trace-flusher.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 15000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/trace-flusher.js",
+     "deny_shape": [],
+     "model_context": [],
+     "class": "UNKNOWN",
+     "basis": "NO_TABLE_ROW"
+    },
+    {
+     "container": "Stop-chain",
+     "script": "./session-summary.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 20000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/session-summary.js",
+     "deny_shape": [],
+     "model_context": [],
+     "class": "UNKNOWN",
+     "basis": "NO_TABLE_ROW"
+    },
+    {
+     "container": "Stop-chain",
+     "script": "./scaffold-auditor.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 15000,
+     "block": true,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/scaffold-auditor.js",
+     "deny_shape": [],
+     "model_context": [],
+     "class": "BLOCKING-SAFETY",
+     "basis": "FLAG_BLOCK_OR_CRITICAL"
+    },
+    {
+     "container": "Stop-chain",
+     "script": "./lazarus-snapshot.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 10000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/lazarus-snapshot.js",
+     "deny_shape": [],
+     "model_context": [],
+     "class": "UNKNOWN",
+     "basis": "NO_TABLE_ROW"
+    },
+    {
+     "container": "Stop-chain",
+     "script": "../skills/claude-power-pack/modules/zero-crash/hooks/context-watchdog.py",
+     "kind": "chain",
+     "exe_kind": "python",
+     "timeout_ms": 20000,
+     "block": false,
+     "critical": true,
+     "resolved": "repo",
+     "repo_path": "modules/zero-crash/hooks/context-watchdog.py",
+     "deny_shape": [
+      "DECISION_BLOCK"
+     ],
+     "model_context": [
+      "ADDITIONAL_CONTEXT",
+      "HOOK_SPECIFIC_OUTPUT",
+      "SYSTEM_MESSAGE"
+     ],
+     "class": "BLOCKING-SAFETY",
+     "basis": "FLAG_BLOCK_OR_CRITICAL"
+    },
+    {
+     "container": "Stop-chain",
+     "script": "../skills/claude-power-pack/modules/zero-crash/hooks/ram-watchdog.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 6000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "modules/zero-crash/hooks/ram-watchdog.js",
+     "deny_shape": [],
+     "model_context": [
+      "ADDITIONAL_CONTEXT",
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "UNKNOWN",
+     "basis": "NO_TABLE_ROW"
+    },
+    {
+     "container": "Stop-chain",
+     "script": "./learning-sentinel.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 6000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/learning-sentinel.js",
+     "deny_shape": [],
+     "model_context": [
+      "ADDITIONAL_CONTEXT",
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "UNKNOWN",
+     "basis": "NO_TABLE_ROW"
+    },
+    {
+     "container": "Stop-chain",
+     "script": "./vault-heartbeat.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 8000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/vault-heartbeat.js",
+     "deny_shape": [],
+     "model_context": [
+      "SYSTEM_MESSAGE"
+     ],
+     "class": "UNKNOWN",
+     "basis": "NO_TABLE_ROW"
+    },
+    {
+     "container": "Stop-chain",
+     "script": "../skills/claude-power-pack/hooks/claude_md_linter_stop.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 8000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/claude_md_linter_stop.js",
+     "deny_shape": [],
+     "model_context": [
+      "ADDITIONAL_CONTEXT"
+     ],
+     "class": "UNKNOWN",
+     "basis": "NO_TABLE_ROW"
+    },
+    {
+     "container": "Stop-chain",
+     "script": "../skills/claude-power-pack/hooks/mark-live-session.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 8000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/mark-live-session.js",
+     "deny_shape": [],
+     "model_context": [],
+     "class": "UNKNOWN",
+     "basis": "NO_TABLE_ROW"
+    },
+    {
+     "container": "Stop-chain",
+     "script": "./research-intent-detector.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 8000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/research-intent-detector.js",
+     "deny_shape": [],
+     "model_context": [
+      "ADDITIONAL_CONTEXT",
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "UNKNOWN",
+     "basis": "NO_TABLE_ROW"
+    },
+    {
+     "container": "Stop-chain",
+     "script": "../skills/claude-power-pack/hooks/background-verifier.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 8000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/background-verifier.js",
+     "deny_shape": [],
+     "model_context": [],
+     "class": "UNKNOWN",
+     "basis": "NO_TABLE_ROW"
+    },
+    {
+     "container": "Stop-chain",
+     "script": "../skills/claude-power-pack/hooks/jobs_woz_gate.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 15000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/jobs_woz_gate.js",
+     "deny_shape": [],
+     "model_context": [
+      "ADDITIONAL_CONTEXT"
+     ],
+     "class": "UNKNOWN",
+     "basis": "NO_TABLE_ROW"
+    },
+    {
+     "container": "Stop-chain",
+     "script": "../skills/claude-power-pack/hooks/jit_correlate_stop.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 8000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/jit_correlate_stop.js",
+     "deny_shape": [],
+     "model_context": [],
+     "class": "UNKNOWN",
+     "basis": "NO_TABLE_ROW"
+    },
+    {
+     "container": "Stop-chain",
+     "script": "../skills/claude-power-pack/hooks/output_contract_stop.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 8000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/output_contract_stop.js",
+     "deny_shape": [],
+     "model_context": [
+      "ADDITIONAL_CONTEXT",
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "UNKNOWN",
+     "basis": "NO_TABLE_ROW"
+    },
+    {
+     "container": "Stop-chain",
+     "script": "../skills/claude-power-pack/tools/family_donegate_stop.py",
+     "kind": "chain",
+     "exe_kind": "python",
+     "timeout_ms": 8000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "tools/family_donegate_stop.py",
+     "deny_shape": [
+      "DECISION_BLOCK"
+     ],
+     "model_context": [],
+     "class": "BLOCKING-SAFETY",
+     "basis": "DENY_SHAPE_IN_SOURCE"
+    },
+    {
+     "container": "Stop-chain",
+     "script": "../skills/claude-power-pack/tools/design_donegate_stop.py",
+     "kind": "chain",
+     "exe_kind": "python",
+     "timeout_ms": 8000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "tools/design_donegate_stop.py",
+     "deny_shape": [
+      "DECISION_BLOCK"
+     ],
+     "model_context": [],
+     "class": "BLOCKING-SAFETY",
+     "basis": "DENY_SHAPE_IN_SOURCE"
+    },
+    {
+     "container": "Stop-chain",
+     "script": "../skills/claude-power-pack/tools/ads_sync.py",
+     "kind": "chain",
+     "exe_kind": "python",
+     "timeout_ms": 6000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "tools/ads_sync.py",
+     "deny_shape": [],
+     "model_context": [],
+     "class": "UNKNOWN",
+     "basis": "NO_TABLE_ROW"
+    },
+    {
+     "container": "Stop-chain",
+     "script": "../skills/claude-power-pack/modules/graphify/session_writeback.py",
+     "kind": "chain",
+     "exe_kind": "python",
+     "timeout_ms": 8000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "modules/graphify/session_writeback.py",
+     "deny_shape": [],
+     "model_context": [],
+     "class": "UNKNOWN",
+     "basis": "NO_TABLE_ROW"
+    },
+    {
+     "container": "Stop-chain",
+     "script": "../skills/claude-power-pack/tools/ceps_promote_stop.py",
+     "kind": "chain",
+     "exe_kind": "python",
+     "timeout_ms": 8000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "tools/ceps_promote_stop.py",
+     "deny_shape": [],
+     "model_context": [],
+     "class": "UNKNOWN",
+     "basis": "NO_TABLE_ROW"
+    },
+    {
+     "container": "Stop-chain",
+     "script": "../skills/claude-power-pack/hooks/ceps_correction_stop.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 3000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/ceps_correction_stop.js",
+     "deny_shape": [],
+     "model_context": [],
+     "class": "UNKNOWN",
+     "basis": "NO_TABLE_ROW"
+    },
+    {
+     "container": "Stop-chain",
+     "script": "../skills/claude-power-pack/modules/fable_distillation/fd_07_flywheel.py",
+     "kind": "chain",
+     "exe_kind": "python",
+     "timeout_ms": 8000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "modules/fable_distillation/fd_07_flywheel.py",
+     "deny_shape": [],
+     "model_context": [
+      "SYSTEM_MESSAGE"
+     ],
+     "class": "UNKNOWN",
+     "basis": "NO_TABLE_ROW"
+    },
+    {
+     "container": "Stop-chain",
+     "script": "../skills/claude-power-pack/modules/frontier_intelligence/token_irr.py",
+     "kind": "chain",
+     "exe_kind": "python",
+     "timeout_ms": 8000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "modules/frontier_intelligence/token_irr.py",
+     "deny_shape": [],
+     "model_context": [
+      "SYSTEM_MESSAGE"
+     ],
+     "class": "UNKNOWN",
+     "basis": "NO_TABLE_ROW"
+    },
+    {
+     "container": "Stop-chain",
+     "script": "../skills/claude-power-pack/hooks/session_delta_stop.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 8000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/session_delta_stop.js",
+     "deny_shape": [],
+     "model_context": [],
+     "class": "UNKNOWN",
+     "basis": "NO_TABLE_ROW"
+    }
+   ],
+   "deadline_ms": null,
+   "deadline_status": "NONE_DECLARED",
+   "concurrency": 8
+  },
+  "SessionEnd-chain": {
+   "kind": "chain",
+   "entries": [
+    {
+     "container": "SessionEnd-chain",
+     "script": "../skills/claude-power-pack/tools/ads_sync.py",
+     "kind": "chain",
+     "exe_kind": "python",
+     "timeout_ms": 30000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "tools/ads_sync.py",
+     "deny_shape": [],
+     "model_context": [],
+     "class": "UNKNOWN",
+     "basis": "NO_TABLE_ROW"
+    },
+    {
+     "container": "SessionEnd-chain",
+     "script": "../skills/claude-power-pack/modules/graphify/session_writeback.py",
+     "kind": "chain",
+     "exe_kind": "python",
+     "timeout_ms": 60000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "modules/graphify/session_writeback.py",
+     "deny_shape": [],
+     "model_context": [],
+     "class": "UNKNOWN",
+     "basis": "NO_TABLE_ROW"
+    },
+    {
+     "container": "SessionEnd-chain",
+     "script": "./trace-flusher.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 30000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/trace-flusher.js",
+     "deny_shape": [],
+     "model_context": [],
+     "class": "UNKNOWN",
+     "basis": "NO_TABLE_ROW"
+    },
+    {
+     "container": "SessionEnd-chain",
+     "script": "../skills/claude-power-pack/hooks/session_delta_stop.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 15000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/session_delta_stop.js",
+     "deny_shape": [],
+     "model_context": [],
+     "class": "UNKNOWN",
+     "basis": "NO_TABLE_ROW"
+    },
+    {
+     "container": "SessionEnd-chain",
+     "script": "./learning-sentinel.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 15000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/learning-sentinel.js",
+     "deny_shape": [],
+     "model_context": [
+      "ADDITIONAL_CONTEXT",
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "UNKNOWN",
+     "basis": "NO_TABLE_ROW"
+    }
+   ],
+   "deadline_ms": null,
+   "deadline_status": "NONE_DECLARED",
+   "concurrency": null
+  },
+  "PreToolUse-Bash-chain": {
+   "kind": "chain",
+   "entries": [
+    {
+     "container": "PreToolUse-Bash-chain",
+     "script": "./windows-bash-bridge-guard.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 8000,
+     "block": true,
+     "critical": true,
+     "resolved": "repo",
+     "repo_path": "hooks/windows-bash-bridge-guard.js",
+     "deny_shape": [
+      "DECISION_BLOCK",
+      "EXIT_2"
+     ],
+     "model_context": [],
+     "class": "BLOCKING-SAFETY",
+     "basis": "FLAG_BLOCK_OR_CRITICAL"
+    },
+    {
+     "container": "PreToolUse-Bash-chain",
+     "script": "../skills/claude-power-pack/hooks/capsule_mutation_guard.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 4000,
+     "block": true,
+     "critical": true,
+     "resolved": "repo",
+     "repo_path": "hooks/capsule_mutation_guard.js",
+     "deny_shape": [
+      "PERMISSION_DECISION"
+     ],
+     "model_context": [
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "BLOCKING-SAFETY",
+     "basis": "FLAG_BLOCK_OR_CRITICAL"
+    },
+    {
+     "container": "PreToolUse-Bash-chain",
+     "script": "./gui-app-console-inherit-guard.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 5000,
+     "block": true,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/gui-app-console-inherit-guard.js",
+     "deny_shape": [
+      "DECISION_BLOCK",
+      "EXIT_2"
+     ],
+     "model_context": [],
+     "class": "BLOCKING-SAFETY",
+     "basis": "FLAG_BLOCK_OR_CRITICAL"
+    },
+    {
+     "container": "PreToolUse-Bash-chain",
+     "script": "../skills/claude-power-pack/hooks/console-popup-guard.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 4000,
+     "block": true,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/console-popup-guard.js",
+     "deny_shape": [
+      "DECISION_BLOCK",
+      "EXIT_2"
+     ],
+     "model_context": [],
+     "class": "BLOCKING-SAFETY",
+     "basis": "FLAG_BLOCK_OR_CRITICAL"
+    },
+    {
+     "container": "PreToolUse-Bash-chain",
+     "script": "../skills/claude-power-pack/hooks/carrier_bash_guard.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 3000,
+     "block": true,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/carrier_bash_guard.js",
+     "deny_shape": [
+      "PERMISSION_DECISION"
+     ],
+     "model_context": [
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "BLOCKING-SAFETY",
+     "basis": "FLAG_BLOCK_OR_CRITICAL"
+    },
+    {
+     "container": "PreToolUse-Bash-chain",
+     "script": "../skills/claude-power-pack/modules/zero-crash/hooks/process-sandbox.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 5000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "modules/zero-crash/hooks/process-sandbox.js",
+     "deny_shape": [],
+     "model_context": [
+      "ADDITIONAL_CONTEXT"
+     ],
+     "class": "UNKNOWN",
+     "basis": "NO_TABLE_ROW"
+    },
+    {
+     "container": "PreToolUse-Bash-chain",
+     "script": "../skills/claude-power-pack/modules/zero-crash/hooks/ovo-push-gate.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 5000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "modules/zero-crash/hooks/ovo-push-gate.js",
+     "deny_shape": [],
+     "model_context": [],
+     "class": "UNKNOWN",
+     "basis": "NO_TABLE_ROW"
+    },
+    {
+     "container": "PreToolUse-Bash-chain",
+     "script": "../skills/claude-power-pack/modules/zero-crash/hooks/skill-heat-map-advisor.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 5000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "modules/zero-crash/hooks/skill-heat-map-advisor.js",
+     "deny_shape": [],
+     "model_context": [
+      "ADDITIONAL_CONTEXT",
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "UNKNOWN",
+     "basis": "NO_TABLE_ROW"
+    },
+    {
+     "container": "PreToolUse-Bash-chain",
+     "script": "./quality-skill-gate.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 15000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/quality-skill-gate.js",
+     "deny_shape": [
+      "PERMISSION_DECISION"
+     ],
+     "model_context": [
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "BLOCKING-SAFETY",
+     "basis": "DENY_SHAPE_IN_SOURCE"
+    },
+    {
+     "container": "PreToolUse-Bash-chain",
+     "script": "../skills/claude-power-pack/modules/rtk-core/rtk-rewrite.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 10000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "modules/rtk-core/rtk-rewrite.js",
+     "deny_shape": [
+      "PERMISSION_DECISION"
+     ],
+     "model_context": [
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "BLOCKING-SAFETY",
+     "basis": "DENY_SHAPE_IN_SOURCE"
+    },
+    {
+     "container": "PreToolUse-Bash-chain",
+     "script": "../skills/claude-power-pack/hooks/graph_first_gate.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 4000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/graph_first_gate.js",
+     "deny_shape": [],
+     "model_context": [
+      "ADDITIONAL_CONTEXT",
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "UNKNOWN",
+     "basis": "NO_TABLE_ROW"
+    },
+    {
+     "container": "PreToolUse-Bash-chain",
+     "script": "../skills/claude-power-pack/hooks/cascade_check_bash.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 5000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/cascade_check_bash.js",
+     "deny_shape": [
+      "CONTINUE_FALSE"
+     ],
+     "model_context": [
+      "ADDITIONAL_CONTEXT",
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "BLOCKING-SAFETY",
+     "basis": "DENY_SHAPE_IN_SOURCE"
+    },
+    {
+     "container": "PreToolUse-Bash-chain",
+     "script": "../skills/claude-power-pack/hooks/legal_deploy_gate.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 16000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/legal_deploy_gate.js",
+     "deny_shape": [
+      "PERMISSION_DECISION",
+      "CONTINUE_FALSE"
+     ],
+     "model_context": [
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "BLOCKING-SAFETY",
+     "basis": "DENY_SHAPE_IN_SOURCE"
+    },
+    {
+     "container": "PreToolUse-Bash-chain",
+     "script": "../skills/claude-power-pack/hooks/destructive_doctrine_card.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 5000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/destructive_doctrine_card.js",
+     "deny_shape": [
+      "PERMISSION_DECISION",
+      "CONTINUE_FALSE"
+     ],
+     "model_context": [
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "BLOCKING-SAFETY",
+     "basis": "DENY_SHAPE_IN_SOURCE"
+    },
+    {
+     "container": "PreToolUse-Bash-chain",
+     "script": "../skills/claude-power-pack/hooks/doctrine_cards.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 5000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/doctrine_cards.js",
+     "deny_shape": [
+      "PERMISSION_DECISION"
+     ],
+     "model_context": [
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "BLOCKING-SAFETY",
+     "basis": "DENY_SHAPE_IN_SOURCE"
+    }
+   ],
+   "deadline_ms": null,
+   "deadline_status": "NONE_DECLARED",
+   "concurrency": 4
+  },
+  "PreToolUse-Edit-chain": {
+   "kind": "chain",
+   "entries": [
+    {
+     "container": "PreToolUse-Edit-chain",
+     "script": "../skills/claude-power-pack/hooks/secret_firewall_gate.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 8000,
+     "block": false,
+     "critical": true,
+     "resolved": "repo",
+     "repo_path": "hooks/secret_firewall_gate.js",
+     "deny_shape": [
+      "PERMISSION_DECISION",
+      "CONTINUE_FALSE"
+     ],
+     "model_context": [
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "BLOCKING-SAFETY",
+     "basis": "FLAG_BLOCK_OR_CRITICAL"
+    },
+    {
+     "container": "PreToolUse-Edit-chain",
+     "script": "./secret-scanner.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 8000,
+     "block": false,
+     "critical": true,
+     "resolved": "repo",
+     "repo_path": "hooks/secret-scanner.js",
+     "deny_shape": [
+      "EXIT_2"
+     ],
+     "model_context": [],
+     "class": "BLOCKING-SAFETY",
+     "basis": "FLAG_BLOCK_OR_CRITICAL"
+    },
+    {
+     "container": "PreToolUse-Edit-chain",
+     "script": "../skills/claude-power-pack/hooks/capsule_mutation_guard.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 4000,
+     "block": true,
+     "critical": true,
+     "resolved": "repo",
+     "repo_path": "hooks/capsule_mutation_guard.js",
+     "deny_shape": [
+      "PERMISSION_DECISION"
+     ],
+     "model_context": [
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "BLOCKING-SAFETY",
+     "basis": "FLAG_BLOCK_OR_CRITICAL"
+    },
+    {
+     "container": "PreToolUse-Edit-chain",
+     "script": "./quality-gate.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 5000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/quality-gate.js",
+     "deny_shape": [
+      "PERMISSION_DECISION"
+     ],
+     "model_context": [
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "BLOCKING-SAFETY",
+     "basis": "DENY_SHAPE_IN_SOURCE"
+    },
+    {
+     "container": "PreToolUse-Edit-chain",
+     "script": "./anti-thrash.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 5000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/anti-thrash.js",
+     "deny_shape": [
+      "EXIT_2"
+     ],
+     "model_context": [],
+     "class": "BLOCKING-SAFETY",
+     "basis": "DENY_SHAPE_IN_SOURCE"
+    },
+    {
+     "container": "PreToolUse-Edit-chain",
+     "script": "./readonly-prompts-guard.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 3000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/readonly-prompts-guard.js",
+     "deny_shape": [
+      "EXIT_2"
+     ],
+     "model_context": [],
+     "class": "BLOCKING-SAFETY",
+     "basis": "DENY_SHAPE_IN_SOURCE"
+    },
+    {
+     "container": "PreToolUse-Edit-chain",
+     "script": "../skills/claude-power-pack/modules/zero-crash/hooks/skill-heat-map-advisor.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 5000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "modules/zero-crash/hooks/skill-heat-map-advisor.js",
+     "deny_shape": [],
+     "model_context": [
+      "ADDITIONAL_CONTEXT",
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "UNKNOWN",
+     "basis": "NO_TABLE_ROW"
+    },
+    {
+     "container": "PreToolUse-Edit-chain",
+     "script": "../skills/claude-power-pack/modules/zero-crash/hooks/zero-fiction-gate.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 9000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "modules/zero-crash/hooks/zero-fiction-gate.js",
+     "deny_shape": [
+      "PERMISSION_DECISION"
+     ],
+     "model_context": [
+      "ADDITIONAL_CONTEXT",
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "BLOCKING-SAFETY",
+     "basis": "DENY_SHAPE_IN_SOURCE"
+    },
+    {
+     "container": "PreToolUse-Edit-chain",
+     "script": "./jobs-woz-gatekeeper.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 20000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/jobs-woz-gatekeeper.js",
+     "deny_shape": [
+      "PERMISSION_DECISION"
+     ],
+     "model_context": [
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "BLOCKING-SAFETY",
+     "basis": "DENY_SHAPE_IN_SOURCE"
+    },
+    {
+     "container": "PreToolUse-Edit-chain",
+     "script": "../skills/claude-power-pack/hooks/uqf_pre_edit_gate.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 8000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/uqf_pre_edit_gate.js",
+     "deny_shape": [],
+     "model_context": [
+      "ADDITIONAL_CONTEXT",
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "UNKNOWN",
+     "basis": "NO_TABLE_ROW"
+    },
+    {
+     "container": "PreToolUse-Edit-chain",
+     "script": "../skills/claude-power-pack/hooks/claude_md_firewall.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 8000,
+     "block": true,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/claude_md_firewall.js",
+     "deny_shape": [
+      "PERMISSION_DECISION"
+     ],
+     "model_context": [
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "BLOCKING-SAFETY",
+     "basis": "FLAG_BLOCK_OR_CRITICAL"
+    },
+    {
+     "container": "PreToolUse-Edit-chain",
+     "script": "../skills/claude-power-pack/hooks/console-popup-guard.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 4000,
+     "block": true,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/console-popup-guard.js",
+     "deny_shape": [
+      "DECISION_BLOCK",
+      "EXIT_2"
+     ],
+     "model_context": [],
+     "class": "BLOCKING-SAFETY",
+     "basis": "FLAG_BLOCK_OR_CRITICAL"
+    },
+    {
+     "container": "PreToolUse-Edit-chain",
+     "script": "../skills/claude-power-pack/hooks/cdio_visual_advisory.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 10000,
+     "block": true,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/cdio_visual_advisory.js",
+     "deny_shape": [
+      "PERMISSION_DECISION"
+     ],
+     "model_context": [
+      "ADDITIONAL_CONTEXT",
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "BLOCKING-SAFETY",
+     "basis": "FLAG_BLOCK_OR_CRITICAL"
+    }
+   ],
+   "deadline_ms": null,
+   "deadline_status": "NONE_DECLARED",
+   "concurrency": 6
+  },
+  "PreToolUse-Read-chain": {
+   "kind": "chain",
+   "entries": [
+    {
+     "container": "PreToolUse-Read-chain",
+     "script": "./gatekeeper-semantic.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 3000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/gatekeeper-semantic.js",
+     "deny_shape": [],
+     "model_context": [],
+     "class": "UNKNOWN",
+     "basis": "NO_TABLE_ROW"
+    },
+    {
+     "container": "PreToolUse-Read-chain",
+     "script": "./anti-thrash.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 5000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/anti-thrash.js",
+     "deny_shape": [
+      "EXIT_2"
+     ],
+     "model_context": [],
+     "class": "BLOCKING-SAFETY",
+     "basis": "DENY_SHAPE_IN_SOURCE"
+    },
+    {
+     "container": "PreToolUse-Read-chain",
+     "script": "../skills/claude-power-pack/hooks/graph_first_gate.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 4000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/graph_first_gate.js",
+     "deny_shape": [],
+     "model_context": [
+      "ADDITIONAL_CONTEXT",
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "UNKNOWN",
+     "basis": "NO_TABLE_ROW"
+    }
+   ],
+   "deadline_ms": null,
+   "deadline_status": "NONE_DECLARED",
+   "concurrency": 3
+  },
+  "SessionStart-chain": {
+   "kind": "chain",
+   "entries": [
+    {
+     "container": "SessionStart-chain",
+     "script": "./host-memory-floor.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 5000,
+     "block": false,
+     "critical": true,
+     "resolved": "live-only",
+     "repo_path": null,
+     "deny_shape": [],
+     "model_context": [],
+     "class": "BLOCKING-SAFETY",
+     "basis": "FLAG_BLOCK_OR_CRITICAL"
+    },
+    {
+     "container": "SessionStart-chain",
+     "script": "../skills/claude-power-pack/hooks/session_start_hub.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 10000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/session_start_hub.js",
+     "deny_shape": [],
+     "model_context": [
+      "ADDITIONAL_CONTEXT"
+     ],
+     "class": "UNKNOWN",
+     "basis": "NO_TABLE_ROW"
+    },
+    {
+     "container": "SessionStart-chain",
+     "script": "./learning-sentinel.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 3000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/learning-sentinel.js",
+     "deny_shape": [],
+     "model_context": [
+      "ADDITIONAL_CONTEXT",
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "UNKNOWN",
+     "basis": "NO_TABLE_ROW"
+    },
+    {
+     "container": "SessionStart-chain",
+     "script": "../skills/claude-power-pack/hooks/backlog_ledger_refresh.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 3000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/backlog_ledger_refresh.js",
+     "deny_shape": [],
+     "model_context": [
+      "ADDITIONAL_CONTEXT",
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "UNKNOWN",
+     "basis": "NO_TABLE_ROW"
+    }
+   ],
+   "deadline_ms": 4000,
+   "deadline_status": "SET",
+   "concurrency": 3
+  },
+  "UserPromptSubmit-chain": {
+   "kind": "chain",
+   "entries": [
+    {
+     "container": "UserPromptSubmit-chain",
+     "script": "./dead-closer-recovery.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 6000,
+     "block": false,
+     "critical": true,
+     "resolved": "repo",
+     "repo_path": "hooks/dead-closer-recovery.js",
+     "deny_shape": [
+      "DECISION_BLOCK"
+     ],
+     "model_context": [
+      "ADDITIONAL_CONTEXT",
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "BLOCKING-SAFETY",
+     "basis": "FLAG_BLOCK_OR_CRITICAL"
+    },
+    {
+     "container": "UserPromptSubmit-chain",
+     "script": "./correction-guard.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 8000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/correction-guard.js",
+     "deny_shape": [],
+     "model_context": [
+      "ADDITIONAL_CONTEXT",
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "UNKNOWN",
+     "basis": "NO_TABLE_ROW"
+    },
+    {
+     "container": "UserPromptSubmit-chain",
+     "script": "./prd-keyword-sentinel.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 8000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/prd-keyword-sentinel.js",
+     "deny_shape": [],
+     "model_context": [
+      "ADDITIONAL_CONTEXT",
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "UNKNOWN",
+     "basis": "NO_TABLE_ROW"
+    },
+    {
+     "container": "UserPromptSubmit-chain",
+     "script": "./corpus-reuse-sentinel.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 5000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/corpus-reuse-sentinel.js",
+     "deny_shape": [],
+     "model_context": [
+      "ADDITIONAL_CONTEXT",
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "UNKNOWN",
+     "basis": "NO_TABLE_ROW"
+    },
+    {
+     "container": "UserPromptSubmit-chain",
+     "script": "../skills/claude-power-pack/hooks/gsd_x_tier.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 8000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/gsd_x_tier.js",
+     "deny_shape": [],
+     "model_context": [
+      "ADDITIONAL_CONTEXT",
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "UNKNOWN",
+     "basis": "NO_TABLE_ROW"
+    },
+    {
+     "container": "UserPromptSubmit-chain",
+     "script": "../skills/claude-power-pack/hooks/d2a_gate.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 12000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/d2a_gate.js",
+     "deny_shape": [],
+     "model_context": [
+      "ADDITIONAL_CONTEXT",
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "UNKNOWN",
+     "basis": "NO_TABLE_ROW"
+    },
+    {
+     "container": "UserPromptSubmit-chain",
+     "script": "../skills/claude-power-pack/tools/jit_skill_loader.py",
+     "kind": "chain",
+     "exe_kind": "python",
+     "timeout_ms": 12000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "tools/jit_skill_loader.py",
+     "deny_shape": [],
+     "model_context": [
+      "ADDITIONAL_CONTEXT",
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "UNKNOWN",
+     "basis": "NO_TABLE_ROW"
+    },
+    {
+     "container": "UserPromptSubmit-chain",
+     "script": "../skills/claude-power-pack/tools/design_route_prompt.py",
+     "kind": "chain",
+     "exe_kind": "python",
+     "timeout_ms": 6000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "tools/design_route_prompt.py",
+     "deny_shape": [],
+     "model_context": [
+      "ADDITIONAL_CONTEXT",
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "UNKNOWN",
+     "basis": "NO_TABLE_ROW"
+    }
+   ],
+   "deadline_ms": 3000,
+   "deadline_status": "SET",
+   "concurrency": 4
+  },
+  "UserPromptSubmit-deadline-drill-chain": {
+   "kind": "chain",
+   "entries": [
+    {
+     "container": "UserPromptSubmit-deadline-drill-chain",
+     "script": "./tests/fixtures/drill-fast-critical.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 5000,
+     "block": false,
+     "critical": true,
+     "resolved": "fixture",
+     "repo_path": null,
+     "deny_shape": [],
+     "model_context": [],
+     "class": "BLOCKING-SAFETY",
+     "basis": "FLAG_BLOCK_OR_CRITICAL"
+    },
+    {
+     "container": "UserPromptSubmit-deadline-drill-chain",
+     "script": "./tests/fixtures/drill-slow-straggler.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 25000,
+     "block": false,
+     "critical": false,
+     "resolved": "fixture",
+     "repo_path": null,
+     "deny_shape": [],
+     "model_context": [],
+     "class": "UNKNOWN",
+     "basis": "UNRESOLVED_LIVE_ONLY"
+    }
+   ],
+   "deadline_ms": 1500,
+   "deadline_status": "SET",
+   "concurrency": null
+  },
+  "UserPromptSubmit-deadline-drill-control-chain": {
+   "kind": "chain",
+   "entries": [
+    {
+     "container": "UserPromptSubmit-deadline-drill-control-chain",
+     "script": "./tests/fixtures/drill-fast-critical.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 5000,
+     "block": false,
+     "critical": true,
+     "resolved": "fixture",
+     "repo_path": null,
+     "deny_shape": [],
+     "model_context": [],
+     "class": "BLOCKING-SAFETY",
+     "basis": "FLAG_BLOCK_OR_CRITICAL"
+    },
+    {
+     "container": "UserPromptSubmit-deadline-drill-control-chain",
+     "script": "./tests/fixtures/drill-pooled-fast.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 5000,
+     "block": false,
+     "critical": false,
+     "resolved": "fixture",
+     "repo_path": null,
+     "deny_shape": [],
+     "model_context": [],
+     "class": "UNKNOWN",
+     "basis": "UNRESOLVED_LIVE_ONLY"
+    }
+   ],
+   "deadline_ms": null,
+   "deadline_status": "NONE_DECLARED",
+   "concurrency": null
+  },
+  "UserPromptSubmit-deadline-drill-critstarve-chain": {
+   "kind": "chain",
+   "entries": [
+    {
+     "container": "UserPromptSubmit-deadline-drill-critstarve-chain",
+     "script": "./tests/fixtures/drill-slow-critical.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 9000,
+     "block": false,
+     "critical": true,
+     "resolved": "fixture",
+     "repo_path": null,
+     "deny_shape": [],
+     "model_context": [],
+     "class": "BLOCKING-SAFETY",
+     "basis": "FLAG_BLOCK_OR_CRITICAL"
+    },
+    {
+     "container": "UserPromptSubmit-deadline-drill-critstarve-chain",
+     "script": "./tests/fixtures/drill-spawn-sentinel.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 9000,
+     "block": false,
+     "critical": false,
+     "resolved": "fixture",
+     "repo_path": null,
+     "deny_shape": [],
+     "model_context": [],
+     "class": "UNKNOWN",
+     "basis": "UNRESOLVED_LIVE_ONLY"
+    }
+   ],
+   "deadline_ms": 1500,
+   "deadline_status": "SET",
+   "concurrency": null
+  },
+  "PostToolUse-Bash-chain": {
+   "kind": "chain",
+   "entries": [
+    {
+     "container": "PostToolUse-Bash-chain",
+     "script": "../skills/claude-power-pack/modules/zero-crash/hooks/tty-restore.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 6000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "modules/zero-crash/hooks/tty-restore.js",
+     "deny_shape": [],
+     "model_context": [],
+     "class": "UNKNOWN",
+     "basis": "NO_TABLE_ROW"
+    },
+    {
+     "container": "PostToolUse-Bash-chain",
+     "script": "./bug-hunter-learning.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 8000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/bug-hunter-learning.js",
+     "deny_shape": [],
+     "model_context": [],
+     "class": "UNKNOWN",
+     "basis": "NO_TABLE_ROW"
+    },
+    {
+     "container": "PostToolUse-Bash-chain",
+     "script": "../skills/claude-power-pack/hooks/osa_deploy_detector.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 8000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/osa_deploy_detector.js",
+     "deny_shape": [],
+     "model_context": [
+      "ADDITIONAL_CONTEXT",
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "UNKNOWN",
+     "basis": "NO_TABLE_ROW"
+    },
+    {
+     "container": "PostToolUse-Bash-chain",
+     "script": "../skills/claude-power-pack/hooks/bug-hunter-ceps-bridge.js",
+     "kind": "chain",
+     "exe_kind": "node",
+     "timeout_ms": 8000,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/bug-hunter-ceps-bridge.js",
+     "deny_shape": [],
+     "model_context": [
+      "ADDITIONAL_CONTEXT",
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "UNKNOWN",
+     "basis": "NO_TABLE_ROW"
+    }
+   ],
+   "deadline_ms": null,
+   "deadline_status": "NONE_DECLARED",
+   "concurrency": 4
+  },
+  "PreToolUse-default": {
+   "kind": "event",
+   "entries": [
+    {
+     "container": "PreToolUse-default",
+     "script": "./session-init.js",
+     "kind": "event",
+     "exe_kind": null,
+     "timeout_ms": null,
+     "block": false,
+     "critical": false,
+     "resolved": "live-only",
+     "repo_path": null,
+     "deny_shape": [],
+     "model_context": [],
+     "class": "UNKNOWN",
+     "basis": "UNRESOLVED_LIVE_ONLY"
+    },
+    {
+     "container": "PreToolUse-default",
+     "script": "./lazarus-heartbeat.js",
+     "kind": "event",
+     "exe_kind": null,
+     "timeout_ms": null,
+     "block": false,
+     "critical": false,
+     "resolved": "live-only",
+     "repo_path": null,
+     "deny_shape": [],
+     "model_context": [],
+     "class": "UNKNOWN",
+     "basis": "UNRESOLVED_LIVE_ONLY"
+    },
+    {
+     "container": "PreToolUse-default",
+     "script": "../skills/claude-power-pack/modules/harness/intent_lock.js",
+     "kind": "event",
+     "exe_kind": null,
+     "timeout_ms": null,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "modules/harness/intent_lock.js",
+     "deny_shape": [],
+     "model_context": [
+      "ADDITIONAL_CONTEXT"
+     ],
+     "class": "UNKNOWN",
+     "basis": "NO_TABLE_ROW"
+    }
+   ],
+   "deadline_ms": null,
+   "deadline_status": "NONE_DECLARED",
+   "concurrency": null
+  },
+  "PostToolUse-default": {
+   "kind": "event",
+   "entries": [
+    {
+     "container": "PostToolUse-default",
+     "script": "./turn-boundary-breadcrumb-close.js",
+     "kind": "event",
+     "exe_kind": null,
+     "timeout_ms": null,
+     "block": false,
+     "critical": false,
+     "resolved": "live-only",
+     "repo_path": null,
+     "deny_shape": [],
+     "model_context": [],
+     "class": "UNKNOWN",
+     "basis": "UNRESOLVED_LIVE_ONLY"
+    },
+    {
+     "container": "PostToolUse-default",
+     "script": "../skills/claude-power-pack/hooks/mission_wall.js",
+     "kind": "event",
+     "exe_kind": null,
+     "timeout_ms": null,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/mission_wall.js",
+     "deny_shape": [
+      "DECISION_BLOCK"
+     ],
+     "model_context": [],
+     "class": "BLOCKING-SAFETY",
+     "basis": "DENY_SHAPE_IN_SOURCE"
+    },
+    {
+     "container": "PostToolUse-default",
+     "script": "../skills/claude-power-pack/hooks/rollover_wall.js",
+     "kind": "event",
+     "exe_kind": null,
+     "timeout_ms": null,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/rollover_wall.js",
+     "deny_shape": [
+      "DECISION_BLOCK"
+     ],
+     "model_context": [],
+     "class": "BLOCKING-SAFETY",
+     "basis": "DENY_SHAPE_IN_SOURCE"
+    },
+    {
+     "container": "PostToolUse-default",
+     "script": "../skills/claude-power-pack/hooks/semantic_breaker.js",
+     "kind": "event",
+     "exe_kind": null,
+     "timeout_ms": null,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/semantic_breaker.js",
+     "deny_shape": [
+      "PERMISSION_DECISION"
+     ],
+     "model_context": [
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "BLOCKING-SAFETY",
+     "basis": "DENY_SHAPE_IN_SOURCE"
+    },
+    {
+     "container": "PostToolUse-default",
+     "script": "./session-logger.js",
+     "kind": "event",
+     "exe_kind": null,
+     "timeout_ms": null,
+     "block": false,
+     "critical": false,
+     "resolved": "live-only",
+     "repo_path": null,
+     "deny_shape": [],
+     "model_context": [],
+     "class": "UNKNOWN",
+     "basis": "UNRESOLVED_LIVE_ONLY"
+    },
+    {
+     "container": "PostToolUse-default",
+     "script": "./dna-flywheel.js",
+     "kind": "event",
+     "exe_kind": null,
+     "timeout_ms": null,
+     "block": false,
+     "critical": false,
+     "resolved": "live-only",
+     "repo_path": null,
+     "deny_shape": [],
+     "model_context": [],
+     "class": "UNKNOWN",
+     "basis": "UNRESOLVED_LIVE_ONLY"
+    },
+    {
+     "container": "PostToolUse-default",
+     "script": "./trace-emitter.js",
+     "kind": "event",
+     "exe_kind": null,
+     "timeout_ms": null,
+     "block": false,
+     "critical": false,
+     "resolved": "live-only",
+     "repo_path": null,
+     "deny_shape": [],
+     "model_context": [],
+     "class": "UNKNOWN",
+     "basis": "UNRESOLVED_LIVE_ONLY"
+    }
+   ],
+   "deadline_ms": null,
+   "deadline_status": "NONE_DECLARED",
+   "concurrency": null
+  },
+  "UserPromptSubmit-default": {
+   "kind": "event",
+   "entries": [
+    {
+     "container": "UserPromptSubmit-default",
+     "script": "./power-pack-reminder.js",
+     "kind": "event",
+     "exe_kind": null,
+     "timeout_ms": null,
+     "block": false,
+     "critical": false,
+     "resolved": "live-only",
+     "repo_path": null,
+     "deny_shape": [],
+     "model_context": [],
+     "class": "UNKNOWN",
+     "basis": "UNRESOLVED_LIVE_ONLY"
+    },
+    {
+     "container": "UserPromptSubmit-default",
+     "script": "./baseline-translator.js",
+     "kind": "event",
+     "exe_kind": null,
+     "timeout_ms": null,
+     "block": false,
+     "critical": false,
+     "resolved": "live-only",
+     "repo_path": null,
+     "deny_shape": [],
+     "model_context": [],
+     "class": "UNKNOWN",
+     "basis": "UNRESOLVED_LIVE_ONLY"
+    },
+    {
+     "container": "UserPromptSubmit-default",
+     "script": "../skills/claude-power-pack/hooks/creative_grounding.js",
+     "kind": "event",
+     "exe_kind": null,
+     "timeout_ms": null,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/creative_grounding.js",
+     "deny_shape": [],
+     "model_context": [
+      "ADDITIONAL_CONTEXT",
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "UNKNOWN",
+     "basis": "NO_TABLE_ROW"
+    }
+   ],
+   "deadline_ms": null,
+   "deadline_status": "NONE_DECLARED",
+   "concurrency": null
+  },
+  "PreToolUse-Bash-default": {
+   "kind": "event",
+   "entries": [
+    {
+     "container": "PreToolUse-Bash-default",
+     "script": "./turn-boundary-breadcrumb.js",
+     "kind": "event",
+     "exe_kind": null,
+     "timeout_ms": null,
+     "block": false,
+     "critical": false,
+     "resolved": "live-only",
+     "repo_path": null,
+     "deny_shape": [],
+     "model_context": [],
+     "class": "UNKNOWN",
+     "basis": "UNRESOLVED_LIVE_ONLY"
+    },
+    {
+     "container": "PreToolUse-Bash-default",
+     "script": "../skills/claude-power-pack/hooks/session_budget_guard.js",
+     "kind": "event",
+     "exe_kind": null,
+     "timeout_ms": null,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/session_budget_guard.js",
+     "deny_shape": [
+      "PERMISSION_DECISION",
+      "CONTINUE_FALSE"
+     ],
+     "model_context": [
+      "ADDITIONAL_CONTEXT",
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "BLOCKING-SAFETY",
+     "basis": "DENY_SHAPE_IN_SOURCE"
+    },
+    {
+     "container": "PreToolUse-Bash-default",
+     "script": "../skills/claude-power-pack/hooks/semantic_breaker.js",
+     "kind": "event",
+     "exe_kind": null,
+     "timeout_ms": null,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/semantic_breaker.js",
+     "deny_shape": [
+      "PERMISSION_DECISION"
+     ],
+     "model_context": [
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "BLOCKING-SAFETY",
+     "basis": "DENY_SHAPE_IN_SOURCE"
+    }
+   ],
+   "deadline_ms": null,
+   "deadline_status": "NONE_DECLARED",
+   "concurrency": null
+  },
+  "PreToolUse-Edit-default": {
+   "kind": "event",
+   "entries": [
+    {
+     "container": "PreToolUse-Edit-default",
+     "script": "./turn-boundary-breadcrumb.js",
+     "kind": "event",
+     "exe_kind": null,
+     "timeout_ms": null,
+     "block": false,
+     "critical": false,
+     "resolved": "live-only",
+     "repo_path": null,
+     "deny_shape": [],
+     "model_context": [],
+     "class": "UNKNOWN",
+     "basis": "UNRESOLVED_LIVE_ONLY"
+    },
+    {
+     "container": "PreToolUse-Edit-default",
+     "script": "../skills/claude-power-pack/hooks/session_budget_guard.js",
+     "kind": "event",
+     "exe_kind": null,
+     "timeout_ms": null,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/session_budget_guard.js",
+     "deny_shape": [
+      "PERMISSION_DECISION",
+      "CONTINUE_FALSE"
+     ],
+     "model_context": [
+      "ADDITIONAL_CONTEXT",
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "BLOCKING-SAFETY",
+     "basis": "DENY_SHAPE_IN_SOURCE"
+    },
+    {
+     "container": "PreToolUse-Edit-default",
+     "script": "../skills/claude-power-pack/hooks/semantic_breaker.js",
+     "kind": "event",
+     "exe_kind": null,
+     "timeout_ms": null,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/semantic_breaker.js",
+     "deny_shape": [
+      "PERMISSION_DECISION"
+     ],
+     "model_context": [
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "BLOCKING-SAFETY",
+     "basis": "DENY_SHAPE_IN_SOURCE"
+    }
+   ],
+   "deadline_ms": null,
+   "deadline_status": "NONE_DECLARED",
+   "concurrency": null
+  },
+  "PreToolUse-Read-default": {
+   "kind": "event",
+   "entries": [
+    {
+     "container": "PreToolUse-Read-default",
+     "script": "./turn-boundary-breadcrumb.js",
+     "kind": "event",
+     "exe_kind": null,
+     "timeout_ms": null,
+     "block": false,
+     "critical": false,
+     "resolved": "live-only",
+     "repo_path": null,
+     "deny_shape": [],
+     "model_context": [],
+     "class": "UNKNOWN",
+     "basis": "UNRESOLVED_LIVE_ONLY"
+    },
+    {
+     "container": "PreToolUse-Read-default",
+     "script": "../skills/claude-power-pack/hooks/session_budget_guard.js",
+     "kind": "event",
+     "exe_kind": null,
+     "timeout_ms": null,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/session_budget_guard.js",
+     "deny_shape": [
+      "PERMISSION_DECISION",
+      "CONTINUE_FALSE"
+     ],
+     "model_context": [
+      "ADDITIONAL_CONTEXT",
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "BLOCKING-SAFETY",
+     "basis": "DENY_SHAPE_IN_SOURCE"
+    },
+    {
+     "container": "PreToolUse-Read-default",
+     "script": "../skills/claude-power-pack/hooks/semantic_breaker.js",
+     "kind": "event",
+     "exe_kind": null,
+     "timeout_ms": null,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/semantic_breaker.js",
+     "deny_shape": [
+      "PERMISSION_DECISION"
+     ],
+     "model_context": [
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "BLOCKING-SAFETY",
+     "basis": "DENY_SHAPE_IN_SOURCE"
+    }
+   ],
+   "deadline_ms": null,
+   "deadline_status": "NONE_DECLARED",
+   "concurrency": null
+  },
+  "PreToolUse-Agent-default": {
+   "kind": "event",
+   "entries": [
+    {
+     "container": "PreToolUse-Agent-default",
+     "script": "../skills/claude-power-pack/hooks/session_budget_guard.js",
+     "kind": "event",
+     "exe_kind": null,
+     "timeout_ms": null,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/session_budget_guard.js",
+     "deny_shape": [
+      "PERMISSION_DECISION",
+      "CONTINUE_FALSE"
+     ],
+     "model_context": [
+      "ADDITIONAL_CONTEXT",
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "BLOCKING-SAFETY",
+     "basis": "DENY_SHAPE_IN_SOURCE"
+    },
+    {
+     "container": "PreToolUse-Agent-default",
+     "script": "../skills/claude-power-pack/hooks/amr_fence.js",
+     "kind": "event",
+     "exe_kind": null,
+     "timeout_ms": null,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/amr_fence.js",
+     "deny_shape": [
+      "PERMISSION_DECISION"
+     ],
+     "model_context": [
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "BLOCKING-SAFETY",
+     "basis": "DENY_SHAPE_IN_SOURCE"
+    },
+    {
+     "container": "PreToolUse-Agent-default",
+     "script": "../skills/claude-power-pack/hooks/cognitive_admission.js",
+     "kind": "event",
+     "exe_kind": null,
+     "timeout_ms": null,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/cognitive_admission.js",
+     "deny_shape": [
+      "PERMISSION_DECISION"
+     ],
+     "model_context": [
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "BLOCKING-SAFETY",
+     "basis": "DENY_SHAPE_IN_SOURCE"
+    },
+    {
+     "container": "PreToolUse-Agent-default",
+     "script": "../skills/claude-power-pack/hooks/semantic_breaker.js",
+     "kind": "event",
+     "exe_kind": null,
+     "timeout_ms": null,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/semantic_breaker.js",
+     "deny_shape": [
+      "PERMISSION_DECISION"
+     ],
+     "model_context": [
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "BLOCKING-SAFETY",
+     "basis": "DENY_SHAPE_IN_SOURCE"
+    }
+   ],
+   "deadline_ms": null,
+   "deadline_status": "NONE_DECLARED",
+   "concurrency": null
+  },
+  "PreToolUse-Web-default": {
+   "kind": "event",
+   "entries": [
+    {
+     "container": "PreToolUse-Web-default",
+     "script": "../skills/claude-power-pack/hooks/research_reuse.js",
+     "kind": "event",
+     "exe_kind": null,
+     "timeout_ms": null,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/research_reuse.js",
+     "deny_shape": [
+      "PERMISSION_DECISION"
+     ],
+     "model_context": [
+      "ADDITIONAL_CONTEXT",
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "BLOCKING-SAFETY",
+     "basis": "DENY_SHAPE_IN_SOURCE"
+    }
+   ],
+   "deadline_ms": null,
+   "deadline_status": "NONE_DECLARED",
+   "concurrency": null
+  },
+  "PostToolUse-Web-default": {
+   "kind": "event",
+   "entries": [
+    {
+     "container": "PostToolUse-Web-default",
+     "script": "../skills/claude-power-pack/hooks/research_reuse.js",
+     "kind": "event",
+     "exe_kind": null,
+     "timeout_ms": null,
+     "block": false,
+     "critical": false,
+     "resolved": "repo",
+     "repo_path": "hooks/research_reuse.js",
+     "deny_shape": [
+      "PERMISSION_DECISION"
+     ],
+     "model_context": [
+      "ADDITIONAL_CONTEXT",
+      "HOOK_SPECIFIC_OUTPUT"
+     ],
+     "class": "BLOCKING-SAFETY",
+     "basis": "DENY_SHAPE_IN_SOURCE"
+    }
+   ],
+   "deadline_ms": null,
+   "deadline_status": "NONE_DECLARED",
+   "concurrency": null
+  }
+ }
+}

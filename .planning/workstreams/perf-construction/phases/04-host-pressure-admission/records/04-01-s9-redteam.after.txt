@@ -1,0 +1,123 @@
+# record_run
+# date_utc: 2026-11-23T00:03:52.237098+00:00
+# head: 5c0e52a6
+# cmd: python3 tools/test_s9_redteam.py
+PASS V-S9RT-REGISTRY 15 claims; texts equal to the test's own copy for ids 1-14; id 15 declared
+PASS V-S9RT-SUBATTACKS-DECLARED every claim declares its sub-attacks before they run
+PASS V-S9RT-CLOSED-SET VERDICTS=('HELD', 'BREACH', 'UNMEASURED'); a PASS sub-result is rejected=True
+PASS V-S9RT-NO-PASS-TOKEN verdicts seen ['HELD']
+PASS V-S9RT-HELD-NEEDS-CONTROL fired->HELD not-fired->UNMEASURED unset->UNMEASURED
+PASS V-S9RT-WORST-OF ['BREACH', 'BREACH', 'BREACH', 'UNMEASURED', 'HELD']
+PASS V-S9RT-PLANE-NAMED unknown plane refused=True; reasonless UNMEASURED gets 'unspecified'; 25 real sub-results carry a plane
+PASS V-S9RT-NONESSENTIAL non-essential UNMEASURED does not drag (HELD); a non-essential BREACH still counts (BREACH)
+PASS V-S9RT-READONLY 939 opens observed, 0 host write opens; pinned prefix sha256 b47ff018fb44 unchanged
+PASS V-S9RT-READONLY-PROBE-FIRES probe recorded ["open('ledger.jsonl','w')", "os.makedirs('sub')", "os.mkdir('sub')"]
+PASS V-S9RT-READONLY-COPY-IDENTICAL read_prefix over a temp copy: 0 writes, sha256 unchanged
+PASS V-S9RT-PATCH-RESTORED attribute scopes restore the original objects after normal and raised exits and after every attack
+PASS V-S9RT-C14-CONTROLS diff control flagged ['gsd-core/bin/x.cjs'], mutate classified 1, injected switch found=True
+PASS V-S9RT-C14-SUBJECT 205 branch files diffed, 743 core files swept for 14 names; verdict HELD
+PASS V-S9RT-C10-CONTROLS mutant terminal-without-proof -> RECOVERED_DONE on ['forced_status_not_done']; real matching values -> RECOVERED_DONE
+PASS V-S9RT-C10-CASES 6 cases through the real reconcile; call-count probe 15 (6 base + 6 mutant + 1 negative + 2 forced-status)
+PASS V-S9RT-C10-SUBJECT host-evidence is reported apart as UNMEASURED(no host receipts), never counted as a pass
+PASS V-S9RT-C7-CONTROLS expand-authority: 39 calls past the cap without a trip; lease cap removed: 30 renewals; seq ignored: 30 grants
+PASS V-S9RT-C7-SUBJECT real judge: 20 renewals then trip at call 43; one grant per hold; lapse trips at call 11; verdict HELD
+PASS V-S9RT-C8-CONTROLS count mode moves the STATE.md-only fingerprint (True); a real code change moves it and renews (True)
+PASS V-S9RT-C8-SUBJECT 9 noise cases and 6 real-work cases through the real progress_fingerprint and judge; gamed=[] blind=[]; verdict HELD
+PASS V-S9RT-C4-CONTROLS injected reachable ROADMAP writer found=True; whitespace-stripping normaliser merges ['empty_vs_nl', 'trailing_newline', 'trailing_space']
+PASS V-S9RT-C4-SUBJECT functions>1000 True files>100 True, 2 ROADMAP writers (0 reachable); 312 byte inputs; verdict HELD
+PASS V-S9RT-C9-CONTROLS filters off: spurious items present=True; seeded ask emitted 1 Owner-class item(s)
+PASS V-S9RT-C9-SUBJECT 23 workstreams, sources>=5 True; real spurious 0 dup 0; production frequency UNMEASURED (non-essential, reported apart)
+PASS V-S9RT-C11-CONTROLS injected launch-on-independent_work consumer found=True; predicate true on the seeded qualifying ledger=True, false on both negative seeds
+PASS V-S9RT-C11-SUBJECT 976 files swept, 14 readers, 0 consumers; pin 6339 rows, 55 mission_blocked, 0 independent_work=true; verdict HELD
+PASS V-S9RT-C13-CONTROLS injected summed-hours decider found; a summed-hours labeller calls the serialized arm a gain while the critical path says it is not
+PASS V-S9RT-C13-SUBJECT 976 files swept, 2 readers, 0 deciders; parallel {'summed_mission_hours': 6.0, 'wall_clock_hours': 3.0, 'critical_path_wall_clock_hours': 3.0} vs serialized {'summed_mission_hours': 4.0, 'wall_clock_hours': 4.0, 'critical_path_wall_clock_hours': 4.0}; verdict HELD
+PASS V-S9RT-C6-CONTROLS injected wait-on-mission wake and flock found; an open claim blocks another mission under the occupied-capacity mutant; the mutant wait-for graph has a cycle
+PASS V-S9RT-C6-SUBJECT 160 claims, 0 late, 0 never followed up; 1 of 2266 refusal rows sit inside another mission's open claim, refusal code reads other missions=[]; 3 held then 0 after the delta; verdict HELD
+PASS V-S9RT-C12-CONTROLS a fully telemetered seeded ledger has bias 0.0 h; the same ledger without terminal rows has 9.0 h; pin-ended windows (guard removed) read 27483.911 h and breach=True; repaired flow_replay on the cut ledger {'hours': 11.0, 'open_at_pin': 1, 'unobserved_tail_hours': 9.0}
+PASS V-S9RT-C12-SUBJECT flow_replay 1651.959 h vs independent bounded 1695.94 h (pin-ended 27527.892 h) with open=92 and unobserved tail 25831.952 h beside it; unmeasured kept apart {'measured_total': 249, 'unmeasured_apart': 17, 'rows_mapped_of_total': [588, 3400]}; verdict HELD
+PASS V-S9RT-C15-CONTROLS a planted 15-item numbered list is found by the same search that finds none in the real files
+PASS V-S9RT-C15-SUBJECT 5 files searched, claim text found=False, verdict UNMEASURED: claim-text-search:claim text absent; OWNER DECISION NEEDED
+PASS V-S9RT-C3-CONTROLS a fixed-time resolution leaves the span unchanged and a notify-delay resolution shortens it by the whole earlier-stop interval
+PASS V-S9RT-C3-SUBJECT one S2 incident, stop 1127.0 s earlier, mission ended 'owner dead and budget: older than 5.0 h'; verdict UNMEASURED
+PASS V-S9RT-C5-CONTROLS a fast-superseded set reads 1.0, a slow set 0.0, and untimed packets are unmeasured rather than zero
+PASS V-S9RT-C5-SUBJECT 2 of 16 timed packets superseded within 24 h (1 untimed), share 0.125; verdict UNMEASURED
+PASS V-S9RT-C1-CONTROLS deleting the confound qualifiers makes the comparison read as unqualified; a confounded sample's gap vanishes once stratified
+PASS V-S9RT-C1-SUBJECT 1 effect comparison(s), 0 unqualified; wording HELD, effect UNMEASURED, claim UNMEASURED
+PASS V-S9RT-C2-CONTROLS a seeded dearer rotation is proven, a cheaper one held, an in-between one unmeasured
+PASS V-S9RT-C2-SUBJECT 6 rotation epochs, 0 observable compactions of 5 ledgered; verdict UNMEASURED
+PASS V-S9RT-ALL-ATTACKED 15 of 15 claims have an attack; placeholders []
+PASS V-S9RT-REUSE-HASHED matching blob and pin load=True; a different pin load=False; one extra byte in the working copy load=False
+PASS V-S9RT-PIN a pin with one hex digit changed is Inconclusive=True; the real pin loads 6339 rows
+PASS V-S9RT-DETERMINISTIC two whole runs equal=True over 15 claims (generated_at pinned)
+FAIL V-S9RT-REPORT-REPRODUCES the committed 08-REDTEAM.json equals a fresh run minus generated_at: False; claims differing [6, 9, 11, 13]
+PASS V-S9RT-DRILL-M-ATTACK-DROPPED expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-C1-CTL-OFF expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-C1-QUALIFIER-BLIND expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-C1-STRATA-OFF expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-C10-CASE-DROPPED expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-C10-HOSTEVIDENCE-HELD expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-C10-MUTANT-OFF expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-C10-NEG-BLIND expected_red=1 still_green=[] baseline_not_green=[] crashed=['c10']
+PASS V-S9RT-DRILL-M-C10-NOT-COUNTED expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-C11-CTL-OFF expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-C11-PIN-FALSE-TRUE expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-C11-READERS-NONE expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-C11-SEED-NOT-TRUE expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-C12-JUDGE-BLIND expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-C12-OPEN-AT-LAST expected_red=2 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-C12-TERMINAL-BLIND expected_red=2 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-C12-TOL-HUGE expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-C13-CTL-OFF expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-C13-READERS-NONE expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-C14-CLASSIFY-ALL-READ expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-C14-CORE-ABSENT expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-C14-DIFF-BLIND expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-C15-CTL-OFF expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-C15-FILES-NONE expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-C15-LIST-BLIND expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-C2-CTL-OFF expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-C2-ROTATION-NONE expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-C3-CTL-OFF expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-C3-EXO-BLIND expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-C4-CTL-OFF expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-C4-ENTRIES-EMPTY expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-C4-FILES-FEW expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-C5-CTL-OFF expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-C5-SUPERSEDED-NONE expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-C5-UNTIMED-ZERO expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-C6-CLAIMS-NONE expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-C6-CTL-OFF expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-C6-CYCLE-BLIND expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-C6-DELTA-NOT-RELEASED expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-C7-LOOP-SHORT expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-C7-MUTANT-OFF expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-C8-CASE-DROPPED expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-C8-CTL-OFF expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-C8-WORK-DROPPED expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-C9-CTL-OFF expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-C9-SEED-DROPPED expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-C9-SWEEP-EMPTY expected_red=1 still_green=[] baseline_not_green=[] crashed=['c9']
+PASS V-S9RT-DRILL-M-HELD-WITHOUT-CONTROL expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-NONDETERMINISTIC expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-NONESSENTIAL-DECIDES expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-PATCH-NOT-RESTORED expected_red=1 still_green=[] baseline_not_green=[] crashed=['patch']
+PASS V-S9RT-DRILL-M-PIN-UNVERIFIED expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-PLANE-NOT-CHECKED expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-PROBE-BLIND-MKDIR expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-PROBE-BLIND-WRITE expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-RANK-INVERTED expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-REASON-DROPPED expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-REGISTRY-TEXT expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+FAIL V-S9RT-DRILL-M-REPORT-DRIFT expected_red=1 still_green=[] baseline_not_green=['V-S9RT-REPORT-REPRODUCES'] crashed=[]
+PASS V-S9RT-DRILL-M-REUSE-UNHASHED expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-SUBATTACK-EMPTY expected_red=1 still_green=[] baseline_not_green=[] crashed=[]
+PASS V-S9RT-DRILL-M-VERDICT-NOT-VALIDATED expected_red=1 still_green=[] baseline_not_green=[] crashed=['closed']
+PASS V-S9RT-DRILL-M-VERDICT-SET-WIDENED expected_red=1 still_green=[] baseline_not_green=[] crashed=['closed']
+FAIL V-S9RT-DRILL-CONTROL-NOOP-FIRES no-op substitution left 44/45 mapped gates green: all 62/63 drills would read it as a failure
+PASS V-S9RT-DRILL-REAL-FILE-UNTOUCHED tools/redteam_s9.py sha256 c83800cfdca7 identical before and after 64 mutated copies
+PASS V-S9RT-MUTANT-MAP unmapped=[] stale=[] undefined=[] unused=[] gates=48 unmutated=['V-S9RT-NO-PASS-TOKEN', 'V-S9RT-READONLY', 'V-S9RT-READONLY-COPY-IDENTICAL']
+FAIL V-S9RT-REPORT-REPRODUCES the committed 08-REDTEAM.json equals a fresh run minus generated_at: False; claims differing [6, 9, 11, 13]
+FAIL V-S9RT-DRILL-M-REPORT-DRIFT expected_red=1 still_green=[] baseline_not_green=['V-S9RT-REPORT-REPRODUCES'] crashed=[]
+FAIL V-S9RT-DRILL-CONTROL-NOOP-FIRES no-op substitution left 44/45 mapped gates green: all 62/63 drills would read it as a failure
+S9RT_PASS=111/114  threshold=114/114  wall=465s (limit 540s)
+# exit=1

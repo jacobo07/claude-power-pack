@@ -1,0 +1,36 @@
+# record_run
+# date_utc: 2026-11-22T18:49:43.829736+00:00
+# head: dcd6dfdc
+# cmd: python3 tools/test_bench_integrity.py
+# pristine: tools/bench_all.py=yes
+  PASS V-BENCHINT-PYTEST-FAILED-NOT-FAST: rc 1 'No module named pytest' -> main rc 1, errors names pytest, no numeric pytest_total_ms, console ERROR
+  PASS V-BENCHINT-PYTEST-COMPLETED-BOOKEND: rc 0 '5 passed' -> main rc 0, numeric pytest_total_ms, no error
+  PASS V-BENCHINT-SITE-session_start: timeout/spawn/rc/crash -> labelled _error and no numeric _ms; a completing run records its primary metric
+  PASS V-BENCHINT-SITE-jit_cold_start: timeout/spawn/rc/crash -> labelled _error and no numeric _ms; a completing run records its primary metric
+  PASS V-BENCHINT-SITE-uqf_scan: timeout/spawn/rc/crash -> labelled _error and no numeric _ms; a completing run records its primary metric
+  PASS V-BENCHINT-SITE-verify_spp: timeout/spawn/rc/crash -> labelled _error and no numeric _ms; a completing run records its primary metric
+  PASS V-BENCHINT-SITE-pytest: timeout/spawn/rc/crash -> labelled _error and no numeric _ms; a completing run records its primary metric
+  PASS V-BENCHINT-SITE-vgate_suites: timeout/spawn/rc/crash -> labelled _error and no numeric _ms; a completing run records its primary metric
+  PASS V-BENCHINT-SITE-tco_gate: timeout/spawn/rc/crash -> labelled _error and no numeric _ms; a completing run records its primary metric
+  PASS V-BENCHINT-SITE-tis_report: timeout/spawn/rc/crash -> labelled _error and no numeric _ms; a completing run records its primary metric
+  PASS V-BENCHINT-SITE-osa_dispatcher: timeout/spawn/rc/crash -> labelled _error and no numeric _ms; a completing run records its primary metric
+  PASS V-BENCHINT-SITE-proactive_dispatch: timeout/spawn/rc/crash -> labelled _error and no numeric _ms; a completing run records its primary metric
+  PASS V-BENCHINT-SITE-monitoring: timeout/spawn/rc/crash -> labelled _error and no numeric _ms; a completing run records its primary metric
+  PASS V-BENCHINT-SITE-anti_patterns: timeout/spawn/rc/crash -> labelled _error and no numeric _ms; a completing run records its primary metric
+  PASS V-BENCHINT-SITE-ceps_record: timeout/spawn/rc/crash -> labelled _error and no numeric _ms; a completing run records its primary metric
+  PASS V-BENCHINT-SITE-session_hub_direct: timeout/spawn/rc/crash -> labelled _error and no numeric _ms; a completing run records its primary metric
+  PASS V-BENCHINT-SITE-never_again: timeout/spawn/rc/crash -> labelled _error and no numeric _ms; a completing run records its primary metric
+  PASS V-BENCHINT-CLASSIFIER-TABLE: 12 classifier cases + reason shape
+  PASS V-BENCHINT-RC1-IS-VERDICT: session_start and monitoring with rc 1 still record their values
+  PASS V-BENCHINT-VGATE-AGGREGATE: a failed suite -> vgate_error + details + vgate_failed_run_ms, no vgate_total_ms; all-pass records it
+  PASS V-BENCHINT-MUTANT-CAUGHT: real module accepted, mutant with the tco_gate classifier call removed rejected by the same check
+  FAIL V-BENCHINT-ABS-MISS-EXITS-NONZERO: main rc=0 for never_again_ms=9999 vs target 20; no TARGET MISSES block naming metric and value
+  PASS V-BENCHINT-AT-TARGET-EXITS-ZERO: a value at (20) and under (5) its target exits 0 with no miss block
+  PASS V-BENCHINT-SECONDARY-NOT-GATED: jit_cold_start_max_ms=99999 with avg 10 (target 80) exits 0
+  PASS V-BENCHINT-UNSELECTED-NOT-A-MISS: an unselected benchmark contributes no miss; the same value selected does
+  FAIL V-BENCHINT-RAM-HOST-SCOPE-UNJUDGED: host-scope reading not printed as UNJUDGED; pp-scope 900 MB exited 0, expected 1; pp-scope miss not named in a TARGET MISSES block
+  FAIL V-BENCHINT-TAG-USES-PRIMARY: never_again_ms=9999.0: line '  [never_again] ... 9999ms [OK] (outer 0ms)' lacks [FAIL]; never_again_ms=24.0: line '  [never_again] ... 24ms [OK] (outer 0ms)' lacks [WARN]
+  FAIL V-BENCHINT-OWNER-MAP-COMPLETE: bench_all.METRIC_OWNER is missing
+
+BENCHINT_PASS=24/28  threshold=28/28
+# exit=1

@@ -1,0 +1,11 @@
+# record_run
+# date_utc: 2026-11-23T13:34:44.125881+00:00
+# head: 2be8486c
+# cmd: python3 -I .planning/workstreams/perf-construction/phases/06-ratchet-ukdl-and-hand-back/ratchet_connect.py classify
+PROMPT 'the benchmark is slow, fix the p95 latency of the hook chain' -> []
+PROMPT 'va lento al crear, mide cuanto tarda la construccion' -> []
+PROMPT 'make the bench_all regression window host-state matched' -> []
+PROMPT 'performance measurement metrology for session start' -> []
+CONTROL 'add a landing page website' -> ['web_surface']
+CLASSIFY_NO_FAMILY=4/4 CONTROL_REACHED=web_surface
+# exit=0

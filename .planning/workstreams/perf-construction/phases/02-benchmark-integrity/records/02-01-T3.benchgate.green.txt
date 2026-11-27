@@ -1,0 +1,20 @@
+# record_run
+# date_utc: 2026-11-22T18:51:20.182198+00:00
+# head: 729bf021
+# cmd: python3 tools/test_bench_gate.py
+  PASS V-BENCH-BAND-VALUE: BAND=1.5, the documented allowance
+  PASS V-BENCH-BAND-APPLIED: tis_report_ms=268 (target 225, band 337) admitted
+  PASS V-BENCH-BAND-APPLIED-2: tco_gate_ms=357 (target 270, band 405) admitted
+  PASS V-BENCH-OVER-BAND-REJECTED: session_hub_ms=1301 (band 450) rejected -- the real one
+  PASS V-BENCH-BAND-BOUNDARY: exactly 45 is admitted
+  PASS V-BENCH-MISSING-IS-FAILURE: an unreported benchmark is named, not skipped
+  PASS V-BENCH-MISSING-BOOKEND: a complete sample reports no gaps
+  PASS V-BENCH-RETRY-ABSORBS-NOISE: 1008 then 194 -> min 194 admitted (measured spread was 418%)
+  PASS V-BENCH-RETRY-KEEPS-REAL: 1359 then 734 -> min 734 still over band 450
+  PASS V-BENCH-RETRY-ORDER-FREE: sample order does not change the verdict
+  PASS V-BENCH-THIRD-SAMPLE-COUNTS: 52 then 48 then 25 -> min 25 admitted; two slow draws in a row no longer accuse
+  PASS V-BENCH-RETRY-FITS-BUDGET: 3 x 45s <= 150s row budget
+  PASS V-BENCH-CEPS-TARGET-MEASURED: ceps_record_ms target 400 admits the measured worst min-of-3 (437 ms, real-corpus fixture) and stays inside 2x of it -- 38 timed a refusal, 60 timed an empty corpus
+
+BENCH_GATE_PASS=13/13  threshold=13/13
+# exit=0

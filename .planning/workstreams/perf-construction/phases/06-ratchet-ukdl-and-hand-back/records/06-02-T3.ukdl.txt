@@ -1,0 +1,22 @@
+# record_run
+# date_utc: 2026-11-23T13:41:22.288869+00:00
+# head: 090f779e
+# cmd: bash -c python3 -I .planning/workstreams/perf-construction/phases/06-ratchet-ukdl-and-hand-back/ukdl_candidate_check.py selftest && python3 -I .planning/workstreams/perf-construction/phases/06-ratchet-ukdl-and-hand-back/ukdl_candidate_check.py check vault/knowledge_base/candidates/perf-construction-20261123.md
+  PASS V-UKDL-GOOD: a well-formed block has no problems []
+  PASS V-UKDL-NO-PLANE: missing plane -> ["plane: plane '' is not one of GEX44, LAPTOP-ONLY, REPO-STATIC, SPEC"]
+  PASS V-UKDL-ID-COLLISION: id HR-TRUTH-CONTRACT-IS-OWNER-001 read from an aggregate at run time -> ['collision: id HR-TRUTH-CONTRACT-IS-OWNER-001 already occurs in an aggregate (collides)']
+  PASS V-UKDL-DANGLING-POINTER: pointer to a missing file -> ['evidence: dangling evidence pointer: vault/knowledge_base/no-such-file-for-selftest.md']
+  PASS V-UKDL-NO-SWEEP: no ownership sweep line -> ['sweep: no ownership sweep result (must start NEW or EXTEND_EXISTING_OWNER)']
+  PASS V-UKDL-STATUS: a promoted status -> ["status: status is not exactly 'CANDIDATE - NOT PROMOTED'"]
+  PASS V-UKDL-HOME-PATH: an absolute home path -> ['home: absolute home or Windows user path in the block']
+  PASS V-UKDL-KIND: kind T on a PR id -> ["kind: kind 'T' does not match id prefix 'PR'"]
+  PASS V-UKDL-DUPLICATE-ID: an id twice in one file -> ['unique: id PR-SELFTEST-FIXTURE-SHAPE-001 occurs 2 times in the file']
+  PASS V-UKDL-MUTANT-CONTROL: with the plane check disabled the missing-plane block is ACCEPTED (the gate depends on that check); restored
+UKDL_SELFTEST=10/10
+PASS PR-FAILED-SAMPLE-STAYS-IN-THE-DENOMINATOR-001 line=20
+PASS PR-UNKNOWN-HOST-STATE-LEAVES-THE-WINDOW-001 line=30
+PASS PR-CENSORED-DURATION-IS-NOT-ZERO-001 line=40
+PASS PR-PROOF-NO-STANDING-GATE-RUNS-IS-INHERITED-BY-CONVENTION-001 line=50
+PASS PR-HOST-PLANE-NUMBER-NEVER-FILLS-THE-LAPTOP-ONE-001 line=60
+UKDL_CHECK=5/5
+# exit=0

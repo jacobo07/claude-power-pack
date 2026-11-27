@@ -1,0 +1,53 @@
+PLANE: GEX44 (host kobicraft-gex44, linux). NOT a laptop number. Supports LP-08 only as cross-plane context.
+CHECKOUT: ~/missions/perf-construction @ 84833282
+COMMANDS: scratchpad/perf/gex_lp08.sh (A/B MemoryHigh=500M, 5+5) and gex_lp08b.sh (MemoryHigh infinity/500M/150M/80M x3, with cgroup memory.peak and memory.events high)
+VERDICT: INCONCLUSIVE for the RAM-causes-slowness question. The limit never bound: peak 55-98 MB, high_events=0 at every limit, so this instrument could not have returned 'slower'.
+
+--- run A (gex_lp08.sh) ---
+free 1 rc=1 wall_s=1.709562687
+limited 1 rc=1 wall_s=2.029680565
+free 2 rc=1 wall_s=1.684162347
+limited 2 rc=1 wall_s=1.853614812
+free 3 rc=1 wall_s=1.792817510
+limited 3 rc=0 wall_s=1.817240979
+free 4 rc=1 wall_s=1.746626685
+limited 4 rc=1 wall_s=1.852970954
+free 5 rc=1 wall_s=1.659115938
+limited 5 rc=1 wall_s=1.939545767
+DONE
+ARM free n 5 host kobicraft-gex44
+  anti_patterns_ms median=86.8 min=81.6 max=107.1 n=5
+  ceps_record_ms median=16.9 min=15.5 max=18.7 n=5
+  never_again_ms median=0.3 min=0.2 max=6.2 n=5
+  osa_dispatcher_ms median=47.2 min=45.5 max=69.4 n=5
+  proactive_dispatch_ms median=8.1 min=7.9 max=13.2 n=5
+  session_hub_ms median=196.9 min=155.3 max=263.8 n=5
+  tco_gate_ms median=78.6 min=59.5 max=90.1 n=5
+  tis_report_ms median=65.1 min=60.5 max=92.5 n=5
+ARM limited n 5 host kobicraft-gex44
+  anti_patterns_ms median=85.5 min=78.8 max=113.7 n=5
+  ceps_record_ms median=21.6 min=17.4 max=27.3 n=5
+  never_again_ms median=0.3 min=0.3 max=0.3 n=5
+  osa_dispatcher_ms median=53.0 min=46.2 max=70.4 n=5
+  proactive_dispatch_ms median=8.3 min=7.7 max=10.9 n=5
+  session_hub_ms median=189.9 min=149.8 max=251.1 n=5
+  tco_gate_ms median=62.3 min=60.5 max=106.3 n=5
+  tis_report_ms median=73.0 min=61.5 max=86.2 n=5
+
+--- run B (gex_lp08b.sh) ---
+lim=infinity i=1 wall_ms=1896 peak_mb=56 high_events=0
+lim=infinity i=2 wall_ms=2170 peak_mb=56 high_events=0
+lim=infinity i=3 wall_ms=1887 peak_mb=55 high_events=0
+lim=500M i=1 wall_ms=2198 peak_mb=57 high_events=0
+lim=500M i=2 wall_ms=2309 peak_mb=68 high_events=0
+lim=500M i=3 wall_ms=2114 peak_mb=56 high_events=0
+lim=150M i=1 wall_ms=2159 peak_mb=56 high_events=0
+lim=150M i=2 wall_ms=2205 peak_mb=98 high_events=0
+lim=150M i=3 wall_ms=2043 peak_mb=56 high_events=0
+lim=80M i=1 wall_ms=2186 peak_mb=58 high_events=0
+lim=80M i=2 wall_ms=2447 peak_mb=57 high_events=0
+lim=80M i=3 wall_ms=1943 peak_mb=56 high_events=0
+infinity 3 session_hub=197 tco_gate=76 ceps_record=22 osa_dispatcher=58 tis_report=87 anti_patterns=91
+500M 3 session_hub=241 tco_gate=75 ceps_record=16 osa_dispatcher=56 tis_report=79 anti_patterns=91
+150M 3 session_hub=217 tco_gate=83 ceps_record=18 osa_dispatcher=52 tis_report=88 anti_patterns=101
+80M 3 session_hub=207 tco_gate=68 ceps_record=20 osa_dispatcher=61 tis_report=67 anti_patterns=94

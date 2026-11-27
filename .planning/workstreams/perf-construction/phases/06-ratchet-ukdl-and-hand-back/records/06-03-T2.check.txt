@@ -1,0 +1,14 @@
+# record_run
+# date_utc: 2026-11-23T13:52:48.671234+00:00
+# head: 7f768010
+# cmd: python3 -I .planning/workstreams/perf-construction/phases/06-ratchet-ukdl-and-hand-back/handoff_check.py check .planning/workstreams/perf-construction/phases/06-ratchet-ukdl-and-hand-back/HANDOFF.md
+PASS V-HO-FIRSTLINE: first line is 'Creation speed on the laptop: UNKNOWN'
+PASS V-HO-SECTIONS: headings [(1, 'Owner summary'), (2, 'Engineering handoff'), (3, 'Laptop-only checklist'), (4, 'Known unknowns'), (5, 'Exact next task')]
+PASS V-HO-COUNT: INVENTORY line equals the inventory
+PASS V-HO-COUNT-PROSE: prose counts equal the inventory
+PASS V-HO-LP: 12 LP rows equal the inventory set
+PASS V-HO-CLAIM: no forbidden claim
+PASS V-HO-PATH: every backticked path exists, none absolute
+PASS V-HO-NEXT: one task, one command, one record, one falsifier
+HANDOFF_CHECK=PASS
+# exit=0

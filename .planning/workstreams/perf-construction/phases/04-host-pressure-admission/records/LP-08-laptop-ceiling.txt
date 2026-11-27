@@ -1,0 +1,26 @@
+PLANE: LAPTOP (DESKTOP-PMT5BS8, win32). 19 runs of tools/bench_all.py --quick, 2026-11-24 12:17-19:25 UTC, ~25 min apart (scratchpad/perf/lp08_loop.ps1), ledger = worktree vault/benchmarks/ledger.json, labels LP08-r01..r19.
+STATUS: UNJUDGED (stays PROPOSED_UNCALIBRATED). The procedure needs runs below 10 and above 40 claude.exe; the count never left 31-36 (one run unreadable). The falsifier could not be exercised, so this is not evidence that count does or does not predict timing.
+SECONDARY (same runs, by pressure class): session_hub median RED 1199 ms (n=7) vs GREEN 1746 ms (n=11); RED runs were not slower. The RAM-floor class did not predict timing at this resolution.
+LP-07 SIDE EVIDENCE: r16 had an unreadable count and was classed UNKNOWN, not GREEN (the LP-07 falsifier did not fire).
+CROSS-REFERENCE: LAPTOP-contention-sampler-2h.txt -- spawn latency tracks CPU saturation (r=0.69), not count or RAM.
+
+n 19
+r01 12:17 cl 31 av 4090 GREEN session_hub=6976.9 tco_gate=645.2 ceps_record=331.4 osa_dispatcher=457.4
+r02 12:18 cl 31 av 5058 GREEN session_hub=1746.1 tco_gate=541.0 ceps_record=436.0 osa_dispatcher=412.2
+r03 12:43 cl 31 av 3531 GREEN session_hub=3878.9 tco_gate=417.0 ceps_record=377.8 osa_dispatcher=261.4
+r04 13:08 cl 32 av 1793 RED session_hub=3729.1 tco_gate=559.3 ceps_record=431.7 osa_dispatcher=301.1
+r05 13:33 cl 32 av 3694 GREEN session_hub=2737.9 tco_gate=680.6 ceps_record=417.2 osa_dispatcher=431.1
+r06 13:58 cl 32 av 4188 GREEN session_hub=1784.3 tco_gate=407.2 ceps_record=394.3 osa_dispatcher=364.1
+r07 14:24 cl 32 av 2680 RED session_hub=1169.0 tco_gate=505.8 ceps_record=286.5 osa_dispatcher=242.1
+r08 14:49 cl 32 av 3458 GREEN session_hub=1278.5 tco_gate=311.5 ceps_record=339.1 osa_dispatcher=223.5
+r09 15:14 cl 32 av 3094 GREEN session_hub=1258.0 tco_gate=336.0 ceps_record=335.4 osa_dispatcher=291.5
+r10 15:39 cl 32 av 3501 GREEN session_hub=1016.1 tco_gate=327.2 ceps_record=284.0 osa_dispatcher=194.0
+r11 16:04 cl 32 av 1976 RED session_hub=633.9 tco_gate=326.2 ceps_record=303.6 osa_dispatcher=184.2
+r12 16:29 cl 32 av 1846 RED session_hub=1199.0 tco_gate=458.0 ceps_record=314.6 osa_dispatcher=302.9
+r13 16:54 cl 32 av 4165 GREEN session_hub=1350.8 tco_gate=402.5 ceps_record=327.4 osa_dispatcher=331.1
+r14 17:19 cl 32 av 2185 RED session_hub=1990.0 tco_gate=730.5 ceps_record=398.3 osa_dispatcher=374.3
+r15 17:44 cl 32 av 3510 GREEN session_hub=2177.9 tco_gate=632.5 ceps_record=396.3 osa_dispatcher=495.5
+r16 18:10 cl None av 3503 UNKNOWN session_hub=1856.8 tco_gate=739.0 ceps_record=602.1 osa_dispatcher=532.2
+r17 18:35 cl 35 av 989 RED session_hub=1626.7 tco_gate=543.6 ceps_record=323.0 osa_dispatcher=308.2
+r18 19:00 cl 36 av 4365 GREEN session_hub=1361.4 tco_gate=692.3 ceps_record=365.1 osa_dispatcher=588.9
+r19 19:25 cl 34 av 2947 RED session_hub=679.1 tco_gate=381.9 ceps_record=330.2 osa_dispatcher=271.8

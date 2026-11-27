@@ -1,0 +1,10 @@
+# record_run
+# date_utc: 2026-11-23T08:52:22.951825+00:00
+# head: 22235839
+# cmd: python3 -I .planning/workstreams/perf-construction/phases/04-host-pressure-admission/smoke_pressure.py --selftest-plane
+  PASS (kobicraft-gex44, linux) -> plane: GEX44 host: kobicraft-gex44
+  PASS (kobicraft-gex44, win32) -> plane: UNVERIFIED host: kobicraft-gex44 os: win32
+  PASS (some-other-node, linux) -> plane: UNVERIFIED host: some-other-node os: linux
+  PASS (LAPTOP-OWNER, win32) -> plane: UNVERIFIED host: LAPTOP-OWNER os: win32
+PLANE_SELFTEST=4/4
+# exit=0

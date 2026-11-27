@@ -1,0 +1,10 @@
+# record_run
+# date_utc: 2026-11-23T13:55:21.365808+00:00
+# head: 823d4615
+# cmd: python3 -I .planning/workstreams/perf-construction/phases/06-ratchet-ukdl-and-hand-back/handoff_check.py tree .planning/workstreams/perf-construction/phases/06-ratchet-ukdl-and-hand-back/records/06-03-T3.final-gates.txt
+TREE tools_modules_hooks_vault_config_clean PASS: porcelain empty
+TREE whole_tree_only_allowed_paths PASS: dirty paths are all inside the phase directory or STATE.md
+TREE hash_ledger.json PASS: sha256 cef10a592e567e06fa43529966061bc223600475526fa2f435741f11582e32f4 SAME as HASH_BEFORE in the gate record
+TREE hash_resource-floors.json PASS: sha256 54a5f2af2c4d2a46151bc751000819aafcfa67d69e43e0b95fdf1ed884cfdc09 SAME as HASH_BEFORE in the gate record
+HANDOFF_TREE=PASS
+# exit=0

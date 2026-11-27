@@ -1,0 +1,26 @@
+PLANE: LAPTOP (DESKTOP-PMT5BS8, win32), 2026-11-24. Sampler scratchpad/perf/defender_sampler.ps1: 12 samples x 150 s per arm; MsMpEng CPU from Win32_PerfRawData_PerfProc_Process (Get-Process returns null for the protected process; the first dry run read 0 and was discarded).
+ARMS: A1 no exclusion -> B Owner added ExclusionPath C:\Users\User\.claude and C:\Users\User\Desktop\Cursor Projects (admin, Owner reported 'hecho'; not observable without admin) -> A2 Owner removed them ('hecho').
+VERDICT (Defender cost): the exclusion lowers Defender CPU. B median 4.37% of host is below the MINIMUM of both controls (A1 min 6.69, A2 min 8.05). A2 median 23.57% (~3.8 of 16 cores) -- possibly a rescan after the exclusion was removed, or a scheduled scan; cause not observed.
+VERDICT (spawn latency): NOT improved by the exclusion in this window. B and A2 both ran at ~95% total CPU with 34-38 claude.exe; cmd median 84.5 vs 88, node 322 vs 356. Total CPU saturation from other work dominates.
+
+A1-noexcl n=12 errors=0
+  msmpeng_pct_of_host  median=8.395 min=6.69 max=14.8
+  cpu_pct              median=67.5 min=20 max=100
+  cmd_ms               median=57.5 min=42 max=122
+  node_ms              median=199.5 min=155 max=535
+  free_mb              median=2961.5 min=741 max=4316
+  claude               median=32.0 min=32 max=35
+B-folderexcl n=12 errors=0
+  msmpeng_pct_of_host  median=4.37 min=2.03 max=11.39
+  cpu_pct              median=94.0 min=13 max=100
+  cmd_ms               median=84.5 min=52 max=1274
+  node_ms              median=322.0 min=186 max=5688
+  free_mb              median=2276.5 min=690 max=3575
+  claude               median=34.0 min=34 max=34
+A2-noexcl n=12 errors=0
+  msmpeng_pct_of_host  median=23.57 min=8.05 max=30.87
+  cpu_pct              median=95.0 min=37 max=100
+  cmd_ms               median=88.0 min=46 max=694
+  node_ms              median=356.0 min=186 max=2657
+  free_mb              median=3091.0 min=708 max=3600
+  claude               median=37.0 min=34 max=38

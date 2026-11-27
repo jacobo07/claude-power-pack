@@ -1,0 +1,137 @@
+# record_run
+# date_utc: 2026-11-22T22:11:57.281238+00:00
+# head: 07caeb3a
+# cmd: python3 -I .planning/workstreams/perf-construction/phases/02-benchmark-integrity/live_smoke.py
+SMOKE source=working tree benches=['uqf_scan', 'pytest', 'proactive_dispatch'] ledger=/tmp/tmphu9n4gv5/ledger.json
+
+=== call 1 ===
+Running full suite (3 benchmarks)...
+  [uqf_scan] ... 356ms [OK] (outer 355ms)
+  [pytest] ... ERROR (17ms)
+  [proactive_dispatch] ... 8ms [OK] (outer 61ms)
+==============================================================================
+PP BENCHMARK SUITE
+Metric                               ms     target   status
+------------------------------------------------------------------------------
+uqf_scan_ms                         356       1500       OK
+proactive_dispatch_ms                 8         20       OK
+==============================================================================
+AT TARGET: 2/2
+==============================================================================
+REGRESSION WINDOW: 0 matched entries (excluded: no_host_state=0, other_mode=0, other_host_state=0); judged 0 of 3 primary metrics
+REGRESSION: UNJUDGED for 3 of 3 primary metrics (a verdict needs >= 3 matched values)
+
+ERRORS (1):
+  pytest: FAILED rc=1 after 17ms: /usr/bin/python3: No module named pytest
+
+VERDICTS (non-passing: 3 of 3 metrics):
+  pytest_total_ms: instrument_ran=False met_target=UNJUDGED regressed=UNJUDGED evidence_sufficient=False -- benchmark pytest errored: FAILED rc=1 after 17ms: /usr/bin/python3: No module named pytest (n=0)
+  uqf_scan_ms: instrument_ran=True met_target=True regressed=UNJUDGED evidence_sufficient=False -- fewer than 3 matched values (n=0) (n=0)
+  proactive_dispatch_ms: instrument_ran=True met_target=True regressed=UNJUDGED evidence_sufficient=False -- fewer than 3 matched values (n=0) (n=0)
+VERDICTS: 2/3 ran, 2 met, 0 regressed, 3 UNJUDGED
+
+bench_all exit rc=1  at_target=2/17
+=== call 1 exit code: 1 ===
+
+=== call 2 ===
+Running full suite (3 benchmarks)...
+  [uqf_scan] ... 520ms [OK] (outer 520ms)
+  [pytest] ... ERROR (25ms)
+  [proactive_dispatch] ... 8ms [OK] (outer 60ms)
+==============================================================================
+PP BENCHMARK SUITE
+Metric                               ms     target   status
+------------------------------------------------------------------------------
+uqf_scan_ms                         520       1500       OK
+proactive_dispatch_ms                 8         20       OK
+==============================================================================
+AT TARGET: 2/2
+==============================================================================
+REGRESSION WINDOW: 1 matched entries (excluded: no_host_state=0, other_mode=0, other_host_state=0); judged 0 of 3 primary metrics
+REGRESSION: UNJUDGED for 3 of 3 primary metrics (a verdict needs >= 3 matched values)
+
+ERRORS (1):
+  pytest: FAILED rc=1 after 25ms: /usr/bin/python3: No module named pytest
+
+VERDICTS (non-passing: 3 of 3 metrics):
+  pytest_total_ms: instrument_ran=False met_target=UNJUDGED regressed=UNJUDGED evidence_sufficient=False -- benchmark pytest errored: FAILED rc=1 after 25ms: /usr/bin/python3: No module named pytest (n=0)
+  uqf_scan_ms: instrument_ran=True met_target=True regressed=UNJUDGED evidence_sufficient=False -- fewer than 3 matched values (n=1) (n=1)
+  proactive_dispatch_ms: instrument_ran=True met_target=True regressed=UNJUDGED evidence_sufficient=False -- fewer than 3 matched values (n=1) (n=1)
+VERDICTS: 2/3 ran, 2 met, 0 regressed, 3 UNJUDGED
+
+bench_all exit rc=1  at_target=2/17
+=== call 2 exit code: 1 ===
+
+EXIT_CODES=[1, 1] entries_in_temp_ledger=2
+SECOND_ENTRY={
+  "errors": {
+    "pytest": "FAILED rc=1 after 25ms: /usr/bin/python3: No module named pytest"
+  },
+  "host_state": {
+    "available_mb": 53089.89453125,
+    "available_source": "/proc/meminfo",
+    "cpu_count": 20,
+    "host": "kobicraft-gex44",
+    "load1": 13.544921875,
+    "os": "linux",
+    "schema": 1
+  },
+  "ledger_schema": 2,
+  "quick": false,
+  "results": {
+    "proactive_dispatch_advisories": 0,
+    "proactive_dispatch_ms": 8.0,
+    "proactive_dispatch_outer_ms": 60.0,
+    "pytest_error": "FAILED rc=1 after 25ms: /usr/bin/python3: No module named pytest",
+    "pytest_outer_ms": 25.0,
+    "uqf_scan_lines": 7,
+    "uqf_scan_ms": 519.9,
+    "uqf_scan_outer_ms": 520.0,
+    "uqf_scan_rc": 0
+  },
+  "verdicts": {
+    "proactive_dispatch_ms": {
+      "evidence_sufficient": false,
+      "instrument_ran": true,
+      "met_target": true,
+      "reasons": {
+        "evidence_sufficient": "fewer than 3 matched values (n=1)",
+        "instrument_ran": "numeric value, no error",
+        "met_target": "8 <= target 20",
+        "regressed": "fewer than 3 matched values (n=1)"
+      },
+      "regressed": null,
+      "window_median": 8.2,
+      "window_n": 1
+    },
+    "pytest_total_ms": {
+      "evidence_sufficient": false,
+      "instrument_ran": false,
+      "met_target": null,
+      "reasons": {
+        "evidence_sufficient": "the instrument did not run",
+        "instrument_ran": "benchmark pytest errored: FAILED rc=1 after 25ms: /usr/bin/python3: No module named pytest",
+        "met_target": "the instrument did not run",
+        "regressed": "the instrument did not run"
+      },
+      "regressed": null,
+      "window_median": null,
+      "window_n": 0
+    },
+    "uqf_scan_ms": {
+      "evidence_sufficient": false,
+      "instrument_ran": true,
+      "met_target": true,
+      "reasons": {
+        "evidence_sufficient": "fewer than 3 matched values (n=1)",
+        "instrument_ran": "numeric value, no error",
+        "met_target": "519.9 <= target 1500",
+        "regressed": "fewer than 3 matched values (n=1)"
+      },
+      "regressed": null,
+      "window_median": 355.5,
+      "window_n": 1
+    }
+  }
+}
+# exit=0

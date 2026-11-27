@@ -1,0 +1,9 @@
+﻿window 2026-11-19T13:51:57Z -> 2026-11-26T13:51:57Z
+files=400 hook runs=110272 total hook-seconds=375498 (sum, not wall)
+event             hook                                     runs median_ms  p90_ms  share timeouts
+Stop              Stop chain (11 hooks, fork-storm-safe)   4230     16826   36954  22.8%        0
+PreToolUse        PreToolUse Bash chain (4 hooks, fork-s  13043      4134   14297  22.3%        5
+PreToolUse        PreToolUse Edit chain (7 hooks, fork-s   8232      6972   15239  17.8%        2
+PostToolUse       hook-dispatcher.js                      33318       636    2281   9.4%        0
+PreToolUse        PreToolUse Read chain (1 hook, fork-st   8974      1610    5655   6.1%       15
+PreToolUse        cdio_visual_advisory.js                  8884       985    3171   3.6%      241

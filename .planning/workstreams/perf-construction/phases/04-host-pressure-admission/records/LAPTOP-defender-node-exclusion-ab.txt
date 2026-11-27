@@ -1,0 +1,26 @@
+PLANE: LAPTOP (DESKTOP-PMT5BS8, win32), 2026-11-24. Probe: scratchpad/perf/spawn_probe.py (subprocess.run / Popen, node = C:\Program Files\nodejs\node.EXE).
+CONDITION: BEFORE = no exclusion. EXCL-n = Owner added Defender ExclusionProcess + ExclusionPath for node.exe (admin shell, Owner reported 'hecho'; exclusion list unreadable without admin, so its presence is the Owner's report, not observed by me).
+CONTROL: cmd /c exit is not covered by the exclusion; it measures host noise in the same window.
+VERDICT: NO DETECTABLE EFFECT. node -e 0 median BEFORE 305 vs EXCL 238/201/405; 7x parallel BEFORE 1100 vs EXCL 1636/804/1626; cmd control 54 vs 53/59/63. The spread across EXCL runs exceeds any before/after difference. A node.exe Defender exclusion is not a lever at this resolution.
+EARLIER SAME DAY (~12:40, LAPTOP-spawn-cost-profile.txt): cmd /c exit 785, node 759, 7x 2903 -> process-creation cost is intermittent, 2-15x swings within an hour at a constant ~31 claude.exe.
+
+[BEFORE] 2026-11-24T13:42:47 claude=31 avail_mb=3928
+[BEFORE] node -e 0        median=305 min=198 max=602 n=8
+[BEFORE] cmd /c exit      median=54 min=49 max=73 n=8
+[BEFORE] 7x node parallel median=1100 min=819 max=1396 n=5
+[BEFORE] claude=31 avail_mb=3766
+[EXCL-1] 2026-11-24T13:52:22 claude=32 avail_mb=2384
+[EXCL-1] node -e 0        median=238 min=201 max=284 n=8
+[EXCL-1] cmd /c exit      median=53 min=50 max=73 n=8
+[EXCL-1] 7x node parallel median=1636 min=869 max=2828 n=5
+[EXCL-1] claude=32 avail_mb=2258
+[EXCL-2] 2026-11-24T13:54:47 claude=32 avail_mb=2037
+[EXCL-2] node -e 0        median=201 min=188 max=361 n=8
+[EXCL-2] cmd /c exit      median=59 min=49 max=66 n=8
+[EXCL-2] 7x node parallel median=804 min=795 max=1061 n=5
+[EXCL-2] claude=32 avail_mb=1995
+[EXCL-3] 2026-11-24T13:56:54 claude=33 avail_mb=1918
+[EXCL-3] node -e 0        median=405 min=225 max=520 n=8
+[EXCL-3] cmd /c exit      median=63 min=59 max=105 n=8
+[EXCL-3] 7x node parallel median=1626 min=1344 max=1850 n=5
+[EXCL-3] claude=32 avail_mb=2186

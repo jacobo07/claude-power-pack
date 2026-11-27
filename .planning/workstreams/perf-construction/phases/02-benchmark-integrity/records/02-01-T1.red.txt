@@ -1,0 +1,10 @@
+# record_run
+# date_utc: 2026-11-22T18:42:32.232270+00:00
+# head: 39f59e28
+# cmd: python3 tools/test_bench_integrity.py
+# pristine: tools/bench_all.py=yes
+  FAIL V-BENCHINT-PYTEST-FAILED-NOT-FAST: main rc=0, expected 1; errors=[] lacks 'pytest'; pytest_total_ms=0.0 recorded for a failed subprocess; console line '  [pytest] ... 0ms [OK] (outer 0ms)' lacks ERROR
+  PASS V-BENCHINT-PYTEST-COMPLETED-BOOKEND: rc 0 '5 passed' -> main rc 0, numeric pytest_total_ms, no error
+
+BENCHINT_PASS=1/2  threshold=2/2
+# exit=1

@@ -1,0 +1,54 @@
+# Phase 4: Host-pressure admission - Context
+
+**Gathered:** 2026-11-23 (unattended; no discuss step, research skipped; this file is the evidence base, read from code)
+**Status:** Ready for planning
+**Plane:** GEX44 (Linux, Python 3.12.3, stdlib only, no psutil). The Owner's complaint is the LAPTOP (Windows): anything judging laptop RAM or process counts is LAPTOP-ONLY / UNJUDGED. The laptop case (28 claude.exe, 12 revived in one minute, 275-1563 MB free) is cited as MOTIVATION ONLY, never as a measurement of this host.
+
+<domain>
+## Phase Boundary
+
+Requirement PERF-04 (host-pressure admission from both poles). ROADMAP success criteria (binding):
+1. resource_admission reads free RAM AND live claude process count and returns RED below a declared floor, with a test from both poles.
+2. Every benchmark sample carries the host state; samples under RED are INCONCLUSIVE for regression purposes.
+3. The laptop evidence is cited as the motivating case, LAPTOP-ONLY.
+
+Phase goal: work is admitted against the host's real state; a starved host is reported as such (slow-host separated from slow-component).
+
+Out of scope: Phase 5 (hook critical-path audit), the ROOT milestone, ~/.claude/settings.json, rules, CLAUDE.md, the live claude-power-pack install, pushing.
+</domain>
+
+<facts>
+## Code facts the plans start from (verified by reading this clone at HEAD 1d9bccb5)
+
+- tools/resource_admission.py (92 lines, stdlib): verdicts ADMIT / REFUSE_LOW_MEMORY / UNKNOWN_REFUSE; `read_available_mb()` (Linux /proc/meminfo MemAvailable, win32 GlobalMemoryStatusEx, darwin vm_stat; None = unreadable never 0); `floor_mb(profile)` from vault/config/resource-floors.json (default 3000; slim-t1/t2 1500; top-level-worker 3000); `verdict(reading, profile)` -> {verdict, available_mb, floor_mb, profile}; `refusal(profile, reader)` -> None (admit or switched off) else the verdict dict; kill switch CPP_RESOURCE_ADMISSION=off. No process counting anywhere (01-EVIDENCE P16/P17: CONFIRMED_ACTIVE, S-12 control 1).
+- Callers (must keep working, signature-compatible): tools/gsd_mission.py:1471 (before claim or spawn), :2688 (deferred closeout), :7520 (preflight report, maps verdict to ok / refuse / unmeasured); tests tools/test_a5_u6.py (imports `resource_admission as ra`, has a mutation drill replacing `mb >= floor`), tools/test_arm_preflight.py (V-PRE-REFUSE-LOW-MEMORY, V-PRE-UNREADABLE-MEMORY-IS-UNMEASURED), tools/test_gsd_mission_baseline.py, tools/test_gsd_mission_resources.py, tools/bench_all.py (loads it by file path), tools/test_bench_integrity.py (stubs `ba._load_resource_admission`).
+- tools/bench_all.py already (Phase 2, plan 02-03) writes `host_state` per ledger entry (ledger_schema 2): `read_host_state()` ~line 985 -> {schema, host, os, cpu_count, available_mb, available_source, load1}; `host_bucket()` (memory edges 1000/3000/8000 MB, load/cpu edges 0.5/1.0); `window_for()` same-mode same-bucket window, MIN_WINDOW 3, WINDOW_N 7; `judge_metrics()` four verdicts per metric (instrument_ran, met_target, regressed, evidence_sufficient), `verdicts_fail()` derives the exit code. It does NOT count processes and has no RED/INCONCLUSIVE notion: a sample taken on a starved host is only bucketed apart, still compared as if healthy. So criterion 2 is partly met (host state per ENTRY). The gap: no process count in host_state, no RED classification, a RED entry still enters windows and can produce `regressed` True/False.
+- tools/verify_bench_all.py (Phase 2) keeps min as the labelled floor plus p50/p95 and reports UNCONFIRMED retries; check whether its samples carry host state before deciding if it is in scope (it may only need to inherit RED from bench_all's entries).
+- tools/resource_census.py is Windows-first (ctypes, psutil, claude.exe sessions, MCP attribution) and psutil is NOT installed here: it is a precedent for what "a live claude process" is, but it cannot be imported as the counter on GEX44. A Linux process count reads /proc (comm / cmdline of numeric dirs) with stdlib only; pgrep shows 9 claude processes now. Identity rule precedent from the census: match by exact executable name, never a loose substring of arbitrary cmdline (RR-02: a loose match attributed 751 unrelated processes).
+- Host now (instrument: /proc/meminfo + `free -m`, one sample, not a result): 20 CPUs, MemAvailable ~51 GB of 64 GB.
+- Declared floors file: vault/config/resource-floors.json (MB per profile). The process-count ceiling is a NEW declared number needing a written justification and a place (extend this json, keep `default`/`profiles` keys readable by the old reader).
+</facts>
+
+<decisions>
+## Implementation Decisions (locked for the planner and executors)
+
+- **D4-01 (EXTEND, not build):** extend tools/resource_admission.py. No new admission module. Add a `read_claude_process_count()` (same style as read_available_mb: returns {"count": int | None, "source": str}; None = unreadable, never 0; Linux via /proc stdlib, win32 and darwin via the cheapest stdlib route or an explicit UNREADABLE with a source naming why; never psutil as a hard dependency) and a pressure classification. Written reason EXTEND of resource_census fails: it needs psutil and is Windows-only.
+- **D4-02 (RED is additive, old verdicts stay):** keep ADMIT / REFUSE_LOW_MEMORY / UNKNOWN_REFUSE and their callers working. RED is a host-pressure classification (GREEN / RED / UNKNOWN; an amber band only if justified in writing) computed from BOTH poles: free RAM below the declared floor OR live claude count above the declared ceiling -> RED. An unreadable RAM reading is UNKNOWN, never GREEN and never zero (absent is not zero). SAFEST option for admission behaviour: RAM-floor behaviour unchanged for existing callers; the process ceiling is added as a new refusal reason honouring the existing kill switch; the choice and its reversal are recorded in STATE.md. Never auto-kill a process (HR-STALLED-SESSION-ADVISORY-001).
+- **D4-03 (declared numbers, with a source):** RAM floor = the existing declared floor; the process ceiling is a new declared value in vault/config/resource-floors.json with reasoning next to it. The laptop figures motivate the ceiling's existence, not its value; the plan states the value is a PROPOSAL pending laptop calibration (LP item) and that GEX44 numbers do not calibrate the laptop.
+- **D4-04 (both poles, mutation):** every new verdict path has a test reached from a real input shape (a fake /proc tree or injected reader) AND one where the opposite input flips the output; each new test has a recorded failing run against pre-change code or a mutant (Phase 2/3 pattern: .planning/workstreams/perf-construction/phases/02-benchmark-integrity/record_run.py), recorded verbatim. Poles: "RAM fine, count over ceiling -> RED", "RAM low, count fine -> RED", "both fine -> GREEN", "unreadable -> UNKNOWN not GREEN".
+- **D4-05 (host state carries the process count; RED samples are INCONCLUSIVE):** extend bench_all's `read_host_state()` with the claude process count and the pressure class by CONNECTING to resource_admission's reader (one parser, not two); bump HOST_SCHEMA with a defined rule for old entries (schema 1: no count -> pressure UNKNOWN; stated and tested; never silently GREEN). An entry under RED yields `regressed` None and `evidence_sufficient` False with a reason naming the pressure (INCONCLUSIVE for regression), must not enter the baseline window used for others, and is still recorded and shown (never dropped from the ledger, never counted as a fast sample). A RED run never prints "no regressions": it prints an INCONCLUSIVE line. SAFEST option: `met_target` stays judged (absolute target), only `regressed` goes INCONCLUSIVE, `verdicts_fail` unchanged for met_target.
+- **D4-06 (slow-host vs slow-component):** when a metric misses its target on a RED host the output says SLOW-HOST-SUSPECT (regression INCONCLUSIVE); on a GREEN host a miss is a component finding. Reuse the four-verdict structure; no new verdict key beyond D4-05.
+- **D4-07 (live smoke, plane named):** one live run on GEX44 shows the real reading (RAM, claude count, class) with plane GEX44, plus a forced-RED run (a TEMP floors file with a low ceiling, never editing the real config) proving the same code path flips to RED/INCONCLUSIVE end to end through bench_all against a temp ledger (never the real vault/benchmarks/ledger.json). Laptop procedure (LP-07): on the laptop run the same reader with laptop floors, record count and class before/after a revival burst; falsifier: a laptop header that says GEX44, or laptop numbers filled from a GEX44 run.
+- **D4-08 (gates, baseline first):** record BEFORE any edit and keep green after: tools/test_a5_u6.py, tools/test_arm_preflight.py, tools/test_bench_integrity.py (41/41 at Phase 2), tools/test_bench_gate.py (23/23), tools/test_gsd_mission_resources.py, the gsd_mission baseline test; `python3 modules/liveness/reachability.py` offender set unchanged by NAME (56 pre-phase); tools/test_git_invocation.py failing set unchanged (6/7, 14 pre-existing offenders). Wire any NEW test file into the existing bench-gate/vgate row as Phase 2 did, with a negative control, or declare it; never leave it unreachable and silent.
+- **D4-09 (scope fences for parallel safety):** no two plans in the same wave list the same file in files_modified. tools/bench_all.py and tools/test_bench_integrity.py are edited only by the plan that owns the host_state/INCONCLUSIVE change. tools/gsd_mission.py (7500+ lines) is touched only if a caller must learn the new class; prefer leaving callers unchanged and justify any edit.
+- **D4-10 (evidence and hygiene):** each plan ends with its SUMMARY; the phase ends with phases/04-host-pressure-admission/04-EVIDENCE.md (commands, exit codes, verdicts, P-ids touched: P16, P17, P06 completion; LAPTOP-ONLY items). Every number names instrument, plane (GEX44) and sample size. Commit by explicit pathspec, never push, never touch ~/.claude/settings.json, rules, CLAUDE.md or the live power-pack install. Unattended: any Owner-needed choice is decided to the safest reversible option and written into STATE.md as an OWNER DECISION NEEDED line with the pick.
+</decisions>
+
+<canonical_refs>
+- .planning/workstreams/perf-construction/ROADMAP.md (Phase 4), REQUIREMENTS.md (PERF-04), STATE.md
+- .planning/workstreams/perf-construction/phases/01-reality-and-ownership/01-EVIDENCE.md (P16, P17, P06, LP-01)
+- .planning/workstreams/perf-construction/phases/02-benchmark-integrity/{02-CONTEXT.md,02-03-SUMMARY.md,02-EVIDENCE.md,record_run.py}
+- .planning/workstreams/perf-construction/phases/03-construction-metrology-contract/03-03-PLAN.md (plan style precedent)
+- tools/resource_admission.py, tools/bench_all.py (read_host_state, host_bucket, window_for, judge_metrics, verdicts_fail), tools/resource_census.py (precedent only), vault/config/resource-floors.json
+- vault/audits/perf_campaign_w0_reality.md
+</canonical_refs>

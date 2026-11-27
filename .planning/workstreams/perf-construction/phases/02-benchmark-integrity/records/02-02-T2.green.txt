@@ -1,0 +1,26 @@
+# record_run
+# date_utc: 2026-11-22T18:45:37.806224+00:00
+# head: e1bc38a8
+# cmd: python3 tools/test_bench_gate.py
+  PASS V-BENCH-BAND-VALUE: BAND=1.5, the documented allowance
+  PASS V-BENCH-BAND-APPLIED: tis_report_ms=268 (target 225, band 337) admitted
+  PASS V-BENCH-BAND-APPLIED-2: tco_gate_ms=357 (target 270, band 405) admitted
+  PASS V-BENCH-OVER-BAND-REJECTED: session_hub_ms=1301 (band 450) rejected -- the real one
+  PASS V-BENCH-BAND-BOUNDARY: exactly 45 is admitted
+  PASS V-BENCH-MISSING-IS-FAILURE: an unreported benchmark is named, not skipped
+  PASS V-BENCH-MISSING-BOOKEND: a complete sample reports no gaps
+  PASS V-BENCH-RETRY-ABSORBS-NOISE: 1008 then 194 -> min 194 admitted (measured spread was 418%)
+  PASS V-BENCH-RETRY-KEEPS-REAL: 1359 then 734 -> min 734 still over band 450
+  PASS V-BENCH-RETRY-ORDER-FREE: sample order does not change the verdict
+  PASS V-BENCH-THIRD-SAMPLE-COUNTS: 52 then 48 then 25 -> min 25 admitted; two slow draws in a row no longer accuse
+  PASS V-BENCH-RETRY-FITS-BUDGET: 3 x 45s <= 150s row budget
+  PASS V-BENCH-CEPS-TARGET-MEASURED: ceps_record_ms target 400 admits the measured worst min-of-3 (437 ms, real-corpus fixture) and stays inside 2x of it -- 38 timed a refusal, 60 timed an empty corpus
+  PASS V-BENCH-PERCENTILE: linear interpolation, clamped q, None (never 0) on empty
+  PASS V-BENCH-SUMMARIZE: n/floor/p50/p95/max over valid values; empty is n=0, None elsewhere
+  PASS V-BENCH-REPORT-LABELS: over-band report names the potential floor, p50, p95 and n=2; typical verdict UNJUDGED below 3 valid samples; rc stays 1
+  PASS V-BENCH-EVALUATE-SKIPS-NONE: 1359, None, 200 -> admitted; 1359, None, 734 -> floor 734 kept
+  PASS V-BENCH-JUDGE-ACCOUNTS-ATTEMPTS: attempted/valid/failed counted; one valid sample over band is insufficient, healthy and two-sample runs are sufficient
+  PASS V-BENCH-MAIN-FAILED-RETRY-UNCONFIRMED: failed retry -> UNCONFIRMED, 1 valid of 2 attempted, reason kept, rc 1; bookend clean second sample -> rc 0, success line unchanged
+
+BENCH_GATE_PASS=19/19  threshold=19/19
+# exit=0

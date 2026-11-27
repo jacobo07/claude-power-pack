@@ -1,0 +1,213 @@
+# record_run
+# date_utc: 2026-11-23T12:49:48.331932+00:00
+# head: aa124969
+# cmd: bash /tmp/p5-scripts/final_gates.sh .planning/workstreams/perf-construction/phases/05-critical-path-audit/records/05-01-reach-pre.txt
+# pristine: hooks/=yes
+## HEAD
+aa124969
+## python3 tools/test_a5_u6.py exit=0
+PASS U6-LOW-REFUSES {'verdict': 'REFUSE_LOW_MEMORY', 'available_mb': 500, 'floor_mb': 3000, 'profile': 'top-level-worker'}
+PASS U6-ADEQUATE-ADMITS-CONTROL 
+PASS U6-UNKNOWN-REFUSES {'verdict': 'UNKNOWN_REFUSE', 'available_mb': None, 'floor_mb': 3000, 'profile': 'top-level-worker'}
+PASS U6-UNREADABLE-SHAPES-REFUSE 
+PASS U6-FLOORS 
+PASS U6-SLIM-FLOOR-BOUNDARY 
+PASS U6-REAL-READER {'available_mb': 48385.8125, 'source': '/proc/meminfo'}
+PASS U6-LAUNCH-LOW-SPAWNS-NOTHING REFUSE_LOW_MEMORY: available_mb=500 floor_mb=3000 profile=top-level-worker
+PASS U6-LAUNCH-UNKNOWN-SPAWNS-NOTHING 
+PASS U6-LAUNCH-READER-RAISES-REFUSES 
+PASS U6-LAUNCH-ADEQUATE-ADMITS-CONTROL None
+PASS U6-KILL-SWITCH 
+PASS U6-MUTANT-INVERTED-COMPARATOR-RED mutant admits low / refuses adequate: the gates above would fail
+A5_U6_PASS=13/13
+## python3 tools/test_arm_preflight.py exit=0
+PASS V-PRE-HAPPY [{'check': 'gsd_status', 'status': 'ok', 'why': 'r'}, {'check': 'resource_admission', 'status': 'ok', 'why': ''}, {'check': 'authority', 'status': 'ok', 'why': ''}, {'check': 'foreseeable_decisions', 'status': 'unmeasured', 'why': 'unreadable source(s): /tmp/x/vault/specs/x.md, /tmp/x/.planning/workstreams/x/ROADMAP.md, /tmp/x/.planning/workstreams/x/STATE.md'}]
+PASS V-PRE-REFUSE-NO_PHASES gsd_status: NO_PHASES: r -- no open GSD milestone in /tmp/x: the worker would have no work. Create the milestone first (/gsd-new-milestone, or .planning/ROADMAP.md + STATE.md with the packet's phases), check gsd_long_run.gsd_status == OK, then arm; or set CPP_GSD_X_OPTOUT=<reason>
+PASS V-PRE-REFUSE-ALL_COMPLETE gsd_status: ALL_COMPLETE: r -- no open GSD milestone in /tmp/x: the worker would have no work. Create the milestone first (/gsd-new-milestone, or .planning/ROADMAP.md + STATE.md with the packet's phases), check gsd_long_run.gsd_status == OK, then arm; or set CPP_GSD_X_OPTOUT=<reason>
+PASS V-PRE-UNAVAILABLE-IS-UNMEASURED 
+PASS V-PRE-RAISING-READER-IS-UNMEASURED 
+PASS V-PRE-GSDX-NON-GSD-ROUTE-REFUSES gsd_status: NO_PHASES: r -- no open GSD milestone in /tmp/x: the worker would have no work and its capsule could not seal at the first context wall. Create the milestone first (/gsd-new-milestone, or .planning/ROADMAP.md + STATE.md with the packet's phases), check gsd_long_run.gsd_status == OK, then arm; or set CPP_GSD_X_OPTOUT=<reason>
+PASS V-PRE-GSDX-NON-GSD-ROUTE-OK-PASSES [{'check': 'gsd_status', 'status': 'ok', 'why': 'r'}, {'check': 'resource_admission', 'status': 'ok', 'why': ''}, {'check': 'authority', 'status': 'warn', 'why': 'no authority_tokens on this arm: spend is bounded only by a goal ledger, if bound'}, {'check': 'foreseeable_decisions', 'status': 'unmeasured', 'why': 'unreadable source(s): /tmp/x/vault/specs/x.md, /tmp/x/.planning/workstreams/x/ROADMAP.md, /tmp/x/.planning/workstreams/x/STATE.md'}]
+PASS V-PRE-GSDX-ABSENT-ROADMAP-REFUSES gsd_status: NO_PHASES: GSD finds no ROADMAP.md (gsd-tools: No ROADMAP.md found) -- no open GSD milestone in /tmp/x: the worker would have no work and its capsule could not seal at the first context wall. Create the milestone first (/gsd-new-milestone, or .planning/ROADMAP.md + STATE.md with the packet's phases), check gsd_long_run.gsd_status == OK, then arm; or set CPP_GSD_X_OPTOUT=<reason>
+PASS V-PRE-GSDX-OPTOUT-WARNS [{'check': 'gsd_status', 'status': 'warn', 'why': 'NO_PHASES: r -- GSD X opt-out: throwaway smoke, no rollover'}, {'check': 'resource_admission', 'status': 'ok', 'why': ''}, {'check': 'authority', 'status': 'warn', 'why': 'no authority_tokens on this arm: spend is bounded only by a goal ledger, if bound'}, {'check': 'foreseeable_decisions', 'status': 'unmeasured', 'why': 'unreadable source(s): /tmp/x/vault/specs/x.md, /tmp/x/.planning/workstreams/x/ROADMAP.md, /tmp/x/.planning/workstreams/x/STATE.md'}]
+PASS V-PRE-GSDX-EMPTY-OPTOUT-REFUSES gsd_status: NO_PHASES: r -- no open GSD milestone in /tmp/x: the worker would have no work and its capsule could not seal at the first context wall. Create the milestone first (/gsd-new-milestone, or .planning/ROADMAP.md + STATE.md with the packet's phases), check gsd_long_run.gsd_status == OK, then arm; or set CPP_GSD_X_OPTOUT=<reason>
+PASS V-PRE-REFUSE-LOW-MEMORY resource_admission: available 100 MB below floor 3000 MB
+PASS V-PRE-NO-LAUNCH-NO-MEMORY-CHECK 
+PASS V-PRE-UNREADABLE-MEMORY-IS-UNMEASURED 
+PASS V-PRE-NO-AUTHORITY-WARNS-NOT-REFUSES 
+PASS V-PRE-ROTATION-REPAIR-REPORTED 
+PASS V-PRE-IDEMPOTENT 
+PASS V-PRE-KILL-SWITCH 
+PASS V-PRE-ARM-WIRED arm refused by preflight -- gsd_status: NO_PHASES: forced -- no open GSD milestone in /tmp/x-nonexistent: the worker wou
+PASS V-PRE-GSDX-PACKET-NO-PHASES-REFUSES gsd_status: NO_PHASES: r -- no open GSD milestone in /tmp/x: the worker would have no work and its capsule could not seal at the first context wall. Create the milestone first (/gsd-new-milestone, or .planning/ROADMAP.md + STATE.md with the packet's phases), check gsd_long_run.gsd_status == OK, then arm; or set CPP_GSD_X_OPTOUT=<reason>
+PASS V-PRE-GSDX-PACKET-OK-PASSES [{'check': 'gsd_status', 'status': 'ok', 'why': 'r'}, {'check': 'resource_admission', 'status': 'ok', 'why': ''}, {'check': 'authority', 'status': 'warn', 'why': 'no authority_tokens on this arm: spend is bounded only by a goal ledger, if bound'}, {'check': 'foreseeable_decisions', 'status': 'unmeasured', 'why': 'unreadable source(s): /tmp/x/vault/specs/x.md, /tmp/x/.planning/workstreams/x/ROADMAP.md, /tmp/x/.planning/workstreams/x/STATE.md'}]
+PASS V-PRE-GSDX-ARM-CHAIN-PACKET-REFUSES arm_chain must not reach create() on NO_PHASES with a packet
+PASS V-PRE-ARM-CHAIN-WIRED arm refused by preflight -- spy: refused
+PASS V-PRE-MUTANT-ALWAYS-PASS-GOES-RED mutant did not refuse, so the wired gate detects it
+PRE_PASS=23/23  threshold=23/23
+## python3 tools/test_bench_integrity.py exit=0
+  PASS V-BENCHINT-SITE-verify_spp: timeout/spawn/rc/crash -> labelled _error and no numeric _ms; a completing run records its primary metric
+  PASS V-BENCHINT-SITE-pytest: timeout/spawn/rc/crash -> labelled _error and no numeric _ms; a completing run records its primary metric
+  PASS V-BENCHINT-SITE-vgate_suites: timeout/spawn/rc/crash -> labelled _error and no numeric _ms; a completing run records its primary metric
+  PASS V-BENCHINT-SITE-tco_gate: timeout/spawn/rc/crash -> labelled _error and no numeric _ms; a completing run records its primary metric
+  PASS V-BENCHINT-SITE-tis_report: timeout/spawn/rc/crash -> labelled _error and no numeric _ms; a completing run records its primary metric
+  PASS V-BENCHINT-SITE-osa_dispatcher: timeout/spawn/rc/crash -> labelled _error and no numeric _ms; a completing run records its primary metric
+  PASS V-BENCHINT-SITE-proactive_dispatch: timeout/spawn/rc/crash -> labelled _error and no numeric _ms; a completing run records its primary metric
+  PASS V-BENCHINT-SITE-monitoring: timeout/spawn/rc/crash -> labelled _error and no numeric _ms; a completing run records its primary metric
+  PASS V-BENCHINT-SITE-anti_patterns: timeout/spawn/rc/crash -> labelled _error and no numeric _ms; a completing run records its primary metric
+  PASS V-BENCHINT-SITE-ceps_record: timeout/spawn/rc/crash -> labelled _error and no numeric _ms; a completing run records its primary metric
+  PASS V-BENCHINT-SITE-session_hub_direct: timeout/spawn/rc/crash -> labelled _error and no numeric _ms; a completing run records its primary metric
+  PASS V-BENCHINT-SITE-never_again: timeout/spawn/rc/crash -> labelled _error and no numeric _ms; a completing run records its primary metric
+  PASS V-BENCHINT-CLASSIFIER-TABLE: 12 classifier cases + reason shape
+  PASS V-BENCHINT-RC1-IS-VERDICT: session_start and monitoring with rc 1 still record their values
+  PASS V-BENCHINT-VGATE-AGGREGATE: a failed suite -> vgate_error + details + vgate_failed_run_ms, no vgate_total_ms; all-pass records it
+  PASS V-BENCHINT-MUTANT-CAUGHT: real module accepted, mutant with the tco_gate classifier call removed rejected by the same check
+  PASS V-BENCHINT-ABS-MISS-EXITS-NONZERO: never_again_ms=9999 vs 20 -> rc 1 and a TARGET MISSES block naming it; --json keeps the entry first, block after
+  PASS V-BENCHINT-AT-TARGET-EXITS-ZERO: a value at (20) and under (5) its target exits 0 with no miss block
+  PASS V-BENCHINT-SECONDARY-NOT-GATED: jit_cold_start_max_ms=99999 with avg 10 (target 80) exits 0
+  PASS V-BENCHINT-UNSELECTED-NOT-A-MISS: an unselected benchmark contributes no miss; the same value selected does
+  PASS V-BENCHINT-RAM-HOST-SCOPE-UNJUDGED: host scope: rc 0 + UNJUDGED; pp scope: rc 1 + named miss
+  PASS V-BENCHINT-TAG-USES-PRIMARY: 9999 -> [FAIL], 24 (1.2x) -> [WARN], 5 -> [OK] from the benchmark's own primary metric
+  PASS V-BENCHINT-OWNER-MAP-COMPLETE: all 17 TARGETS metrics have an owning benchmark in ALL_BENCHES
+
+BENCHINT_PASS=53/53  threshold=53/53
+## python3 tools/test_bench_gate.py exit=0
+  PASS V-BENCH-BAND-APPLIED: tis_report_ms=268 (target 225, band 337) admitted
+  PASS V-BENCH-BAND-APPLIED-2: tco_gate_ms=357 (target 270, band 405) admitted
+  PASS V-BENCH-OVER-BAND-REJECTED: session_hub_ms=1301 (band 450) rejected -- the real one
+  PASS V-BENCH-BAND-BOUNDARY: exactly 45 is admitted
+  PASS V-BENCH-MISSING-IS-FAILURE: an unreported benchmark is named, not skipped
+  PASS V-BENCH-MISSING-BOOKEND: a complete sample reports no gaps
+  PASS V-BENCH-RETRY-ABSORBS-NOISE: 1008 then 194 -> min 194 admitted (measured spread was 418%)
+  PASS V-BENCH-RETRY-KEEPS-REAL: 1359 then 734 -> min 734 still over band 450
+  PASS V-BENCH-RETRY-ORDER-FREE: sample order does not change the verdict
+  PASS V-BENCH-THIRD-SAMPLE-COUNTS: 52 then 48 then 25 -> min 25 admitted; two slow draws in a row no longer accuse
+  PASS V-BENCH-RETRY-FITS-BUDGET: 3 x 45s <= 150s row budget
+  PASS V-BENCH-CEPS-TARGET-MEASURED: ceps_record_ms target 400 admits the measured worst min-of-3 (437 ms, real-corpus fixture) and stays inside 2x of it -- 38 timed a refusal, 60 timed an empty corpus
+  PASS V-BENCH-PERCENTILE: linear interpolation, clamped q, None (never 0) on empty
+  PASS V-BENCH-SUMMARIZE: n/floor/p50/p95/max over valid values; empty is n=0, None elsewhere
+  PASS V-BENCH-REPORT-LABELS: over-band report names the potential floor, p50, p95 and n=2; typical verdict UNJUDGED below 3 valid samples; rc stays 1; the BENCHMARKS_OK verdict is the last line (verify_spp summary)
+  PASS V-BENCH-EVALUATE-SKIPS-NONE: 1359, None, 200 -> admitted; 1359, None, 734 -> floor 734 kept
+  PASS V-BENCH-JUDGE-ACCOUNTS-ATTEMPTS: attempted/valid/failed counted; one valid sample over band is insufficient, healthy and two-sample runs are sufficient
+  PASS V-BENCH-MAIN-FAILED-RETRY-UNCONFIRMED: failed retry -> UNCONFIRMED, 1 valid of 2 attempted, reason kept, rc 1; bookend clean second sample -> rc 0, success line unchanged
+  PASS V-BENCH-ABS-NOTE-INSIDE-BAND: 268 vs absolute 150 (band 337) noted with explicit and default tables, default loads without the repo root on sys.path, an unreadable table says UNJUDGED, main prints BENCHMARKS_NOTE and keeps the success line last
+  PASS V-BENCH-ABS-NOTE-SILENT-WHEN-CLEAN: no note at or below target, beyond the band, or for a missing metric; the 151 > 150 bookend is noted
+  PASS V-BENCH-ABS-NOTE-EXIT-UNCHANGED: a note alone keeps rc 0; a genuinely over-band metric plus a note keeps rc 1; the verdict line stays last on both paths
+  PASS V-BENCH-INTEGRITY-SUITE-WIRED: tools/test_bench_integrity.py exits 0 with BENCHINT_PASS=n/n; negative control: exit-1, partial-count and silent scripts are all rejected
+  PASS V-BENCH-PRESSURE-SUITE-WIRED: tools/test_resource_pressure.py exits 0 with PRESSURE_PASS=n/n; negative control: exit-1, partial-count, silent and wrong-marker scripts are all rejected
+
+BENCH_GATE_PASS=24/24  threshold=24/24
+## python3 tools/test_resource_pressure.py exit=0
+  PASS V-PRESS-NO-PID-ENTRIES-IS-NONE-NOT-ZERO: no numeric entries -> None; numeric dirs without claude -> a read 0; unreadable comm skipped
+  PASS V-PRESS-BOUNDARY-CEILING: count equal to the ceiling GREEN, one above RED
+  PASS V-PRESS-BOUNDARY-FLOOR: RAM equal to the floor GREEN, 0.5 below RED, agreeing with verdict()
+  PASS V-PRESS-POLE-TABLE: all nine RAM x count pairs with class and reasons; junk readings are UNKNOWN
+  PASS V-PRESS-WINDOWS-TASKLIST-PARSER: LAPTOP-ONLY fixture shapes: rows counted, no-match line 0, localized or empty None
+  PASS V-PRESS-DARWIN-PS-PARSER: LAPTOP-ONLY fixture shapes: basename claude counted, empty None
+  PASS V-PRESS-PLATFORM-DISPATCH-AND-SHAPE: unsupported platform None; win32 and darwin built from stub subprocess; real reading shape
+  PASS V-PRESS-OLD-CALLERS-UNCHANGED: GUARD: frozen verdict and floor tables, refusal answers, signature, one mb >= floor literal
+  PASS V-PRESS-COUNT-REFUSAL-OPT-IN: count refusal only through count_reader; unreadable never refuses; kill switch honoured
+  PASS V-PRESS-DECLARED-CEILING-FILE: real file keeps its floors and declares the ceiling; bad values fall back to the declared fallback
+  PASS V-PRESS-NO-KILL-NO-PSUTIL-NO-MISSION-READS: AST scan of the module; negative control on a synthetic source
+  PASS V-PRESS-CLI-SHAPE: subprocess CLI prints one JSON object with host, os, profile, ram, count, pressure; no leaks
+    M1 target='count > ceiling' replacement='count >= ceiling' occurrences=1
+    M1 flagged_by=check_boundary_ceiling problem="count equal to the ceiling (5) gave 'RED', want GREEN"
+    M2 target='ram_low = ram_verdict == REFUSE_LOW_MEMORY' replacement='ram_low = False' occurrences=1
+    M2 flagged_by=check_pole_table problem="ram low + count fine: 'GREEN' [], want RED ['ram_below_floor']"
+    M3 target='count = _valid_count(count_reading)' replacement='count = _valid_count(count_reading) or 0' occurrences=1
+    M3 flagged_by=check_pole_table problem="ram low + count unreadable: 'RED' ['ram_below_floor'], want RED ['ram_below_floor', 'claude_count_unreadable']"
+    M3 flagged_by=check_tracer_unreadable problem="unreadable count with RAM 9000 gave 'GREEN' [], want UNKNOWN claude_count_unreadable"
+    M4 target='if not pid_dirs:' replacement='if False:' occurrences=1
+    M4 flagged_by=check_no_pid_entries problem='a root with no numeric entries gave count 0, want None (blind, not zero)'
+    M5 target='if switch_off():' replacement='if False:' occurrences=1
+    M5 flagged_by=check_refusal_opt_in problem='CPP_RESOURCE_ADMISSION=off still refused on a count over the ceiling'
+  PASS V-PRESS-MUTANTS-CAUGHT: five one-line mutants rejected by their owning checks; the real module accepted
+PRESSURE_PASS=17/17  threshold=17/17
+## python3 tools/test_gsd_mission_resources.py exit=0
+PASS V-RES-MODULE-PRESENT mission_resources + gm.resource_gate
+PASS V-RES-VOCAB WAIT_RESOURCE is a wait type but not an Owner wait
+PASS V-RES-ABSENT-FIELD-UNCHANGED calls=[] action=replace
+PASS V-RES-UNMET-PARKS hold=resource/WAIT_RESOURCE action=none launches=0 reason=WAIT_RESOURCE: O-70 needs ram_free_gb 6 UNMET (3.2 GB free < 6 GB needed)
+PASS V-RES-UNMET-NOT-CAPITAL-NOT-INCIDENT ['mission_prepared', 't_setup', 'envelope_auto_assigned', 'breaker_receipt', 'progress_unknown', 'RESOURCE_WAIT', 'owner_hold_set', 'resource_evaluated']
+PASS V-RES-UNMET-STAYS-PARKED none
+PASS V-RES-MET-WAKES events=['resource_available', 'launch_refused_account', 'liveness_incident', 'incident_notify_failed'] hold=None action=replace
+PASS V-RES-SIBLING-INDEPENDENT hold=None eval=['O-70']/['O-65']
+PASS V-RES-SIBLING-CONTROL-ALL-MET when the path exists nothing waits
+PASS V-RES-UNKNOWN-NOT-AVAILABLE hold=resource reason=WAIT_RESOURCE: O-70 needs ram_free_gb 6 UNKNOWN (RuntimeError: wmi down)
+PASS V-RES-UNKNOWN-CONTROL-WAKES a measurable value wakes it
+PASS V-RES-COST-HOLD-WINS-cost hold=cost/cost breaker: processed 9,000,
+PASS V-RES-COST-HOLD-WINS-owner hold=None/Owner park
+PASS V-RES-COST-HOLD-WINS-OVER-RESOURCE cost
+PASS V-RES-CLI-SET [{'id': 'O-65-path_exists', 'kind': 'path_exists', 'arg': '/tmp/gsd-mission-res-test-31lql1ki/R:\\hwf', 'obligation': 'O-65'}, {'id': 'O-70-ram_free_gb', 'kind': 'ram_free_gb', 'arg': 6.0, 'obligation': 'O-70'}, {'id': 'O-70-no_process', 'kind': 'no_process', 'arg': 'electron', 'obligation': 'O-70'}] 
+PASS V-RES-CLI-REPLACE [{'id': 'O-65-path_exists', 'kind': 'path_exists', 'arg': '/tmp/gsd-mission-res-test-31lql1ki/R:\\hwf', 'obligation': 'O-65'}, {'id': 'O-70-ram_free_gb', 'kind': 'ram_free_gb', 'arg': 9.0, 'obligation': 'O-70'}]
+PASS V-RES-CLI-CLEAR [{'id': 'O-65-path_exists', 'kind': 'path_exists', 'arg': '/tmp/gsd-mission-res-test-31lql1ki/R:\\hwf', 'obligation': 'O-65'}]
+RES_PASS=17/17  threshold=17/17
+## python3 tools/test_gsd_mission_baseline.py exit=0
+PASS V-BASE-ABSENT-MODEL ['<HOME>/.local/bin/claude', '--bg', '-n', 'm-abs-e1', '--allowedTools', 'EnterWorktree', '--allowedTools', 'ExitWorktree', '--allowedTools', 'Edit(.planning/**)', '--disallowedTools', 'AskUserQuestion', '--model', 'sonnet', '--autocompact', '250k', '/gsd-autonomous --ws wsx']
+PASS V-BASE-ABSENT-CEILINGS 250k 175000 {'snapshot': 35.0, 'advisory': 40.0, 'rearm': 30.0, 'advisory_tokens': 175000}
+PASS V-BASE-RECORD {'version': '2', 'tier': 'BASIC', 'work_class': 'GSD_RESUME', 'src': {'model': 'policy@2', 'autocompact': 'policy@2', 'continue_max_tokens': 'policy@2'}, 'values': {'model': 'sonnet', 'autocompact': '250k', 'continue_max_tokens': 175000}, 'legacy_reason': None}
+PASS V-BASE-LEDGER-ROW 
+PASS V-BASE-GSD-RESUME-NEVER-SLIM ['<HOME>/.local/bin/claude', '--bg', '-n']
+PASS V-BASE-EXPLICIT-KEPT {'version': '2', 'tier': 'BASIC', 'work_class': 'GSD_RESUME', 'src': {'model': 'explicit', 'autocompact': 'explicit', 'continue_max_tokens': 'policy@2'}, 'values': {'model': 'claude-opus-5-5', 'autocompact': '300k', 'continue_max_tokens': 175000}, 'legacy_reason': None}
+PASS V-BASE-BUILTIN {'version': 'builtin', 'tier': 'BASIC', 'work_class': 'GSD_RESUME', 'src': {'model': 'builtin', 'autocompact': 'builtin', 'continue_max_tokens': 'builtin'}, 'values': {'model': 'sonnet', 'autocompact': '250k', 'continue_max_tokens': 175000}, 'legacy_reason': None}
+PASS V-BASE-MALFORMED-POLICY-BUILTIN 
+PASS V-BASE-OLD-KEYS-UNCHANGED 
+PASS V-BASE-CLASS 
+PASS V-BASE-PACKET-SLIM-UNTOUCHED 
+PASS V-BASE-RERESOLVE-STAYS-POLICY {'version': '2', 'tier': 'BASIC', 'work_class': 'GSD_RESUME', 'src': {'model': 'policy@2', 'autocompact': 'policy@2', 'continue_max_tokens': 'policy@2'}, 'values': {'model': 'sonnet', 'autocompact': '250k', 'continue_max_tokens': 175000}, 'legacy_reason': None}
+PASS V-BASE-RERESOLVE-OPERATOR-EXPLICIT {'version': '2', 'tier': 'BASIC', 'work_class': 'GSD_RESUME', 'src': {'model': 'explicit', 'autocompact': 'policy@2', 'continue_max_tokens': 'policy@2'}, 'values': {'model': 'opus', 'autocompact': '250k', 'continue_max_tokens': 175000}, 'legacy_reason': None}
+PASS V-BASE-OFF-ARGV-IDENTICAL ['<HOME>/.local/bin/claude', '--bg', '-n', 'm-off-e1', '--allowedTools', 'EnterWorktree', '--allowedTools', 'ExitWorktree', '--allowedTools', 'Edit(.planning/**)', '--disallowedTools', 'AskUserQuestion', '--autocompact', '600k', '/gsd-autonomous --ws wsx']
+PASS V-BASE-OFF-NO-LEDGER 
+PASS V-BASE-ENFORCE-REFUSED {'ok': False, 'epoch': 0, 'bg_id': None, 'why': "legacy launch (--bg + opus + >=600k) without legacy_reason; fix: `gsd_mission envelope --mission m-enf --model sonnet --autocompact 250k` or set legacy_reason in ('host_limitation', 'uncertified_work_class', 'quality_requirement', 'novel_architecture', 'safe_deopt')", 'detail': ''}
+PASS V-BASE-ENFORCE-WITH-REASON {'ok': True, 'epoch': 1, 'bg_id': 'deadbeef'}
+PASS V-BASE-ENFORCE-UNKNOWN-REASON-REFUSED 
+PASS V-BASE-ENFORCE-DEFAULTS-PASS {'ok': True, 'epoch': 1, 'bg_id': 'deadbeef'}
+PASS V-BASE-SHADOW-LOGS 
+PASS V-BASE-MODE-PARSER 
+21 passed, 0 failed
+## python3 tools/test_git_invocation.py exit=1
+  OK   V-GITINV-DRILL-RED  synthetic offender is flagged (detected=True)
+  OK   V-GITINV-DRILL-GREEN  synthetic clean call is not flagged (detected=False)
+  OK   V-GITINV-SWEEP-FOUND-SOMETHING  structural sweep of modules/ tools/ hooks/ examined the tree and reports 16 file(s) invoking git by bare name
+  FAIL V-GITINV-NO-GROWTH  no unfrozen offender: ['modules/sqi/floor_guard.py', 'tools/a5_trace.py', 'tools/a5_u10_budget.py', 'tools/backlog_ledger_refresh.py', 'tools/ccn_bench.py', 'tools/ccr_release.py', 'tools/floor_regression_gate.py', 'tools/redteam_s9.py', 'tools/s9_done_gate.py', 'tools/s9_kv_check.py', 'tools/test_bcap2_activation.py', 'tools/test_gex44_env_preflight.py', 'tools/test_kme_pillars.py', 'tools/test_s9_redteam.py']
+  OK   V-GITINV-NO-STALE-EXEMPTION  every frozen entry is still a genuine current offender
+  OK   V-GITINV-FROZEN-FILES-EXIST  every frozen entry names a file that exists
+  OK   V-GITINV-OWNER-EXISTS  modules/execution_env supplies the single resolver callers use
+GIT_INVOCATION_PASS=6/7  threshold=7/7
+  current bare-git call sites:
+    [NEW] modules/sqi/floor_guard.py:[270]
+    [NEW] tools/a5_trace.py:[255, 248]
+    [NEW] tools/a5_u10_budget.py:[58, 59]
+    [NEW] tools/backlog_ledger_refresh.py:[60]
+    [frozen] tools/bench_all.py:[1295]
+    [NEW] tools/ccn_bench.py:[128]
+    [NEW] tools/ccr_release.py:[58]
+    [NEW] tools/floor_regression_gate.py:[859]
+    [NEW] tools/redteam_s9.py:[187, 633, 512]
+    [NEW] tools/s9_done_gate.py:[68, 293]
+    [NEW] tools/s9_kv_check.py:[100]
+    [NEW] tools/test_bcap2_activation.py:[300]
+    [NEW] tools/test_gex44_env_preflight.py:[263, 421]
+    [NEW] tools/test_kme_pillars.py:[279, 692]
+    [frozen] tools/test_meta_systems_runtime.py:[128]
+    [NEW] tools/test_s9_redteam.py:[438]
+## python3 -I tools/test_hook_critical_path.py exit=0 (new in Phase 5)
+  OK   V-CRIT-COLLECT-SHAPE-ONLY-JUDGE-SCOPE-CONTROL  the same file labelled LIVE_DISPATCHER passes the scope rule and reaches the judge (exit 1, verdict line present: True)
+CRITPATH_PASS=134/134  threshold=134/134
+## mb_floor_literal (substitute for the Phase 4 command, which is not recorded: count of the MEM_EDGES_MB line in tools/bench_all.py)
+1
+## bench_all_blob
+611681e6bec23f65bab05dee9d8dc87ec778ebb7
+## ledger_sha
+cef10a592e567e06fa43529966061bc223600475526fa2f435741f11582e32f4  vault/benchmarks/ledger.json
+## floors_sha
+54a5f2af2c4d2a46151bc751000819aafcfa67d69e43e0b95fdf1ed884cfdc09  vault/config/resource-floors.json
+## floors_blob
+8522b474e7264c2c8a9c2bfea3daf1e0d03970e0
+## python3 -I modules/liveness/reachability.py --json (offender names compared to 05-01-reach-pre.txt by unit name; full output in 05-03-reach-final.txt)
+reachability rc=1
+offenders pre=56 now=56 new=0 gone=0 names_unchanged=True
+## git diff --stat 4fa606d7 -- hooks/ vault/ tools/measure_hook_event.py tools/measure_session_start.py tools/test_hook_boundary.py (empty means unchanged)
+## git diff --stat 4fa606d7 -- hooks/ (empty means unchanged)
+## settings and live install: this script reads and writes nothing under ~/.claude
+# exit=0

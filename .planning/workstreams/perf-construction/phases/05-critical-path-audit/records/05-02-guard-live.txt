@@ -1,0 +1,18 @@
+# record_run
+# date_utc: 2026-11-23T12:15:14.186557+00:00
+# head: 744204da
+# cmd: python3 -I tools/hook_critical_path_audit.py guard --baseline .planning/workstreams/perf-construction/phases/05-critical-path-audit/records/05-01-inventory-baseline.json --json
+# pristine: hooks/=yes
+{
+ "moved": [],
+ "added": [],
+ "violations": [],
+ "plane": "GEX44",
+ "baseline_entries": 113,
+ "baseline_git_head": "69e27e195a499e7912533c22f2b119f93964d9cb",
+ "current_git_head": "744204daad9e1bf8956f19e26fefe6052248b7cb",
+ "current_hooks_clean": true,
+ "current_source": "live dispatcher",
+ "table_sha256": "b81856bbd4e441649708855b73118fe5cbac1c88c748184264b7a51b9bba0341"
+}
+# exit=0

@@ -1,0 +1,30 @@
+# record_run
+# date_utc: 2026-11-22T18:47:41.278201+00:00
+# head: 1a2ba1fc
+# cmd: python3 tools/test_bench_gate.py
+# pristine: tools/verify_bench_all.py=yes
+  PASS V-BENCH-BAND-VALUE: BAND=1.5, the documented allowance
+  PASS V-BENCH-BAND-APPLIED: tis_report_ms=268 (target 225, band 337) admitted
+  PASS V-BENCH-BAND-APPLIED-2: tco_gate_ms=357 (target 270, band 405) admitted
+  PASS V-BENCH-OVER-BAND-REJECTED: session_hub_ms=1301 (band 450) rejected -- the real one
+  PASS V-BENCH-BAND-BOUNDARY: exactly 45 is admitted
+  PASS V-BENCH-MISSING-IS-FAILURE: an unreported benchmark is named, not skipped
+  PASS V-BENCH-MISSING-BOOKEND: a complete sample reports no gaps
+  PASS V-BENCH-RETRY-ABSORBS-NOISE: 1008 then 194 -> min 194 admitted (measured spread was 418%)
+  PASS V-BENCH-RETRY-KEEPS-REAL: 1359 then 734 -> min 734 still over band 450
+  PASS V-BENCH-RETRY-ORDER-FREE: sample order does not change the verdict
+  PASS V-BENCH-THIRD-SAMPLE-COUNTS: 52 then 48 then 25 -> min 25 admitted; two slow draws in a row no longer accuse
+  PASS V-BENCH-RETRY-FITS-BUDGET: 3 x 45s <= 150s row budget
+  PASS V-BENCH-CEPS-TARGET-MEASURED: ceps_record_ms target 400 admits the measured worst min-of-3 (437 ms, real-corpus fixture) and stays inside 2x of it -- 38 timed a refusal, 60 timed an empty corpus
+  PASS V-BENCH-PERCENTILE: linear interpolation, clamped q, None (never 0) on empty
+  PASS V-BENCH-SUMMARIZE: n/floor/p50/p95/max over valid values; empty is n=0, None elsewhere
+  FAIL V-BENCH-REPORT-LABELS: rc=1 lacking=[] text='BENCHMARKS_OK: 1/8 over 1.5x target [potential floor (min of 2 valid samples; additive spawn noise can only raise a sample)]: session_hub_ms: 734>450 (1.5x300)\n  session_hub_ms: potential floor 734 vs band 450 | p50=1046 p95=1328 n=2 | typical=UNJUDGED (n=2 < 3)\n'
+  PASS V-BENCH-EVALUATE-SKIPS-NONE: 1359, None, 200 -> admitted; 1359, None, 734 -> floor 734 kept
+  PASS V-BENCH-JUDGE-ACCOUNTS-ATTEMPTS: attempted/valid/failed counted; one valid sample over band is insufficient, healthy and two-sample runs are sufficient
+  PASS V-BENCH-MAIN-FAILED-RETRY-UNCONFIRMED: failed retry -> UNCONFIRMED, 1 valid of 2 attempted, reason kept, rc 1; bookend clean second sample -> rc 0, success line unchanged
+  FAIL V-BENCH-ABS-NOTE-INSIDE-BAND: explicit table raised TypeError: 'NoneType' object is not callable; default table raised TypeError: 'NoneType' object is not callable; unreadable table raised TypeError; main: rc=0 text='BENCHMARKS_OK: 8/8 quick benchmarks within 1.5x SCS C26 targets\n'
+  FAIL V-BENCH-ABS-NOTE-SILENT-WHEN-CLEAN: absolute_notes raised TypeError: 'NoneType' object is not callable
+  FAIL V-BENCH-ABS-NOTE-EXIT-UNCHANGED: rc_note=0 rc_bad=1 text_bad='BENCHMARKS_OK: 1/8 over 1.5x target [potential floor (min of 1 valid sample; additive spawn noise can only raise a sample)]: session_hub_ms: 1301>450 (1.5x300)\n  session_hub_ms: potential floor 1301 vs band 450 | p50=1301 p95=1301 n=1 | typical=UNJUDGED (n=1 < 3)\n'
+
+BENCH_GATE_PASS=18/22  threshold=22/22
+# exit=1

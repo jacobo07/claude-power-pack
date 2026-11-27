@@ -1,0 +1,75 @@
+## python3 tools/test_a5_u6.py exit=0
+PASS U6-LAUNCH-READER-RAISES-REFUSES 
+PASS U6-LAUNCH-ADEQUATE-ADMITS-CONTROL None
+PASS U6-KILL-SWITCH 
+PASS U6-MUTANT-INVERTED-COMPARATOR-RED mutant admits low / refuses adequate: the gates above would fail
+A5_U6_PASS=13/13
+## python3 tools/test_arm_preflight.py exit=0
+PASS V-PRE-GSDX-PACKET-OK-PASSES [{'check': 'gsd_status', 'status': 'ok', 'why': 'r'}, {'check': 'resource_admission', 'status': 'ok', 'why': ''}, {'check': 'authority', 'status': 'warn', 'why': 'no authority_tokens on this arm: spend is bounded only by a goal ledger, if bound'}, {'check': 'foreseeable_decisions', 'status': 'unmeasured', 'why': 'unreadable source(s): /tmp/x/vault/specs/x.md, /tmp/x/.planning/workstreams/x/ROADMAP.md, /tmp/x/.planning/workstreams/x/STATE.md'}]
+PASS V-PRE-GSDX-ARM-CHAIN-PACKET-REFUSES arm_chain must not reach create() on NO_PHASES with a packet
+PASS V-PRE-ARM-CHAIN-WIRED arm refused by preflight -- spy: refused
+PASS V-PRE-MUTANT-ALWAYS-PASS-GOES-RED mutant did not refuse, so the wired gate detects it
+PRE_PASS=23/23  threshold=23/23
+## python3 tools/test_bench_integrity.py exit=0
+  PASS V-BENCHINT-RAM-HOST-SCOPE-UNJUDGED: host scope: rc 0 + UNJUDGED; pp scope: rc 1 + named miss
+  PASS V-BENCHINT-TAG-USES-PRIMARY: 9999 -> [FAIL], 24 (1.2x) -> [WARN], 5 -> [OK] from the benchmark's own primary metric
+  PASS V-BENCHINT-OWNER-MAP-COMPLETE: all 17 TARGETS metrics have an owning benchmark in ALL_BENCHES
+
+BENCHINT_PASS=41/41  threshold=41/41
+## python3 tools/test_bench_gate.py exit=0
+  PASS V-BENCH-ABS-NOTE-SILENT-WHEN-CLEAN: no note at or below target, beyond the band, or for a missing metric; the 151 > 150 bookend is noted
+  PASS V-BENCH-ABS-NOTE-EXIT-UNCHANGED: a note alone keeps rc 0; a genuinely over-band metric plus a note keeps rc 1; the verdict line stays last on both paths
+  PASS V-BENCH-INTEGRITY-SUITE-WIRED: tools/test_bench_integrity.py exits 0 with BENCHINT_PASS=n/n; negative control: exit-1, partial-count and silent scripts are all rejected
+
+BENCH_GATE_PASS=23/23  threshold=23/23
+## python3 tools/test_gsd_mission_resources.py exit=0
+PASS V-RES-COST-HOLD-WINS-OVER-RESOURCE cost
+PASS V-RES-CLI-SET [{'id': 'O-65-path_exists', 'kind': 'path_exists', 'arg': '/tmp/gsd-mission-res-test-3f4bx6t7/R:\\hwf', 'obligation': 'O-65'}, {'id': 'O-70-ram_free_gb', 'kind': 'ram_free_gb', 'arg': 6.0, 'obligation': 'O-70'}, {'id': 'O-70-no_process', 'kind': 'no_process', 'arg': 'electron', 'obligation': 'O-70'}] 
+PASS V-RES-CLI-REPLACE [{'id': 'O-65-path_exists', 'kind': 'path_exists', 'arg': '/tmp/gsd-mission-res-test-3f4bx6t7/R:\\hwf', 'obligation': 'O-65'}, {'id': 'O-70-ram_free_gb', 'kind': 'ram_free_gb', 'arg': 9.0, 'obligation': 'O-70'}]
+PASS V-RES-CLI-CLEAR [{'id': 'O-65-path_exists', 'kind': 'path_exists', 'arg': '/tmp/gsd-mission-res-test-3f4bx6t7/R:\\hwf', 'obligation': 'O-65'}]
+RES_PASS=17/17  threshold=17/17
+## python3 tools/test_gsd_mission_baseline.py exit=0
+PASS V-BASE-ENFORCE-UNKNOWN-REASON-REFUSED 
+PASS V-BASE-ENFORCE-DEFAULTS-PASS {'ok': True, 'epoch': 1, 'bg_id': 'deadbeef'}
+PASS V-BASE-SHADOW-LOGS 
+PASS V-BASE-MODE-PARSER 
+21 passed, 0 failed
+## python3 tools/test_g[i]t_invocation.py (full output) exit=1
+  OK   V-GITINV-DRILL-RED  synthetic offender is flagged (detected=True)
+  OK   V-GITINV-DRILL-GREEN  synthetic clean call is not flagged (detected=False)
+  OK   V-GITINV-SWEEP-FOUND-SOMETHING  structural sweep of modules/ tools/ hooks/ examined the tree and reports 16 file(s) invoking git by bare name
+  FAIL V-GITINV-NO-GROWTH  no unfrozen offender: ['modules/sqi/floor_guard.py', 'tools/a5_trace.py', 'tools/a5_u10_budget.py', 'tools/backlog_ledger_refresh.py', 'tools/ccn_bench.py', 'tools/ccr_release.py', 'tools/floor_regression_gate.py', 'tools/redteam_s9.py', 'tools/s9_done_gate.py', 'tools/s9_kv_check.py', 'tools/test_bcap2_activation.py', 'tools/test_gex44_env_preflight.py', 'tools/test_kme_pillars.py', 'tools/test_s9_redteam.py']
+  OK   V-GITINV-NO-STALE-EXEMPTION  every frozen entry is still a genuine current offender
+  OK   V-GITINV-FROZEN-FILES-EXIST  every frozen entry names a file that exists
+  OK   V-GITINV-OWNER-EXISTS  modules/execution_env supplies the single resolver callers use
+GIT_INVOCATION_PASS=6/7  threshold=7/7
+  current bare-git call sites:
+    [NEW] modules/sqi/floor_guard.py:[270]
+    [NEW] tools/a5_trace.py:[255, 248]
+    [NEW] tools/a5_u10_budget.py:[58, 59]
+    [NEW] tools/backlog_ledger_refresh.py:[60]
+    [frozen] tools/bench_all.py:[1148]
+    [NEW] tools/ccn_bench.py:[128]
+    [NEW] tools/ccr_release.py:[58]
+    [NEW] tools/floor_regression_gate.py:[859]
+    [NEW] tools/redteam_s9.py:[187, 633, 512]
+    [NEW] tools/s9_done_gate.py:[68, 293]
+    [NEW] tools/s9_kv_check.py:[100]
+    [NEW] tools/test_bcap2_activation.py:[300]
+    [NEW] tools/test_gex44_env_preflight.py:[263, 421]
+    [NEW] tools/test_kme_pillars.py:[279, 692]
+    [frozen] tools/test_meta_systems_runtime.py:[128]
+    [NEW] tools/test_s9_redteam.py:[438]
+## mb_floor_literal
+1
+## switch_off_literal
+1
+## count_over_literal
+1
+## floors_blob
+934f806e93d5fa43341acd7321794471f197b0a0  (HEAD blob, before the claude_process key is committed)
+## HEAD
+5c0e52a6
+## python3 tools/test_s9_redteam.py (via record_run --timeout 900) after-change record: 04-01-s9-redteam.after.txt
+PASS lines: 111  FAIL lines: ['V-S9RT-REPORT-REPRODUCES', 'V-S9RT-DRILL-M-REPORT-DRIFT', 'V-S9RT-DRILL-CONTROL-NOOP-FIRES', 'V-S9RT-REPORT-REPRODUCES', 'V-S9RT-DRILL-M-REPORT-DRIFT', 'V-S9RT-DRILL-CONTROL-NOOP-FIRES']
+# exit=1

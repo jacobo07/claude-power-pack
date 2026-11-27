@@ -1,0 +1,19 @@
+﻿window 2026-11-19T13:51:57Z -> 2026-11-26T13:51:57Z
+files=400 turns=2058 (last 15.0 d, newest 400 files, main thread)
+ALL TURNS: n=2058 wall=334.3 h
+  EXCLUSIVE share: hook=19.1%  api=19.6%  agent=0.0%  tool=38.3%  idle=23.0%
+  coverage       : hook=19.1%  api=20.9%  agent=0.1%  tool=53.9%
+  hook events    : PreToolUse=12.9%  Stop=3.6%  PostToolUse=2.6%  UserPromptSubmit=0.0%  SessionStart=0.0%
+FASTER HALF: n=1029 wall=27.9 h
+  EXCLUSIVE share: hook=34.5%  api=34.5%  agent=0.2%  tool=17.3%  idle=13.5%
+  coverage       : hook=34.5%  api=35.6%  agent=0.5%  tool=33.0%
+  hook events    : Stop=18.8%  PreToolUse=12.3%  PostToolUse=3.1%  UserPromptSubmit=0.2%  SessionStart=0.1%
+SLOWEST 10%: n=205 wall=172.9 h
+  EXCLUSIVE share: hook=12.5%  api=13.1%  agent=0.0%  tool=42.3%  idle=32.1%
+  coverage       : hook=12.5%  api=14.2%  agent=0.0%  tool=54.1%
+  hook events    : PreToolUse=9.9%  PostToolUse=1.9%  Stop=0.7%  UserPromptSubmit=0.0%  SessionStart=0.0%
+TURNS WITHOUT SUBAGENTS: n=1778 wall=279.5 h
+  EXCLUSIVE share: hook=18.7%  api=18.8%  agent=0.0%  tool=37.6%  idle=24.9%
+  coverage       : hook=18.7%  api=20.0%  agent=0.0%  tool=52.6%
+  hook events    : PreToolUse=12.4%  Stop=3.8%  PostToolUse=2.5%  UserPromptSubmit=0.0%  SessionStart=0.0%
+per-turn median s: total=214.6 hook_excl=54.0 api_excl=55.0 tool_excl=42.2 idle=16.8

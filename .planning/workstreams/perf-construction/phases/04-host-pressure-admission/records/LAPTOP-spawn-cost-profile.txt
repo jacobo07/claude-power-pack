@@ -1,0 +1,32 @@
+PLANE: LAPTOP (host DESKTOP-PMT5BS8, win32), 2026-11-24 ~12:20-12:45 UTC, ~31 claude.exe open.
+GEX44 lines are marked GEX44 and are cross-plane context only, never laptop numbers.
+CHECKOUT: worktree mission/perf-construction-laptop (branch tip d8b087bc..eebff4a6, code = 84833282)
+
+1. session_start_hub.js (hooks/session_start_hub.js), measured like Claude Code runs it (pipes, stdin "{}")
+   script: scratchpad/perf/hub_exit.py
+   exit_ms = 765, 969, 1781, 1919 (stdout EOF within 0-100 ms of exit)
+   hub's own main() (log 'DONE elapsed_ms'): 1229, 676, 714, 431
+   bench_all session_hub_ms: r01 6976.9 (outlier, recovery gate ran), r02 1746.1
+   INSTRUMENT NOTE: PowerShell Start-Process -Wait gave 6153-12402 ms because it waits for the
+   11 detached launcher children; that number is an artifact and is NOT the hook's latency.
+
+2. Bare process creation on the laptop (scratchpad/perf one-liners, subprocess.run, n=6)
+   node -e 0        median 759  min 570  max 1188 ms
+   node --version   median 819  min 607  max 1074 ms
+   python -c 0      median 465  min 291  max 564 ms
+   cmd /c exit      median 785  min 308  max 1590 ms
+   Parallel empty node (n=5 each):  1 -> median 1121 | 3 -> 1447 | 7 -> 2903 (min 2614, max 4298) ms
+   Defender: RealTimeProtectionEnabled=True, BehaviorMonitorEnabled=True, AMRunningMode=Normal;
+   exclusions unreadable without admin.
+
+3. GEX44 same probes (scratchpad/perf/gex_spawn.sh), node v22.23.3
+   GEX44 parallel empty node: 1 -> 29 | 3 -> 50 | 7 -> 83 ms ; GEX44 sh -c exit 0.7 ms
+
+4. Hook fan-out (~/.claude/settings.json, read 2026-11-24): PreToolUse 22 commands, PostToolUse 15.
+   An Edit matches ~7 Pre + ~7 Post commands; a PowerShell call ~5 Pre + ~3 Post.
+
+READING (hypothesis, not yet a verdict): on this laptop process creation itself costs 0.3-1.6 s,
+~25-1000x GEX44, and 7 concurrent node starts cost ~2.9 s. Every hooked tool call pays it on both
+sides. NOT yet separated: Defender scanning vs memory pressure vs CPU contention from 31 claude.exe.
+Next discriminator: the same probes with low claude count (LP-08 loop) and with a Defender
+process exclusion for node.exe (Owner/admin action).

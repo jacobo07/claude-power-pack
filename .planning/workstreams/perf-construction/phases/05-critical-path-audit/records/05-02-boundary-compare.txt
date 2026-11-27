@@ -1,0 +1,18 @@
+# record_run
+# date_utc: 2026-11-23T12:18:12.955455+00:00
+# head: f7ce4a98
+# cmd: python3 -I .planning/workstreams/perf-construction/phases/05-critical-path-audit/compare_runs.py .planning/workstreams/perf-construction/phases/05-critical-path-audit/records/05-01-boundary-before.txt .planning/workstreams/perf-construction/phases/05-critical-path-audit/records/05-02-boundary-after.txt
+# pristine: hooks/=yes
+GATE V-HOOK-BLOCK-DENIES  before=PASS after=PASS  SAME
+GATE V-HOOK-APPROVE-ALLOWS  before=PASS after=PASS  SAME
+GATE V-HOOK-REVISE-DOES-NOT-DENY  before=PASS after=PASS  SAME
+GATE V-HOOK-NON-SURFACE-INERT  before=PASS after=PASS  SAME
+GATE V-HOOK-GATE-UNAVAILABLE-FAILS-OPEN  before=PASS after=PASS  SAME
+GATE V-HOOK-REGISTRY-DETECTOR-WORKS  before=PASS after=PASS  SAME
+GATE V-HOOK-TRIGGER-REGISTERED  before=PASS after=PASS  SAME
+BEFORE HOOK_PASS=7/7 threshold=7/7  exit=0
+AFTER  HOOK_PASS=7/7 threshold=7/7  exit=0
+NOTE before run: gate V-HOOK-TRIGGER-REGISTERED reports an UNEVALUATED sub-check (isolated HOME has no live settings); the real-HOME run is LP-12, LAPTOP-ONLY / UNJUDGED
+NOTE after run: gate V-HOOK-TRIGGER-REGISTERED reports an UNEVALUATED sub-check (isolated HOME has no live settings); the real-HOME run is LP-12, LAPTOP-ONLY / UNJUDGED
+VERDICT: PASS - before green and every gate line identical in the after run (isolated HOME, GEX44)
+# exit=0

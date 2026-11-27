@@ -1,0 +1,60 @@
+# record_run
+# date_utc: 2026-11-23T00:15:36.855731+00:00
+# head: c17dafdf
+# cmd: python3 tools/test_bench_integrity.py
+  PASS V-BENCHINT-FOUR-VERDICTS-PRESENT: selected metric carries 4 verdicts + reasons in the ledger entry and the --json entry; unselected has none
+  PASS V-BENCHINT-VERDICT-ERRORED-INSTRUMENT: errored benchmark -> ran False, met None, regressed None, sufficient False
+  PASS V-BENCHINT-VERDICT-MISS: 9999 -> met False; 5 and 20 (== target) -> met True
+  PASS V-BENCHINT-VERDICT-UNKNOWN-NEVER-TRUE: unknown is None (identity), printed UNJUDGED with n; 3 matched values answer True and False; host RAM unattributable
+  PASS V-BENCHINT-EXIT-FROM-VERDICTS: error, miss, regression, silently absent -> 1; only unjudged and judged clean -> 0; rc matches the verdicts
+  PASS V-BENCHINT-COMPARE-MATCHED: --compare: delta vs matched median 10; with no window the message and no delta
+  PASS V-BENCHINT-ERRORED-ENTRY-EXCLUDED-FROM-WINDOW: an entry whose benchmark errored contributes nothing, even with a stale 500.0
+  PASS V-BENCHINT-HOST-STATE-SHAPE: 13 fields, schema 2, no env capture, count None-or-int, class in GREEN/RED/UNKNOWN, unreadable -> None, never raises
+  PASS V-BENCHINT-HOST-STATE-CARRIES-COUNT-AND-CLASS: count and class come from the real classifier behind injected readers: GREEN, count-RED, RAM-RED, None/raise/bool/RAM-unreadable -> UNKNOWN, 0 is a reading, RAM-only fake and a raising loader stay UNKNOWN
+  PASS V-BENCHINT-SCHEMA-BUMP: HOST_SCHEMA 2; a schema-2 state buckets, a schema-1 state does not; the real reader reports schema 2
+  PASS V-BENCHINT-RED-RUN-INCONCLUSIVE: RED host over three GREEN 10.0 priors with 18.0: recorded, regressed None, INCONCLUSIVE named, rc 0, no REGRESSIONS block; the same data on a GREEN host: regressed True, rc 1
+  PASS V-BENCHINT-RED-ENTRY-EXCLUDED-FROM-WINDOW: RED and UNKNOWN entries are counted under under_pressure=2 and kept out of the window [10, 11, 12]; a GREEN history is kept whole; the ledger keeps every prior entry and gains one
+  PASS V-BENCHINT-SCHEMA1-ENTRY-IS-UNKNOWN: None, string, schema-1 (legacy and forged GREEN), wrong-case, bool, int and missing classes are UNKNOWN; only a schema-2 stored GREEN is GREEN; schema-1 entries never enter a window
+  PASS V-BENCHINT-UNKNOWN-PRESSURE-INCONCLUSIVE: an unreadable process count is UNKNOWN: recorded, regressed None, INCONCLUSIVE and 'HOST PRESSURE: UNKNOWN' printed
+  PASS V-BENCHINT-RED-NEVER-PRINTS-NO-REGRESSIONS: RED with --compare: INCONCLUSIVE, no 'no regressions', no REGRESSIONS block, no delta, VERDICTS line kept; the GREEN control still prints its delta
+  PASS V-BENCHINT-MET-TARGET-STAYS-JUDGED-ON-RED: 25.0 on RED: met_target False, regressed None, rc 1, SLOW-HOST-SUSPECT; the same on GREEN: rc 1, COMPONENT FINDING; 18.0 on RED: rc 0
+  PASS V-BENCHINT-FLOORS-FLAG: --floors with a temp ceiling 5 gives RED and 50 gives GREEN from the same readings; the temp floor is recorded; no flag leaves the no-argument reader path; real floors file and ledger untouched
+  PASS V-BENCHINT-JSON-OUTPUT-STILL-PARSES: --json on RED and GREEN: the first JSON object decodes, carries pressure and claude_count, and no later line holds a brace
+  PASS V-BENCHINT-PRESSURE-LINES-RENDER: GREEN: one line, a miss is a COMPONENT FINDING; RED: header, INCONCLUSIVE and SLOW-HOST-SUSPECT only with a miss; UNKNOWN: cannot be attributed; no line holds a brace
+  PASS V-BENCHINT-PRESSURE-MUTANTS-CAUGHT: five one-line mutants of bench_all (RED branch off, pressure not passed, window exclusion off, schema rule off, suspect off) each rejected by the check that owns it; the real module accepted by all
+  PASS V-BENCHINT-ENTRY-CARRIES-HOST-STATE: the written entry holds host_state and ledger_schema 2
+  PASS V-BENCHINT-WINDOW-FILTERS: kept [10, 11, 12]; excluded legacy+unreadable=2, mode=1, bucket=1; median 11 over n=3
+  PASS V-BENCHINT-NO-FALSE-REGRESSION-FROM-DECOY: 10.5 vs matched median 10.0 -> rc 0 although the last entry is a full-mode 5.0
+  PASS V-BENCHINT-REAL-REGRESSION-NOT-MASKED: 13.0 vs matched median 10.0 -> rc 1 naming never_again_ms although the last entry is another bucket at 20.0
+  PASS V-BENCHINT-INSUFFICIENT-WINDOW-IS-UNJUDGED: 2 matched entries -> rc 0, 'REGRESSION: UNJUDGED', the count printed, never 'no regressions'
+  PASS V-BENCHINT-PYTEST-FAILED-NOT-FAST: rc 1 'No module named pytest' -> main rc 1, errors names pytest, no numeric pytest_total_ms, console ERROR
+  PASS V-BENCHINT-PYTEST-COMPLETED-BOOKEND: rc 0 '5 passed' -> main rc 0, numeric pytest_total_ms, no error
+  PASS V-BENCHINT-SITE-session_start: timeout/spawn/rc/crash -> labelled _error and no numeric _ms; a completing run records its primary metric
+  PASS V-BENCHINT-SITE-jit_cold_start: timeout/spawn/rc/crash -> labelled _error and no numeric _ms; a completing run records its primary metric
+  PASS V-BENCHINT-SITE-uqf_scan: timeout/spawn/rc/crash -> labelled _error and no numeric _ms; a completing run records its primary metric
+  PASS V-BENCHINT-SITE-verify_spp: timeout/spawn/rc/crash -> labelled _error and no numeric _ms; a completing run records its primary metric
+  PASS V-BENCHINT-SITE-pytest: timeout/spawn/rc/crash -> labelled _error and no numeric _ms; a completing run records its primary metric
+  PASS V-BENCHINT-SITE-vgate_suites: timeout/spawn/rc/crash -> labelled _error and no numeric _ms; a completing run records its primary metric
+  PASS V-BENCHINT-SITE-tco_gate: timeout/spawn/rc/crash -> labelled _error and no numeric _ms; a completing run records its primary metric
+  PASS V-BENCHINT-SITE-tis_report: timeout/spawn/rc/crash -> labelled _error and no numeric _ms; a completing run records its primary metric
+  PASS V-BENCHINT-SITE-osa_dispatcher: timeout/spawn/rc/crash -> labelled _error and no numeric _ms; a completing run records its primary metric
+  PASS V-BENCHINT-SITE-proactive_dispatch: timeout/spawn/rc/crash -> labelled _error and no numeric _ms; a completing run records its primary metric
+  PASS V-BENCHINT-SITE-monitoring: timeout/spawn/rc/crash -> labelled _error and no numeric _ms; a completing run records its primary metric
+  PASS V-BENCHINT-SITE-anti_patterns: timeout/spawn/rc/crash -> labelled _error and no numeric _ms; a completing run records its primary metric
+  PASS V-BENCHINT-SITE-ceps_record: timeout/spawn/rc/crash -> labelled _error and no numeric _ms; a completing run records its primary metric
+  PASS V-BENCHINT-SITE-session_hub_direct: timeout/spawn/rc/crash -> labelled _error and no numeric _ms; a completing run records its primary metric
+  PASS V-BENCHINT-SITE-never_again: timeout/spawn/rc/crash -> labelled _error and no numeric _ms; a completing run records its primary metric
+  PASS V-BENCHINT-CLASSIFIER-TABLE: 12 classifier cases + reason shape
+  PASS V-BENCHINT-RC1-IS-VERDICT: session_start and monitoring with rc 1 still record their values
+  PASS V-BENCHINT-VGATE-AGGREGATE: a failed suite -> vgate_error + details + vgate_failed_run_ms, no vgate_total_ms; all-pass records it
+  PASS V-BENCHINT-MUTANT-CAUGHT: real module accepted, mutant with the tco_gate classifier call removed rejected by the same check
+  PASS V-BENCHINT-ABS-MISS-EXITS-NONZERO: never_again_ms=9999 vs 20 -> rc 1 and a TARGET MISSES block naming it; --json keeps the entry first, block after
+  PASS V-BENCHINT-AT-TARGET-EXITS-ZERO: a value at (20) and under (5) its target exits 0 with no miss block
+  PASS V-BENCHINT-SECONDARY-NOT-GATED: jit_cold_start_max_ms=99999 with avg 10 (target 80) exits 0
+  PASS V-BENCHINT-UNSELECTED-NOT-A-MISS: an unselected benchmark contributes no miss; the same value selected does
+  PASS V-BENCHINT-RAM-HOST-SCOPE-UNJUDGED: host scope: rc 0 + UNJUDGED; pp scope: rc 1 + named miss
+  PASS V-BENCHINT-TAG-USES-PRIMARY: 9999 -> [FAIL], 24 (1.2x) -> [WARN], 5 -> [OK] from the benchmark's own primary metric
+  PASS V-BENCHINT-OWNER-MAP-COMPLETE: all 17 TARGETS metrics have an owning benchmark in ALL_BENCHES
+
+BENCHINT_PASS=53/53  threshold=53/53
+# exit=0

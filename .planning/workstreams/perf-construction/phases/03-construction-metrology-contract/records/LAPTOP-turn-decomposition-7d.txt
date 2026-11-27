@@ -1,0 +1,52 @@
+PLANE: LAPTOP (DESKTOP-PMT5BS8, win32), 2026-11-26. Read-only over %USERPROFILE%\.claude\projects, newest 200 transcripts modified in the last 7 days, main thread only.
+TOOLS: scratchpad/perf/turn_decomp2.py (interval-union decomposition, exclusive shares sum to 100%; sanity run on one session summed to 100%) and scratchpad/perf/hook_cost.py (per-hook-command durationMs from hook_* attachments and stop_hook_summary).
+A first version (turn_decomp.py) summed tool time over parallel calls and exceeded 100%; it is superseded and its shares are not used.
+KEY RESULT: per-turn median 210.8 s = hooks 53.0 s (exclusive) | model/API 53.3 s | tools 45.8 s | idle 15.7 s. Hooks cost as much wall time as the model.
+MECHANISM: hook-dispatcher.js runs each *-chain member as a SEQUENTIAL child process via spawnSync (comment at ~/.claude/hooks/hook-dispatcher.js:144-156), so a chain pays N process starts in series; process start on this laptop is 0.15-1+ s depending on CPU (LAPTOP-contention-sampler-2h.txt).
+CAVEAT: hook intervals assume the attachment timestamp is the hook end; idle includes permission prompts and gaps not attributed to any category.
+
+--- turn_decomp2.py ---
+files=200 turns=1621 (last 7.0 d, newest 200 files, main thread)
+ALL TURNS: n=1621 wall=267.9 h
+  EXCLUSIVE share: hook=17.9%  api=18.5%  agent=0.1%  tool=39.8%  idle=23.9%
+  coverage       : hook=17.9%  api=19.6%  agent=0.1%  tool=54.3%
+  hook events    : PreToolUse=12.0%  Stop=3.5%  PostToolUse=2.4%  UserPromptSubmit=0.1%  SessionStart=0.0%
+FASTER HALF: n=810 wall=21.2 h
+  EXCLUSIVE share: hook=33.7%  api=34.7%  agent=0.2%  tool=18.7%  idle=12.7%
+  coverage       : hook=33.7%  api=35.8%  agent=0.5%  tool=33.3%
+  hook events    : Stop=19.1%  PreToolUse=11.3%  PostToolUse=3.0%  UserPromptSubmit=0.3%  SessionStart=0.1%
+SLOWEST 10%: n=162 wall=143.6 h
+  EXCLUSIVE share: hook=11.3%  api=12.3%  agent=0.0%  tool=42.1%  idle=34.3%
+  coverage       : hook=11.3%  api=13.1%  agent=0.0%  tool=52.8%
+  hook events    : PreToolUse=9.0%  PostToolUse=1.7%  Stop=0.7%  UserPromptSubmit=0.0%  SessionStart=0.0%
+TURNS WITHOUT SUBAGENTS: n=1418 wall=224.5 h
+  EXCLUSIVE share: hook=17.3%  api=17.7%  agent=0.0%  tool=39.0%  idle=26.0%
+  coverage       : hook=17.3%  api=18.7%  agent=0.0%  tool=52.8%
+  hook events    : PreToolUse=11.3%  Stop=3.7%  PostToolUse=2.3%  UserPromptSubmit=0.1%  SessionStart=0.0%
+per-turn median s: total=210.8 hook_excl=53.0 api_excl=53.3 tool_excl=45.8 idle=15.7
+
+--- hook_cost.py ---
+files=200 hook runs=81732 total hook-seconds=284767 (sum, not wall)
+event             hook                                     runs median_ms  p90_ms  share timeouts
+Stop              Stop chain (11 hooks, fork-storm-safe)   3322     16527   37065  23.5%        0
+PreToolUse        PreToolUse Bash chain (4 hooks, fork-s   9695      4106   14665  22.1%        3
+PreToolUse        PreToolUse Edit chain (7 hooks, fork-s   5750      7122   15607  17.1%        2
+PostToolUse       hook-dispatcher.js                      25201       613    2229   9.2%        0
+PreToolUse        PreToolUse Read chain (1 hook, fork-st   7053      1622    5869   6.5%       14
+PreToolUse        cdio_visual_advisory.js                  6241       944    3167   3.3%      174
+PostToolUse       Governance mistake-registry ingest (T-   5737       910    2773   2.7%        0
+PostToolUse       kg-sync-hook.js                          5682       756    2236   2.1%        0
+Stop              auto-compact-stop-launcher.ps1           2034      1533    5758   1.9%      126
+PreToolUse        lazarus-livesnap.js                       574      6859   11329   1.6%      574
+Stop              background-verifier.js                   3817       683    2408   1.6%       42
+SessionStart      hook-dispatcher.js                        334      5432   15887   1.2%       37
+Stop              gsd-context-monitor.js                   1916       767    2828   1.0%       10
+SessionStart      run-hook.cmd                              305      2738    9690   0.8%        0
+PreToolUse        gsd-worktree-path-guard.js                244      7900   15484   0.8%        0
+PreToolUse        gsd-read-guard.js                         254      7022   11111   0.7%      254
+Stop              claude-hook.cmd                          1914       530    2026   0.7%        8
+PreToolUse        Session-file guard (bullet-proof, BL-2    150      6586   11127   0.4%      150
+PreToolUse        claude-hook.cmd                            64     12826   22284   0.3%       64
+SessionStart      rollover_autotype.js                        8    113093  147329   0.3%        8
+SessionStart      skill_evolution.py                         10     19099  146452   0.2%       10
+PostToolUse       bug-hunter-ceps-bridge.js                 149      1871    9509   0.2%        0

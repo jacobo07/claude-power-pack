@@ -1,0 +1,30 @@
+# record_run
+# date_utc: 2026-11-22T18:48:22.009735+00:00
+# head: b9611b73
+# cmd: python3 tools/test_git_invocation.py
+  OK   V-GITINV-DRILL-RED  synthetic offender is flagged (detected=True)
+  OK   V-GITINV-DRILL-GREEN  synthetic clean call is not flagged (detected=False)
+  OK   V-GITINV-SWEEP-FOUND-SOMETHING  structural sweep of modules/ tools/ hooks/ examined the tree and reports 16 file(s) invoking git by bare name
+  FAIL V-GITINV-NO-GROWTH  no unfrozen offender: ['modules/sqi/floor_guard.py', 'tools/a5_trace.py', 'tools/a5_u10_budget.py', 'tools/backlog_ledger_refresh.py', 'tools/ccn_bench.py', 'tools/ccr_release.py', 'tools/floor_regression_gate.py', 'tools/redteam_s9.py', 'tools/s9_done_gate.py', 'tools/s9_kv_check.py', 'tools/test_bcap2_activation.py', 'tools/test_gex44_env_preflight.py', 'tools/test_kme_pillars.py', 'tools/test_s9_redteam.py']
+  OK   V-GITINV-NO-STALE-EXEMPTION  every frozen entry is still a genuine current offender
+  OK   V-GITINV-FROZEN-FILES-EXIST  every frozen entry names a file that exists
+  OK   V-GITINV-OWNER-EXISTS  modules/execution_env supplies the single resolver callers use
+GIT_INVOCATION_PASS=6/7  threshold=7/7
+  current bare-git call sites:
+    [NEW] modules/sqi/floor_guard.py:[270]
+    [NEW] tools/a5_trace.py:[255, 248]
+    [NEW] tools/a5_u10_budget.py:[58, 59]
+    [NEW] tools/backlog_ledger_refresh.py:[60]
+    [frozen] tools/bench_all.py:[747]
+    [NEW] tools/ccn_bench.py:[128]
+    [NEW] tools/ccr_release.py:[58]
+    [NEW] tools/floor_regression_gate.py:[859]
+    [NEW] tools/redteam_s9.py:[187, 633, 512]
+    [NEW] tools/s9_done_gate.py:[68, 293]
+    [NEW] tools/s9_kv_check.py:[100]
+    [NEW] tools/test_bcap2_activation.py:[300]
+    [NEW] tools/test_gex44_env_preflight.py:[263, 421]
+    [NEW] tools/test_kme_pillars.py:[279, 692]
+    [frozen] tools/test_meta_systems_runtime.py:[128]
+    [NEW] tools/test_s9_redteam.py:[438]
+# exit=1

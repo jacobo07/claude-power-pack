@@ -1,0 +1,71 @@
+## python3 tools/test_capability_invocation.py exit=0
+  OK   V-INV-REAL-CONTRACT-ENTRYPOINT: contract declares entrypoint='modules.surface_architecture.resolver:resolve' authority='decision'
+  OK   V-INV-REAL-CONTRACT: real resolver invoked via contract -> outcome=UNDETERMINED exit=22 in 0.0ms (fn=modules.surface_architecture.resolver.resolve)
+  OK   V-INV-REAL-CONTRACT-ABSENCE: all-unknown context -> UNDETERMINED, never a confident winner
+  OK   V-INV-PROVENANCE: who/why/entrypoint/authority/input/outcome/when all present
+INV_PASS=13/13  threshold=13/13
+## python3 tools/test_capability_runtime.py exit=0
+  PASS V-CAPRT-SYMBOL-LEXICON: c++~cpp, c#~csharp, .net~dotnet; original phrase returned
+  PASS V-CAPRT-SYMBOL-NO-CORRUPTION: ordinary text intact, canonical_text idempotent: ['example.network', 'asp.net', 'c++11', 'cpp', 'csharp and dotnet', 'cpp csharp']
+  PASS V-CAPRT-HITS-IDENTITY: 281 discovered word-edged phrases x 8 texts identical to the old matcher (of 281 discovered); symbol control differs as it must
+
+CAPABILITY_RUNTIME_PASS=33/33  threshold=33/33
+## python3 tools/test_agent_resolver.py exit=0
+  PASS V-RES-MISS-NO-MATCH-REAL: NO_MATCH broken=[]
+  PASS V-RES-MISS-EXCLUSION-NOT-NOISE: NO_MATCH, 7 lexical exclusions, none would activate
+  PASS V-RES-MISS-CLASS-EXCLUDED-REAL: CLASS_EXCLUDED ['oneshot-architect-auditor']
+  PASS V-RES-MISS-VETO-IS-NO-MATCH: NO_MATCH vetoed_by=['go-reviewer']
+AGENT_RESOLVER_PASS=33/33  threshold=33/33
+## python3 tools/test_agent_telemetry.py exit=0
+  PASS V-TEL-CLI-RECORDS: exit=1 signals=1 out=['NO_CERTIFIED_SPECIALIST miss=NO_MATCH catalog=11 cache=MISS 1.75ms resolution_id=73cfedc2831b4b9fb02923456175bb49'] err=''
+  PASS V-TEL-CLI-JSON: json keys resolution_id/recorded/miss/query_fp = ['d72e29f8236643c98ab801bd9305a757', True, 'NO_MATCH']
+  PASS V-TEL-CLI-NOT-RECORDED-VISIBLE: exit=1 stderr='TELEMETRY_NOT_RECORDED resolution_id=776faa5ca0c541198cd92310fe79d06d (CO-12 write failed or timed out; the result below is unaffected)'
+  PASS V-TEL-LIVE-ISOLATION: live corpus read: 6 suite query_fps, 0 live agent_resolution rows, leaked=[]
+AGENT_TELEMETRY_PASS=20/20  threshold=20/20
+## python3 tools/test_capability_consumption.py exit=0
+  OK   V-CON-APPROVAL: REQUIRE_APPROVAL renders as unapproved -- dispatch grants nothing
+  OK   V-CON-CONFLICT: UNDETERMINED names no leader even when one is present on the record
+  OK   V-CON-FAILOPEN: capability layer down -> PRD parses normally, no decision, no raise
+  OK   V-CON-FAILOPEN-CONTROL: restored -> decision attached again
+CON_PASS=11/11  threshold=11/11
+## python3 tools/test_capability_directory.py exit=0
+PASS V-CAPDIR-ROW: [{'name': 'alpha', 'line': 'Decompile APKs.', 'path': '/tmp/capdir-nrhw0rl6/alpha/SKILL.md'}]
+PASS V-CAPDIR-NO-DANGLING: ['gone', 'cli card', 'never-installed']
+PASS V-CAPDIR-LIVE-ESTATE: /home/kobii/.claude/skills/android-reverse-engineering/SKILL.md
+CAPDIR_PASS=3/3  threshold=3/3
+## python3 tools/test_reachability.py exit=0
+[OK] V-REACH-TASK-FAILOPEN: empty schtasks output yields no seeds
+[OK] V-REACH-TASK-CHAIN: sched/runner REACHABLE via tools/task_entry.py
+[OK] V-REACH-TASK-NEGATIVE: sched/runner ORPHAN when no task names it
+[OK] V-REACH-SELF: real repo: 525 modules, acceptance arbiter in scope
+REACHABILITY_PASS=15/15  threshold=15/15
+## python3 tools/test_git_invocation.py exit=1
+  OK   V-GITINV-DRILL-RED  synthetic offender is flagged (detected=True)
+  OK   V-GITINV-DRILL-GREEN  synthetic clean call is not flagged (detected=False)
+  OK   V-GITINV-SWEEP-FOUND-SOMETHING  structural sweep of modules/ tools/ hooks/ examined the tree and reports 16 file(s) invoking git by bare name
+  FAIL V-GITINV-NO-GROWTH  no unfrozen offender: ['modules/sqi/floor_guard.py', 'tools/a5_trace.py', 'tools/a5_u10_budget.py', 'tools/backlog_ledger_refresh.py', 'tools/ccn_bench.py', 'tools/ccr_release.py', 'tools/floor_regression_gate.py', 'tools/redteam_s9.py', 'tools/s9_done_gate.py', 'tools/s9_kv_check.py', 'tools/test_bcap2_activation.py', 'tools/test_gex44_env_preflight.py', 'tools/test_kme_pillars.py', 'tools/test_s9_redteam.py']
+  OK   V-GITINV-NO-STALE-EXEMPTION  every frozen entry is still a genuine current offender
+  OK   V-GITINV-FROZEN-FILES-EXIST  every frozen entry names a file that exists
+  OK   V-GITINV-OWNER-EXISTS  modules/execution_env supplies the single resolver callers use
+GIT_INVOCATION_PASS=6/7  threshold=7/7
+  current bare-git call sites:
+    [NEW] modules/sqi/floor_guard.py:[270]
+    [NEW] tools/a5_trace.py:[255, 248]
+    [NEW] tools/a5_u10_budget.py:[58, 59]
+    [NEW] tools/backlog_ledger_refresh.py:[60]
+    [frozen] tools/bench_all.py:[1148]
+    [NEW] tools/ccn_bench.py:[128]
+    [NEW] tools/ccr_release.py:[58]
+    [NEW] tools/floor_regression_gate.py:[859]
+    [NEW] tools/redteam_s9.py:[187, 633, 512]
+    [NEW] tools/s9_done_gate.py:[68, 293]
+    [NEW] tools/s9_kv_check.py:[100]
+    [NEW] tools/test_bcap2_activation.py:[300]
+    [NEW] tools/test_gex44_env_preflight.py:[263, 421]
+    [NEW] tools/test_kme_pillars.py:[279, 692]
+    [frozen] tools/test_meta_systems_runtime.py:[128]
+    [NEW] tools/test_s9_redteam.py:[438]
+## policy_hash
+f113a59d0dc99c56
+## HEAD
+e00beb98

@@ -1,0 +1,11 @@
+# record_run
+# date_utc: 2026-11-22T22:38:56.668834+00:00
+# head: 18404f01
+# cmd: python3 tools/test_construction_metrology.py
+V-METRO -- construction metrology (events, states, connected percentile)
+  OK   V-METRO-TRACER-TTFUR-MEASURED: one human turn -> TTFUR 2.5 s (request copy ignored), N_total=1 measured=1 censored=0, 'plane: GEX44', no canary in output
+  OK   V-METRO-TRACER-UNOBSERVED-CENSORED: a transcript cut mid-turn is one UNOBSERVED censored sample in N_total, value null (not 0)
+  OK   V-METRO-POLICY-ID-UNMOVED: policy id identical with the file, without it and edited: f113a59d0dc99c56; equals live; in NOT_POLICY
+  OK   V-METRO-PERCENTILE-CONNECTED: percentile and store_dirs are the owners' objects; the module defines no copy
+METRO_PASS=4/4  threshold=4/4
+# exit=0

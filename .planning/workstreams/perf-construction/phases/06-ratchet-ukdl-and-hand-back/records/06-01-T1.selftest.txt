@@ -1,0 +1,15 @@
+# record_run
+# date_utc: 2026-11-23T13:22:54.351397+00:00
+# head: 5fecb5a2
+# cmd: python3 -I .planning/workstreams/perf-construction/phases/06-ratchet-ukdl-and-hand-back/inherit_check.py selftest
+OK   V-INH-PASS: good row -> PASS (marker 3/3 (expected 3))
+OK   V-INH-EXIT: marker 3/3 with exit 1 -> FAIL
+OK   V-INH-SILENT: exit 0 and no marker -> UNPARSED
+OK   V-INH-TIMEOUT: over-timeout row -> TIMED_OUT, grandchild process gone=True
+OK   V-INH-LOWER: 2/3, 3/4 and 4/4 against expected 3/3 -> FAIL FAIL FAIL
+OK   V-INH-NOT-RUN: missing executable -> NOT_RUN
+OK   V-INH-BASELINE: recorded 6/7 -> BASELINE_MATCH, lower 5/7 -> FAIL (baseline is never PASS)
+OK   V-INH-FOOTER: PASS+SKIPPED -> exit 0 '1/2 judged'; PASS+UNPARSED -> exit 1, NOT_JUDGED=1
+OK   V-INH-MUTANT-CONTROL: 2/2 against expected 3: real judge -> FAIL, judge with count comparison disabled -> PASS
+INHERIT_SELFTEST=9/9
+# exit=0

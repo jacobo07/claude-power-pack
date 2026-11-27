@@ -1,0 +1,10 @@
+{
+  "hooks": {
+    "context_warning_threshold": 12,
+    "context_critical_threshold": 8
+  },
+  "workflow": {
+    "skip_discuss": true,
+    "plan_check": false
+  }
+}

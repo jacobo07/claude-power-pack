@@ -1,0 +1,9 @@
+# record_run
+# date_utc: 2026-11-22T18:43:10.689085+00:00
+# head: d76e8a9f
+# cmd: python3 tools/test_bench_integrity.py
+  PASS V-BENCHINT-PYTEST-FAILED-NOT-FAST: rc 1 'No module named pytest' -> main rc 1, errors names pytest, no numeric pytest_total_ms, console ERROR
+  PASS V-BENCHINT-PYTEST-COMPLETED-BOOKEND: rc 0 '5 passed' -> main rc 0, numeric pytest_total_ms, no error
+
+BENCHINT_PASS=2/2  threshold=2/2
+# exit=0

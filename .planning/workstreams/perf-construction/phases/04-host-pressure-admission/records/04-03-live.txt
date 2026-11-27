@@ -1,0 +1,12 @@
+# record_run
+# date_utc: 2026-11-23T08:53:51.841206+00:00
+# head: c4752b59
+# cmd: python3 -I .planning/workstreams/perf-construction/phases/04-host-pressure-admission/smoke_pressure.py --live
+plane: GEX44 host: kobicraft-gex44
+instrument: tools/resource_admission.py read_available_mb, read_claude_process_count, pressure
+sample size: n=1 (one reading, a probe of this moment, not a distribution)
+ram: available_mb=52320.125 source=/proc/meminfo
+count: claude_processes=29 source=proc:exe+comm ambiguous=0
+declared: ram_floor_mb=3000 claude_ceiling=40 ceiling_status=PROPOSED_UNCALIBRATED
+class: GREEN reasons=none
+# exit=0

@@ -1,0 +1,15 @@
+# record_run
+# date_utc: 2026-11-23T12:17:15.838893+00:00
+# head: f7ce4a98
+# cmd: python3 -I /tmp/p5-scripts/run_boundary.py
+# pristine: hooks/=yes
+V-HOOK gates (CDIO enforcement across the real process boundary)
+  [PASS] V-HOOK-BLOCK-DENIES: node->python->deny across the real boundary; exit 0 (the refusal rides in the payload, never the exit code); the reason names both the verdict and this fixture's own surface
+  [PASS] V-HOOK-APPROVE-ALLOWS: a conforming design system is not denied, and the hook reports APPROVE against this fixture's own DESIGN.md -- evidence the gate RAN, not merely that nothing was refused
+  [PASS] V-HOOK-REVISE-DOES-NOT-DENY: the hook REPORTS REVISE and does not refuse -- making the verdict reachable did not widen what the gate may block
+  [PASS] V-HOOK-NON-SURFACE-INERT: a .py write beside a BLOCKing DESIGN.md returns exactly {} -- the hook is scoped, not universal
+  [PASS] V-HOOK-GATE-UNAVAILABLE-FAILS-OPEN: an unusable interpreter yields valid JSON, exit 0 and no refusal -- a broken gate stands down instead of blocking real work
+  [PASS] V-HOOK-REGISTRY-DETECTOR-WORKS: planted duplicate found on both tools; an unrelated direct script and a script from a DIFFERENT chain both report clean -- the detector discriminates rather than always answering
+  [PASS] V-HOOK-TRIGGER-REGISTERED: registered on 1 surface(s): hook-dispatcher.js; duplicate-invocation check UNEVALUATED ([Errno 2] No such file or directory: '/tmp/p5-home/.claude/settings.json')
+HOOK_PASS=7/7  threshold=7/7
+# exit=0

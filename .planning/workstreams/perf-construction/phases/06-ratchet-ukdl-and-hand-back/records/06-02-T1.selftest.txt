@@ -1,0 +1,18 @@
+# record_run
+# date_utc: 2026-11-23T13:33:16.535738+00:00
+# head: 1e5cd138
+# cmd: python3 -I .planning/workstreams/perf-construction/phases/06-ratchet-ukdl-and-hand-back/ratchet_connect.py selftest
+  PASS V-RAT-SCRATCH-ROOT: live root, a path inside it and a symlink to it exit [2, 2, 2]; the fresh temp root is accepted
+  PASS V-RAT-B0: B0 written under the scratch root, read back, check PASS, origin VERIFIED
+  PASS V-RAT-B1-CHAIN: verify_chain ok=True generations=[0, 1] parent_sha256 anchored=True
+  PASS V-RAT-REFUSE-NEG: empty list -> RatchetRefusal: promotion refused: negative_controls needs at least on | rc 0 -> RatchetRefusal: promotion refused: negative_controls needs at least on
+  PASS V-RAT-REFUSE-REUSE: reuse run equal to the improving run -> RatchetRefusal: promotion refused: reuse needs a later run (different 
+  PASS V-RAT-REFUSE-AUTH: empty authority -> the owner's refusal; three authority texts naming the Owner -> the script's own guard
+  PASS V-RAT-REFUSALS-WROTE-NOTHING: generations before [0, 1] after [0, 1]
+  PASS V-RAT-TAMPER: one appended byte to B0 -> tampered=[1] ok=False; restored bytes -> ok=True
+  PASS V-RAT-REGRESS: a B1 that drops a B0 entry with no recorded change -> regressions=[{'generation': 1, 'id': 'perf_construction_scratch-fixture-9', 'kind': 'WITHDRAWN'}]
+  PASS V-RAT-MUTANT-CONTROL: with evidence_problems disabled the empty-control entry is ACCEPTED (the instrument can say no); restored it refuses again
+  PASS V-RAT-JUDGE-POLES: good fixture promotable; missing quote -> QUOTE_MISSING; unreadable rc -> missing: evidence_not_equal_to_records, negative_controls, negative_control; unreadable before -> missing: evidence_not_equal_to_records, improvement, before
+  PASS V-RAT-LIVE-UNTOUCHED: git status empty for vault/tower/baselines and vault/tower/families; scratch removed=True
+RATCHET_SELFTEST=12/12
+# exit=0

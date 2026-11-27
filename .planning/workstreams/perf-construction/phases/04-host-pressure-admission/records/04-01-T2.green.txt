@@ -1,0 +1,34 @@
+# record_run
+# date_utc: 2026-11-22T23:55:51.525864+00:00
+# head: 5c0e52a6
+# cmd: python3 tools/test_resource_pressure.py
+  PASS V-PRESS-TRACER-COUNT-OVER-IS-RED: fake /proc tree -> count 3 -> ceiling 2 -> RED; one process fewer -> GREEN
+  PASS V-PRESS-TRACER-RAM-LOW-IS-RED: RAM 800 -> RED ram_below_floor; RAM 9000 -> GREEN
+  PASS V-PRESS-TRACER-UNREADABLE-IS-UNKNOWN: missing proc root -> count None -> UNKNOWN; RAM None -> UNKNOWN
+  PASS V-PRESS-IDENTITY-NATIVE-SEMVER: comm+exe rule: 3 counted, 1 ambiguous, foreign exe and node cmdline not counted; re-point lowers the count
+  PASS V-PRESS-NO-PID-ENTRIES-IS-NONE-NOT-ZERO: no numeric entries -> None; numeric dirs without claude -> a read 0; unreadable comm skipped
+  PASS V-PRESS-BOUNDARY-CEILING: count equal to the ceiling GREEN, one above RED
+  PASS V-PRESS-BOUNDARY-FLOOR: RAM equal to the floor GREEN, 0.5 below RED, agreeing with verdict()
+  PASS V-PRESS-POLE-TABLE: all nine RAM x count pairs with class and reasons; junk readings are UNKNOWN
+  PASS V-PRESS-WINDOWS-TASKLIST-PARSER: LAPTOP-ONLY fixture shapes: rows counted, no-match line 0, localized or empty None
+  PASS V-PRESS-DARWIN-PS-PARSER: LAPTOP-ONLY fixture shapes: basename claude counted, empty None
+  PASS V-PRESS-PLATFORM-DISPATCH-AND-SHAPE: unsupported platform None; win32 and darwin built from stub subprocess; real reading shape
+  PASS V-PRESS-OLD-CALLERS-UNCHANGED: GUARD: frozen verdict and floor tables, refusal answers, signature, one mb >= floor literal
+  PASS V-PRESS-COUNT-REFUSAL-OPT-IN: count refusal only through count_reader; unreadable never refuses; kill switch honoured
+  PASS V-PRESS-DECLARED-CEILING-FILE: real file keeps its floors and declares the ceiling; bad values fall back to the declared fallback
+  PASS V-PRESS-NO-KILL-NO-PSUTIL-NO-MISSION-READS: AST scan of the module; negative control on a synthetic source
+  PASS V-PRESS-CLI-SHAPE: subprocess CLI prints one JSON object with host, os, profile, ram, count, pressure; no leaks
+    M1 target='count > ceiling' replacement='count >= ceiling' occurrences=1
+    M1 flagged_by=check_boundary_ceiling problem="count equal to the ceiling (5) gave 'RED', want GREEN"
+    M2 target='ram_low = ram_verdict == REFUSE_LOW_MEMORY' replacement='ram_low = False' occurrences=1
+    M2 flagged_by=check_pole_table problem="ram low + count fine: 'GREEN' [], want RED ['ram_below_floor']"
+    M3 target='count = _valid_count(count_reading)' replacement='count = _valid_count(count_reading) or 0' occurrences=1
+    M3 flagged_by=check_pole_table problem="ram low + count unreadable: 'RED' ['ram_below_floor'], want RED ['ram_below_floor', 'claude_count_unreadable']"
+    M3 flagged_by=check_tracer_unreadable problem="unreadable count with RAM 9000 gave 'GREEN' [], want UNKNOWN claude_count_unreadable"
+    M4 target='if not pid_dirs:' replacement='if False:' occurrences=1
+    M4 flagged_by=check_no_pid_entries problem='a root with no numeric entries gave count 0, want None (blind, not zero)'
+    M5 target='if switch_off():' replacement='if False:' occurrences=1
+    M5 flagged_by=check_refusal_opt_in problem='CPP_RESOURCE_ADMISSION=off still refused on a count over the ceiling'
+  PASS V-PRESS-MUTANTS-CAUGHT: five one-line mutants rejected by their owning checks; the real module accepted
+PRESSURE_PASS=17/17  threshold=17/17
+# exit=0

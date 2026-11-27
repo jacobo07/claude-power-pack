@@ -1,0 +1,14 @@
+# record_run
+# date_utc: 2026-11-23T13:22:54.634441+00:00
+# head: 5fecb5a2
+# cmd: python3 -I .planning/workstreams/perf-construction/phases/06-ratchet-ukdl-and-hand-back/inherit_check.py manifest --only resource_pressure
+HASH_BEFORE vault/benchmarks/ledger.json cef10a592e567e06fa43529966061bc223600475526fa2f435741f11582e32f4
+HASH_BEFORE vault/config/resource-floors.json 54a5f2af2c4d2a46151bc751000819aafcfa67d69e43e0b95fdf1ed884cfdc09
+ROW resource_pressure      PASS                0.2s  marker 17/17 (expected 17)
+HASH_AFTER vault/benchmarks/ledger.json cef10a592e567e06fa43529966061bc223600475526fa2f435741f11582e32f4 SAME
+HASH_AFTER vault/config/resource-floors.json 54a5f2af2c4d2a46151bc751000819aafcfa67d69e43e0b95fdf1ed884cfdc09 SAME
+INHERIT_JUDGED=1/1 judged (total rows 1, skipped 0, not judged 0)
+INHERIT_PASS=1/1
+SKIPPED=0
+NOT_JUDGED=0
+# exit=0

@@ -1,0 +1,31 @@
+# record_run
+# date_utc: 2026-11-23T13:23:37.619944+00:00
+# head: 088b0ce8
+# cmd: python3 -I .planning/workstreams/perf-construction/phases/06-ratchet-ukdl-and-hand-back/inherit_check.py manifest
+HASH_BEFORE vault/benchmarks/ledger.json cef10a592e567e06fa43529966061bc223600475526fa2f435741f11582e32f4
+HASH_BEFORE vault/config/resource-floors.json 54a5f2af2c4d2a46151bc751000819aafcfa67d69e43e0b95fdf1ed884cfdc09
+ROW a5_u6                  PASS                0.2s  marker 13/13 (expected 13)
+ROW arm_preflight          PASS                0.1s  marker 23/23 (expected 23)
+ROW bench_integrity        PASS                0.3s  marker 53/53 (expected 53)
+ROW bench_gate             PASS                0.8s  marker 24/24 (expected 24)
+ROW resource_pressure      PASS                0.2s  marker 17/17 (expected 17)
+ROW gsd_mission_resources  PASS                1.6s  marker 17/17 (expected 17)
+ROW gsd_mission_baseline   PASS                0.1s  marker 21/21 (expected 21)
+ROW metrology              PASS                3.3s  marker 38/38 (expected 38)
+ROW critical_path          PASS               10.0s  marker 134/134 (expected 134)
+ROW hook_boundary          PASS                0.7s  marker 7/7 (expected 7)
+      note: HOME is a fresh temp dir; the duplicate-invocation sub-check stays UNEVALUATED (LAPTOP-ONLY LP-12)
+ROW git_invocation         BASELINE_MATCH      3.3s  observed 6/7 equals recorded baseline 6/7 (pre-existing debt, never PASS)
+      note: pre-existing debt 6/7; BASELINE_MATCH is not PASS
+ROW hooks_unchanged        PASS                0.0s  hooks/ empty diff against 4fa606d7
+ROW reachability           BASELINE_MATCH      0.3s  56 offenders (rc=1), names equal 05-01-reach-pre.txt by unit; pre-existing debt
+      note: pre-existing 56 offenders; compared by unit name
+ROW phase6_tree_clean      PASS                0.0s  tools modules hooks vault/config: empty porcelain
+ROW s9_redteam             SKIPPED_BY_POLICY   0.0s  814 s; last recorded 111/114 in 04-02-s9-redteam.after.txt; UNJUDGED, no clean control run exists (Phase 4 caveat)
+HASH_AFTER vault/benchmarks/ledger.json cef10a592e567e06fa43529966061bc223600475526fa2f435741f11582e32f4 SAME
+HASH_AFTER vault/config/resource-floors.json 54a5f2af2c4d2a46151bc751000819aafcfa67d69e43e0b95fdf1ed884cfdc09 SAME
+INHERIT_JUDGED=14/15 judged (total rows 15, skipped 1, not judged 0)
+INHERIT_PASS=14/14
+SKIPPED=1
+NOT_JUDGED=0
+# exit=0

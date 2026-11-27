@@ -1,0 +1,17 @@
+# record_run
+# date_utc: 2026-11-22T22:41:30.537295+00:00
+# head: 00e7d004
+# cmd: python3 tools/test_construction_metrology.py
+# pristine: modules/capability_runtime/construction_metrology.py=yes
+V-METRO -- construction metrology (events, states, connected percentile)
+  OK   V-METRO-TRACER-TTFUR-MEASURED: one human turn -> TTFUR 2.5 s (request copy ignored), N_total=1 measured=1 censored=0, 'plane: GEX44', no canary in output
+  OK   V-METRO-TRACER-UNOBSERVED-CENSORED: a transcript cut mid-turn is one UNOBSERVED censored sample in N_total, value null (not 0)
+  OK   V-METRO-POLICY-ID-UNMOVED: policy id identical with the file, without it and edited: f113a59d0dc99c56; equals live; in NOT_POLICY
+  OK   V-METRO-PERCENTILE-CONNECTED: percentile and store_dirs are the owners' objects; the module defines no copy
+  FAIL V-METRO-TTFMC-MEASURED: block={'n_total': None, 'measured': None, 'values': None, 'by_state': None}
+  FAIL V-METRO-TTFMC-NOT-APPLICABLE: unexpected blocks: [('TTFMC', None, None, {}), ('TTVD', None, None, {})]
+  FAIL V-METRO-TTVD-MEASURED: values=None by_state={} reasons=[]
+  OK   V-METRO-NOT-A-START: tool_result-only, isMeta and isCompactSummary user lines open no turn: exactly one turn
+  FAIL V-METRO-CONTRACT-MATCHES-CODE: contract document absent: vault/specs/construction-metrology-contract.md
+METRO_PASS=5/9  threshold=9/9
+# exit=1

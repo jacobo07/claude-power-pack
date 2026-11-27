@@ -1,0 +1,8 @@
+# record_run
+# date_utc: 2026-11-23T09:22:32.244108+00:00
+# head: dc2ef58b
+# cmd: python3 -I /tmp/p5-scripts/tracer_check.py
+TRACER_OK 27 independent_count 27
+[(('BLOCKING-SAFETY', 'DENY_SHAPE_IN_SOURCE'), 2), (('BLOCKING-SAFETY', 'FLAG_BLOCK_OR_CRITICAL'), 5), (('UNKNOWN', 'NO_TABLE_ROW'), 20)]
+git_head dc2ef58b803295b2cbec571aeb579bf13454fe71 hooks_clean True
+# exit=0
