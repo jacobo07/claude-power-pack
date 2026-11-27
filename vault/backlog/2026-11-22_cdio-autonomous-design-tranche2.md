@@ -142,6 +142,23 @@ Partial: 2 autonomy (intent routing existed and fired; tranche 1 added shell cov
 UNVERIFIED: 3 resource selection, 6 accessibility beyond tap/contrast on one page, 7 performance, 11 fresh agent,
 12 cross-project transfer, 14 baseline ratchet inheritance in another repo, 15 final engineering review of the whole.
 
+## Tranche 3 (Owner "go ahead", 2026-11-27): the open mission gates, steps 1-4. Steps 5-6 wait for a repo name.
+- Gate 2 autonomy: PASS on evidence already in hand. Routing fires on Owner intent without the skill being named
+  (live prompts.jsonl rows), machine turns and live hand-backs are filtered (V-DRO-LIVE-HANDBACK-KEEPS-KINDS),
+  shell-written pages reach the Stop gate, and c711a976's 4 headless builds needed 0 human turns.
+- Gate 4 design quality: PASS. Six surfaces across five sectors (portfolio, Bodeguita, B2B, professional service,
+  mobile app, brand kit), independent review APPROVE 100 after repair, blind A/B judge preferred the final in both
+  pairs. Limits: one reviewer family; `record` hashes HTML/SVG, not CSS or fonts.
+- Gate 3 resource selection: measured FAIL, fixed bf39fdde. 2,154 Owner-typed prompts (14 days of transcripts;
+  headless research prompts excluded, the live hook never sees them). Old web route: 26 hits, ~8 real design asks;
+  "la web"/"página de X" asks with a visual verb missed. Now a page noun needs visual intent: 15 hits, 10 real,
+  2 borderline, 3 wrong (two "write an email" asks reached across a full stop by the 160-char window). Recall is
+  measured on a 50-row sample only. A missed route is still reviewed at Stop (V-DSR-DEFAULT-WEB).
+- Gates 6 and 7 accessibility and performance: PASS for browser-observable facts, b682f695 (facts v3, 7 criteria,
+  failing first). Real pages: benchmark 6/6 clean; quicklease.ai clean; jacobolopezcortijo.com fails PAGE-WEIGHT
+  (2215 KB) and OVERSIZED-IMAGE (jacobo-portrait.png 1741 KB, 1254px shown at 380px) -- a real finding for the
+  portfolio, not fixed here. Not measured: keyboard focus order, visible focus, LCP timing.
+
 ## Review of bb95f710 (pp-code-reviewer: 0 critical, 0 high, 2 medium, 1 low) -- session 5b59546c
 - M1 FIXED (next commit): brand was gating for every path; a film/copy page then needed a review and app source in a
   brand-only session was judged. Pinned by V-DSR-BRAND-SCOPED-TO-ASSETS (pre-fix behaviour taken from the reviewer's
