@@ -100,8 +100,9 @@ shipped. This file is the handoff for a fresh agent: it holds no context that is
       Gates: V-FRW 10/10, 4 new; the HEAD probe was shown littering a clean repo.
     - Left as is: `learning-sentinel.js` writes LEARNINGS_PENDING.md only when learning files exist. It is a global
       `~/.claude/hooks` file and is now unreachable in a foreign repo, since nothing creates the folder there.
-    - The tranche-2 engineering list is closed. What remains is Owner-only: item 4 (hero criterion promotion)
-      and item 7 (Bodeguita photos).
+    - The tranche-2 engineering list is closed. What remains is Owner-only: item 7 (Bodeguita photos).
+    - Item 4 PROMOTED db1ef1f4 (Owner "go ahead"): CDIO-05 Lens 2 `hero-protagonist-first-phone-screen` for
+      marketing/landing, `urgent-info-first-screen` for data/app screens; brand sheets and legal pages unassessed.
 - (session 85563ce8) Item 3, second run, with a hand-built protocol (`vault/fixtures/cdio_benchmark/BRIEF.md`) and a
   "very clean always" bar. It runs alongside c711a976's headless run in the same folder, with different files.
   - First independent review: b2b 94, pro_service 90, mobile_app 98, brand_kit 88. All APPROVE, 0 critical, 0 major.
