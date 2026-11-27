@@ -283,8 +283,8 @@ def run_all(ap):
     _fit = ap.UNLOCKED_CAP - 200_000_000 - 25_000_000  # the 200M prior counts: exactly this much earlier spend still fits
     check("V-AP-BUDGET-PRIOR-S27-COUNTS-IN-TOTAL", ap.budget_admits(early(_fit), now, 25_000_000) is None
           and ap.budget_admits(early(_fit + 1), now, 25_000_000) is not None)
-    check("V-AP-BUDGET-OWNER-5700M", ap.UNLOCKED_CAP == 5_700_000_000 and ap.TOTAL_CAP == 5_700_000_000
-          and ap.DAY_CAP == 1_000_000_000)  # Owner 2026-11-27 'both' (was 4.7B / 500M; before that 3.7B / 250M)
+    check("V-AP-BUDGET-OWNER-7700M", ap.UNLOCKED_CAP == 7_700_000_000 and ap.TOTAL_CAP == 7_700_000_000
+          and ap.DAY_CAP == 1_000_000_000)  # Owner 2026-11-27 'y' +2B (was 5.7B; 4.7B / 500M; 3.7B / 250M)
     _keep_u = ap.UNLOCKED_CAP; ap.UNLOCKED_CAP = 285_261_779  # the FROZEN mechanism itself still works
     check("V-AP-BUDGET-FROZEN-MECHANISM", str(ap.budget_admits(early(61_000_000), now, 25_000_000)).startswith("FROZEN"))
     check("V-AP-BUDGET-PRIOR-NOT-IN-DAY", ap.spend_totals([], now) == (200_000_000, 0))
