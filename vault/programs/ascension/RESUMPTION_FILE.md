@@ -5,6 +5,27 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**2026-11-27 08:30Z (pane 31498a3e). ROUND 9: the night runs without the Owner** (Owner "aprovechar las noches al
+100%. subele el nivel de autonomia brutalmente"). Spec `vault/specs/ascension-autopilot-night-autonomy.md`.
+- At 07:30Z: FIFATC, TENNIS and KSR were parked 'branch'; WIIPARTY and WSR were blocked on questions; the day cap
+  stood at 477.9M/500M.
+- Owner answers recorded at 08:28Z: WIIPARTY 079e3c4f (approve the worktree-local rm/cp/configure); WSR fbd900c2
+  (R2 first).
+- Round 9 changes:
+  - `ff_to` fast-forwards over a disjoint dirty set.
+  - `branch_retry_due` re-ticks branch parks every 900 s, and the same note re-parks silently.
+  - `auto_rule` answers a question open 30 min or more: worktree-safe commands, or "take your own
+    recommendation". Budget, authority and outside effects stay the Owner's.
+- DEPLOYED 08:40:24Z: autopilot 09b40b53, evolve 451bbc30, test 6ca85f8c; gate PASS with 225/225 mutants killed.
+  Try 1 was refused because my new test crashed `fresh()`. An old V-EVO-CHECKPOINT-DIRTY-PARKS test was rewritten:
+  an overlapping dirty file parks, a disjoint one fast-forwards.
+- First tick at 08:45Z:
+  - TENNIS unparked, f7bbc45a -> b4918e46, 2 dirty files kept.
+  - FIFATC unparked, 6310851e -> 4e96215a, 1 dirty file kept.
+  - KSR re-parked silently (pivot_residual.md is on 0 branches); retried every 900 s.
+- NEXT: confirm the 00:00Z resumes. Watch the first AUTO-RULING in the digest.
+- Debt: no lane_tick test of the silent re-park. Some mutants are "killed by crash", as before.
+
 **2026-11-26 22:25Z (pane 31498a3e). ROUND 8 LIVE: held launches repair themselves** (Owner "aumenta autonomia para
 que esto se hubiera solucionado solo"). At 21:51Z all 8 lanes read RUNNING with 0 live workers.
 - FIFA S392F was held 'diverged' 7 h with its FINAL checkpoint written. FIFATC S383C was held 'behind_dirty' 9.5 h

@@ -2276,6 +2276,117 @@ def open_question(ls: dict, rec: dict) -> str:
     return str(bi.get("needs") or (rec.get("blocker") or {}).get("reason") or "Owner decision requested")[:500]
 
 
+# Round 9 (Owner 2026-11-27, pane 31498a3e: "todas estas deberian haber continuado de forma autonoma toda la noche ...
+# subele el nivel de autonomia brutalmente"). WIIPARTY S400W (a worktree-local `rm build; cp -a`) and WSR S405R (R2
+# first or certify first, with its own recommendation) sat all night on questions the mission could settle. After
+# AUTO_RULE_S unanswered, the autopilot answers through the Owner's own inbox (answers.jsonl), so the ruling is
+# recorded, delivered and planned exactly like a typed one. What it never answers: a command that is not plainly
+# worktree-local, and any question naming money, budget, authority, credentials, publishing or other outside effects.
+AUTO_RULE_S = 1800
+BRANCH_RETRY_S = 900  # a lane parked "branch" is ticked again this often (round 9)
+
+
+def branch_retry_due(ls: dict) -> bool:
+    """A lane parked on a git state (park_kind 'branch') with a mission is due another look every BRANCH_RETRY_S."""
+    return (ls.get("status") == "PARKED" and ls.get("park_kind") == "branch" and bool(ls.get("mission"))
+            and _now() >= float(ls.get("branch_retry_at") or 0))
+AUTO_RULE_DENY_RE = re.compile(
+    r"\b(budget|tokens?|authority|spend|cost|money|price|pay|paid|credentials?|passwords?|secrets?|api[ _-]?keys?|"
+    r"push|publish|deploy|production|prod|e-?mail|send|post|sudo|purchase|accounts?|wipe|force|legal|licen[cs]e)\b",
+    re.I)
+APPROVE_RE = re.compile(r"\bapprove\s+(?:the\s+)?(?:Bash|shell|command)(?:\s+command)?\s*[:=]\s*(.+)$", re.I | re.S)
+_CMD_DENY = {"sudo", "su", "ssh", "scp", "rsync", "curl", "wget", "git", "chmod", "chown", "kill", "pkill", "killall",
+             "systemctl", "service", "crontab", "dd", "mkfs", "mount", "umount", "docker", "eval", "exec", "shutdown",
+             "reboot", "nc", "ncat", "pip", "pip3", "npm", "apt", "apt-get", "find", "xargs", "bash", "sh", "env"}
+_WRITE_ALL = {"rm", "rmdir", "touch", "mkdir", "truncate"}  # every operand is written
+_WRITE_LAST = {"mv", "cp", "ln", "install"}  # the last operand is written (mv also removes its sources)
+
+
+def worktree_safe_cmd(cmd: str, product: str) -> tuple[bool, str]:
+    """(True, '') when `cmd` plainly stays inside the worker's own tree: no pipe, redirect, background, substitution or
+    glob; no denied program; no '..' or '~'; absolute paths only inside the product (read) or /tmp; every path a
+    command writes (and every mv source) relative. Anything unclear is refused, never guessed."""
+    import shlex  # noqa: PLC0415
+    flat = str(cmd or "").strip().strip("`").replace("&&", ";").replace("||", ";")
+    if not flat.strip(" ;"):
+        return False, "no command"
+    if any(t in flat for t in ("$(", "`", "|", "&", ">", "<", "\n", "*", "?", "{")):
+        return False, "uses a pipe, redirect, background, substitution, glob or several lines"
+    root = os.path.realpath(product)
+    for seg in flat.split(";"):
+        try:
+            toks = shlex.split(seg)
+        except ValueError:
+            return False, f"unparseable: {seg.strip()[:60]}"
+        while toks and re.match(r"^[A-Za-z_][A-Za-z0-9_]*=", toks[0]):
+            toks.pop(0)
+        if not toks:
+            continue
+        name = os.path.basename(toks[0])
+        if name in _CMD_DENY:
+            return False, f"{name} is never auto-approved"
+        for t in toks[1:]:
+            if t.startswith("~") or ".." in t.replace("\\", "/").split("/"):
+                return False, f"argument {t[:60]} may leave the worktree"
+            if t.startswith("/"):
+                p = os.path.realpath(t)
+                if not (p == root or p.startswith(root + os.sep) or p.startswith("/tmp/")):
+                    return False, f"absolute path {t[:60]} is outside the product"
+        ops = [t for t in toks[1:] if not t.startswith("-")]
+        written = ops if name in _WRITE_ALL else (ops if name == "mv" else ops[-1:]) if name in _WRITE_LAST else []
+        for t in written:
+            if t.startswith("/") or t.strip("/") in ("", "."):
+                return False, f"{name} writes {t or '?'}: only relative paths inside the worktree"
+    return True, ""
+
+
+def auto_rule(st: dict, lanes: list, now: float | None = None) -> int:
+    """Answer every question open >= AUTO_RULE_S that the round 9 rules allow; each question is considered once (its
+    key in ls.auto_ruled). A refused one stays the Owner's (owner_queue line; its alert keeps mailing). -> rulings."""
+    import hashlib  # noqa: PLC0415
+    now = _now() if now is None else now
+    n = 0
+    for lane in lanes:
+        ln = lane["name"]
+        ls = (st.get("lanes") or {}).get(ln)
+        if not ls or not ls.get("mission"):
+            continue
+        rec = mission(ls["mission"]) or {}
+        qa = open_question(ls, rec)
+        asked = float((rec.get("blocker") or {}).get("at") or 0)
+        if not qa or not asked or now - asked < AUTO_RULE_S:
+            continue
+        key = f"{ls['mission']}:{hashlib.sha1(qa.encode()).hexdigest()[:10]}"
+        if ls.get("auto_ruled") == key:
+            continue
+        ls["auto_ruled"] = key
+        why = AUTO_RULE_DENY_RE.search(qa)
+        m = APPROVE_RE.search(qa)
+        if m:
+            ok, why = worktree_safe_cmd(m.group(1), lane["product"])
+            text = (f"APPROVED by the autopilot auto-ruling (round 9, Owner 2026-11-27 'subele el nivel de autonomia "
+                    f"brutalmente'; unanswered {int((now - asked) // 60)} min): run exactly {m.group(1).strip()[:400]!r} "
+                    "inside your own worktree and nothing outside it.")
+        elif why:
+            ok, why = False, f"it names {why.group(0)!r}"
+        else:
+            ok = True
+            text = (f"AUTO-RULING by the autopilot (round 9, Owner 2026-11-27 'subele el nivel de autonomia "
+                    f"brutalmente'; unanswered {int((now - asked) // 60)} min): decide it yourself inside the mission "
+                    "envelope. Where you stated a recommendation, take it. Write the choice and why in your next "
+                    f"checkpoint; the Owner may overrule it later. The question was: {qa[:300]}")
+        if not ok:
+            log(f"{ln}: question of {ls['mission']} left to the Owner by the auto-ruling ({why})")
+            owner_queue(ln, f"question left to the Owner (auto-ruling refused: {why}): {qa[:300]}")
+            continue
+        row = record_answer(ln, text, now=now)
+        ledger_add(lane=ln, kind="auto_ruling", tokens=0, ruling=row["id"], mission=ls["mission"])
+        log(f"{ln}: auto-ruling {row['id']} for {ls['mission']} after {int((now - asked) // 60)} min unanswered")
+        digest(ln, f"AUTO-RULING {row['id']} ({ls['mission']}): {text[:240]}")
+        n += 1
+    return n
+
+
 def build_alerts(st: dict) -> list[dict]:
     """What needs the Owner now. 2026-11-25: every gsd_mission notice on GEX44 ended `incident_notify_failed` (no
     channel), and KSR/MKW sat PARKED over missions that were still live (one BLOCKED on an Owner decision)."""
@@ -2694,6 +2805,12 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
             save_state(st)
         else:
             return
+    if branch_retry_due(ls):
+        # Round 9 (FIFATC S383C, TENNIS S428T, KSR S441K parked "branch" from ~01:00Z to 07:30Z with nobody to unpark
+        # them): a branch park is a state of git, which the next commit, relaunch or round 9 fast-forward can change.
+        # Every BRANCH_RETRY_S the lane is ticked again with its judgment cleared; the same park again is silent.
+        ls.update(status="RUNNING", park_kind=None, judged_for=None, branch_retry_at=_now() + BRANCH_RETRY_S)
+        save_state(st)
     if ls.get("status") in ("PARKED", "STOPPED"):
         return
     if ls.get("pending_arm"):
@@ -2783,7 +2900,14 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
         elif evo and checkpoint:
             how, note = evolve.discover_checkpoint(product, checkpoint, dry)
             if how == "PARK":
+                if ls.get("branch_note") == note:  # round 9 retry: still the same git state, already told
+                    ls.update(status="PARKED", park_kind="branch", judged_for=None)
+                    save_state(st)
+                    return
+                ls["branch_note"] = note
                 return _park(st, ls, lane["name"], note, f"PARKED: {note}", kind="branch")
+            ls.pop("branch_note", None)
+            ls.pop("branch_retry_at", None)
             if how == "FF":
                 log(f"{lane['name']}: {note}")
             wr = evolve.worktree_rel(product, checkpoint)
@@ -3497,6 +3621,12 @@ def main(argv: list[str]) -> int:
         log("disk floor cleared: lanes are ticked again")
         save_state(st)
     seen0 = st.get("answers_seen")
+    try:
+        if not dry:
+            auto_rule(st, lanes)
+            save_state(st)  # also keeps each refused question's key, so it is told once
+    except Exception as exc:  # noqa: BLE001 -- the auto-ruling never stops a tick
+        log(f"auto-ruling skipped: {exc!r}")
     try:
         took = take_answers(st, {l["name"] for l in lanes})
     except Exception as exc:  # noqa: BLE001 -- an unreadable inbox never stops a tick

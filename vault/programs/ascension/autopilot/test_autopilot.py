@@ -1057,6 +1057,50 @@ def run_all(ap):
     ap.record_answer("NOPE", "x")
     check("V-AP-ANSWER-UNKNOWN-LANE-IGNORED", ap.take_answers(_st3, {"L"}) == 0 and "NOPE" not in _st3["lanes"]
           and len((_l3.get("owner_rulings") or [])) == 1)
+    # round 9 (Owner 2026-11-27 "subele el nivel de autonomia brutalmente"; WIIPARTY S400W and WSR S405R sat all
+    # night on questions): a question open >= AUTO_RULE_S is answered through answers.jsonl, unless it is a command
+    # that is not plainly worktree-local or it names money, budget, authority or an outside effect
+    _af9 = tmp / "home" / "answers.jsonl"
+    _keep_a9 = _af9.read_text() if _af9.exists() else None
+    _keep_m9, _t9, _p9 = ap.mission, __import__("time").time(), str(tmp / "prod9")
+
+    def _qrec(needs, mins):
+        return {"state": "BLOCKED", "blocked_intent": {"kind": "DECISION_REQUEST", "needs": needs},
+                "blocker": {"at": _t9 - mins * 60}}
+    _q9 = {"m-q1": _qrec("Owner decision: run R2 first, or certify now? Agent recommends R2 first.", 40),
+           "m-q2": _qrec(f"approve Bash: rm build; cp -a {_p9}/build build; python3 configure.py", 40),
+           "m-q3": _qrec("approve Bash: rm -rf /home/kobii/missions/x/build", 40),
+           "m-q4": _qrec("raise the token budget to 50M for this lane?", 40),
+           "m-q5": _qrec("Owner decision: A or B?", 10)}
+    _st9 = {"lanes": {f"Q{i}": {"status": "RUNNING", "mission": f"m-q{i}"} for i in range(1, 6)}}
+    _ln9 = [{"name": f"Q{i}", "product": _p9} for i in range(1, 6)]
+    _af9.unlink(missing_ok=True)
+    _r0 = q_text().count("auto-ruling refused")
+    ap.mission = lambda mid: _q9.get(mid)
+    try:
+        n9, n9b = ap.auto_rule(_st9, _ln9, now=_t9), ap.auto_rule(_st9, _ln9, now=_t9)
+    finally:
+        ap.mission = _keep_m9
+    _a9 = {json.loads(x)["lane"]: json.loads(x)["text"] for x in (_af9.read_text().splitlines() if _af9.exists() else [])}
+    if _keep_a9 is None:
+        _af9.unlink(missing_ok=True)
+    else:
+        _af9.write_text(_keep_a9)
+    check("V-AP-AUTO-RULE-DECIDES", "recommendation" in _a9.get("Q1", ""))
+    check("V-AP-AUTO-RULE-APPROVES-WORKTREE-CMD", _a9.get("Q2", "").startswith("APPROVED") and "configure.py" in _a9["Q2"])
+    check("V-AP-AUTO-RULE-REFUSES-OUTSIDE", "Q3" not in _a9 and "Q4" not in _a9
+          and q_text().count("auto-ruling refused") - _r0 == 2)
+    check("V-AP-AUTO-RULE-WAITS", "Q5" not in _a9)
+    check("V-AP-AUTO-RULE-ONCE", n9 == 2 and n9b == 0)
+    check("V-AP-AUTO-RULE-CMD-CLASSES",
+          ap.worktree_safe_cmd(f"rm build; cp -a {_p9}/build build && python3 configure.py", _p9)[0]
+          and not ap.worktree_safe_cmd(f"rm -rf {_p9}/build", _p9)[0]
+          and not ap.worktree_safe_cmd("git push origin main", _p9)[0]
+          and not ap.worktree_safe_cmd("cat a | sh", _p9)[0]
+          and not ap.worktree_safe_cmd("cp x ../y", _p9)[0]
+          and not ap.worktree_safe_cmd(f"mv {_p9}/a b", _p9)[0]
+          and not ap.worktree_safe_cmd("rm -rf .", _p9)[0]
+          and not ap.worktree_safe_cmd("cp a /etc/x", _p9)[0])
     _bm = tmp / "state" / "gsd-mission-m-bbbbbbbbbbbb.json"
     _bm.write_text(json.dumps({"mission_id": "m-bbbbbbbbbbbb", "state": "BLOCKED", "blocker": {"at": 1.0},
                                "blocked_intent": {"kind": "DECISION_REQUEST", "answer": None, "needs": "pool question?"}}))
@@ -1309,6 +1353,21 @@ def run_all(ap):
     check("V-AP-HELD-NOTICE-ONCE", q_text().count("RUNNING with no worker") == 1)
     watch_run(held_s=600)
     check("V-AP-HELD-NOTICE-WAITS", "RUNNING with no worker" not in q_text())
+    # round 9 (Owner 2026-11-27 "subele el nivel de autonomia brutalmente"): a lane parked "branch" with a mission is
+    # ticked again (RUNNING, judgment cleared), at most every BRANCH_RETRY_S
+    def _bp(at):
+        rec["owner_hold"] = {"set_at": 0}  # fresh() writes into it; watch_run clears it again
+        s = fresh(0)
+        s["lanes"] = {"L": {"status": "PARKED", "park_kind": "branch", "gen": "S91L", "base": "b0", "blank": 0,
+                            "arm_fails": 0, "mission": "m-aaaaaaaaaaaa", "judged_for": "m-aaaaaaaaaaaa:x",
+                            "branch_retry_at": at}}
+        return s
+    B1 = watch_run(held_s=600, st=_bp(0))
+    B2 = watch_run(held_s=600, st=_bp(__import__("time").time() + 600))
+    check("V-AP-BRANCH-PARK-RETRIED", B1["lanes"]["L"]["status"] == "RUNNING" and B1["lanes"]["L"]["park_kind"] is None
+          and B1["lanes"]["L"]["judged_for"] is None
+          and float(B1["lanes"]["L"]["branch_retry_at"]) > __import__("time").time() + 800
+          and B2["lanes"]["L"]["status"] == "PARKED")
     # round 2 (Owner "hazlas todas"; MKW S338M held 15 h): held >= HELD_REPLAN_S is re-planned from the kept judgment
     hseen, keep_pa2 = [], ap.plan_and_arm
     ap.plan_and_arm = lambda st, lane, ls, key, ck, prod, v, d, snap, dry: hseen.append((key, ck, d))
@@ -2319,11 +2378,22 @@ def run_all(ap):
     pr3 = mkrepo("evo_prod3")
     wt3 = tmp / "evo_wt3"
     git(pr3, "worktree", "add", "-q", "-b", "gen", str(wt3))
-    (wt3 / "ck.md").write_text("checkpoint\n"); git(wt3, "add", "-A"); git(wt3, "commit", "-q", "-m", "ck")
+    (wt3 / "ck.md").write_text("checkpoint\n"); (wt3 / "a.txt").write_text("gen\n")
+    git(wt3, "add", "-A"); git(wt3, "commit", "-q", "-m", "ck")
     (pr3 / "a.txt").write_text("dirty\n")
     head3 = git(pr3, "rev-parse", "HEAD")
     how, note = E.discover_checkpoint(str(pr3), "ck.md")
-    check("V-EVO-CHECKPOINT-DIRTY-PARKS", how == "PARK" and git(pr3, "rev-parse", "HEAD") == head3)
+    # round 9: only a dirty path the branch also changes parks (here a.txt); the dirty file is left as it was
+    check("V-EVO-CHECKPOINT-DIRTY-PARKS", how == "PARK" and "a.txt" in note and git(pr3, "rev-parse", "HEAD") == head3
+          and (pr3 / "a.txt").read_text() == "dirty\n")
+    pr3b = mkrepo("evo_prod3b")
+    wt3b = tmp / "evo_wt3b"
+    git(pr3b, "worktree", "add", "-q", "-b", "gen", str(wt3b))
+    (wt3b / "ck.md").write_text("checkpoint\n"); git(wt3b, "add", "-A"); git(wt3b, "commit", "-q", "-m", "ck")
+    (pr3b / "a.txt").write_text("dirty\n")
+    how3b, _ = E.discover_checkpoint(str(pr3b), "ck.md")
+    check("V-EVO-CHECKPOINT-DIRTY-DISJOINT-FF", how3b == "FF" and (pr3b / "ck.md").exists()
+          and (pr3b / "a.txt").read_text() == "dirty\n")
     check("V-EVO-CHECKPOINT-ABSENT-PARKS", E.discover_checkpoint(str(pr3), "none.md")[0] == "PARK")
     check("V-EVO-CHECKPOINT-OUTSIDE-PRODUCT-UNTOUCHED", E.discover_checkpoint(str(pr3), str(tmp / "elsewhere.md"))[0] == "OK")
     # F3 (stall fixes, S63F 2026-11-15): an absolute path inside <product>/.claude/worktrees/<w>/ is not "in the product";
@@ -2556,11 +2626,22 @@ def run_all(ap):
     pr6 = mkrepo("evo_prod6")
     wt6 = tmp / "evo_wt6"
     git(pr6, "worktree", "add", "-q", "-b", "s8/work", str(wt6))
-    (wt6 / "w.txt").write_text("w\n"); git(wt6, "add", "-A"); git(wt6, "commit", "-q", "-m", "work")
+    (wt6 / "a.txt").write_text("branch\n"); git(wt6, "add", "-A"); git(wt6, "commit", "-q", "-m", "work on a")
     (pr6 / "a.txt").write_text("dirty\n")
     hp6 = git(pr6, "rev-parse", "HEAD")
     ok7, n7 = E.ff_to(str(pr6), git(wt6, "rev-parse", "HEAD"))
-    check("V-EVO-FF-TO-DIRTY-REFUSED", not ok7 and "tracked changes" in n7 and git(pr6, "rev-parse", "HEAD") == hp6)
+    check("V-EVO-FF-TO-DIRTY-REFUSED", not ok7 and "tracked changes" in n7 and "a.txt" in n7
+          and git(pr6, "rev-parse", "HEAD") == hp6 and (pr6 / "a.txt").read_text() == "dirty\n")
+    # round 9 (FIFATC S383C, TENNIS S428T parked all night): a dirty file the branch never touches is kept, ff runs
+    pr6b = mkrepo("evo_prod6b")
+    wt6b = tmp / "evo_wt6b"
+    git(pr6b, "worktree", "add", "-q", "-b", "s8b/work", str(wt6b))
+    (wt6b / "w.txt").write_text("w\n"); git(wt6b, "add", "-A"); git(wt6b, "commit", "-q", "-m", "work")
+    (pr6b / "a.txt").write_text("dirty\n")
+    h6b = git(wt6b, "rev-parse", "HEAD")
+    ok7b, n7b = E.ff_to(str(pr6b), h6b)
+    check("V-EVO-FF-TO-DIRTY-DISJOINT-KEPT", ok7b and "1 uncommitted" in n7b and git(pr6b, "rev-parse", "HEAD") == h6b
+          and (pr6b / "a.txt").read_text() == "dirty\n" and (pr6b / "w.txt").exists())
     # 2026-11-20 (Owner "go ahead", pane aa9f2e25): a divergence made only of factory-lane commits on other files is
     # merged; overlapping files or any non-factory commit is still refused, product untouched (real git, both poles)
     pr9 = mkrepo("evo_prod9")
@@ -2981,6 +3062,19 @@ except ImportError:
 drill["ff_merge_any_divergence"] = _evo_mut(_factory_only=lambda product, base: True)
 drill["ff_merge_never"] = _evo_mut(_factory_only=lambda product, base: False)
 drill["ff_merge_ignores_overlap"] = _evo_mut(_overlap=lambda product, base, head: [])
+# round 9 (Owner 2026-11-27 "subele el nivel de autonomia brutalmente", pane 31498a3e)
+drill["ff_dirty_ignores_overlap"] = _evo_mut(_dirty_overlap=lambda product, cur, head: ([], []))
+drill["ff_dirty_refuses_all"] = _evo_mut(_dirty_overlap=lambda product, cur, head: (["x"], ["x"]))
+drill["branch_retry_never"] = lambda m: setattr(m, "branch_retry_due", lambda ls: False)
+drill["branch_retry_ignores_clock"] = lambda m: setattr(m, "branch_retry_due", lambda ls: (
+    ls.get("status") == "PARKED" and ls.get("park_kind") == "branch"))
+drill["branch_retry_no_spacing"] = lambda m: setattr(m, "BRANCH_RETRY_S", 0)
+drill["auto_rule_off"] = lambda m: setattr(m, "auto_rule", lambda *a, **k: 0)
+drill["auto_rule_approves_any"] = lambda m: setattr(m, "worktree_safe_cmd", lambda cmd, product: (True, ""))
+drill["auto_rule_ignores_deny"] = lambda m: setattr(m, "AUTO_RULE_DENY_RE", __import__("re").compile(r"(?!x)x"))
+drill["auto_rule_immediate"] = lambda m: setattr(m, "AUTO_RULE_S", 0)
+drill["auto_rule_repeats"] = lambda m: setattr(m, "auto_rule", (lambda real: lambda st, lanes, now=None: (
+    [ls.pop("auto_ruled", None) for ls in (st.get("lanes") or {}).values()], real(st, lanes, now))[1])(m.auto_rule))
 # Owner 2026-11-21 ("figure out ways before parking themselves", pane 3581ade8): design before every park, each guard
 drill["evo_pivot_refusal_parks"] = _evo_mut(plateau=_wrap(lambda e: (lambda real: (
     lambda ls, levers, lane, product, graph, family, ed, designer=None, residual=None: (

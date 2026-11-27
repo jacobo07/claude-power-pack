@@ -680,14 +680,33 @@ def ff_to(product: str, head, dry: bool = False) -> tuple[bool, str]:
         return True, f"product already at {head[:12]}"
     if _git(product, "merge-base", "--is-ancestor", "HEAD", head)[0] != 0:
         return _merge_over_factory(product, cur, head, dry)
-    if _git(product, "status", "--porcelain", "--untracked-files=no")[1]:
-        return False, "the product has tracked changes"
+    # Round 9 (Owner 2026-11-27, pane 31498a3e, "debemos aprovechar las noches al 100%"): FIFATC S383C and TENNIS S428T
+    # parked all night on "the product has tracked changes" over one dirty file their branches never touch. A
+    # fast-forward keeps such a file as it is; only a dirty path the branch also changes refuses.
+    dirty, both = _dirty_overlap(product, cur, head)
+    if both:
+        return False, f"the product has tracked changes the branch also changes: {both[:3]}"
     if dry:
         return True, f"dry: would fast-forward the product to {head[:12]}"
     rc, out = _git(product, "merge", "--ff-only", head)
     if rc != 0:
         return False, f"fast-forward failed: {out[-200:]}"
-    return True, f"fast-forwarded the product to {head[:12]}"
+    return True, f"fast-forwarded the product to {head[:12]}" + (
+        f" ({len(dirty)} uncommitted file(s) kept)" if dirty else "")
+
+
+def _dirty_overlap(product: str, cur: str, head: str) -> tuple[list[str], list[str]]:
+    """(tracked uncommitted paths of the product, those of them the range cur..head also changes). Unreadable -> refuse."""
+    rc, d = _git(product, "diff", "--name-only", "HEAD")
+    if rc != 0:
+        return ["<git diff failed>"], ["<git diff failed>"]
+    dirty = [p for p in d.splitlines() if p.strip()]
+    if not dirty:
+        return [], []
+    rc, ch = _git(product, "diff", "--name-only", cur, head)
+    if rc != 0:
+        return dirty, ["<git diff failed>"]
+    return dirty, sorted(set(dirty) & {p for p in ch.splitlines() if p.strip()})
 
 
 # Owner 2026-11-20 ("go ahead", pane aa9f2e25): the 0-token factory lane (agora/factory/lane.py) applies to a product
