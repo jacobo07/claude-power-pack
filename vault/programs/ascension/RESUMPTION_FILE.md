@@ -5,6 +5,14 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**2026-11-27 09:25Z (pane 31498a3e). ROUND 10 LIVE** (Owner "both, y dejalas todas running").
+- Caps: day 500M -> 1B; total 4.7B -> 5.7B.
+- Weekly override renewed until 2026-11-28T08:50:34Z (24 h max). It needs the Owner again after that.
+- `control_checkpoint`: the KSR residual committed in its control repo (gen3-pp) is now judged.
+- Deployed 09:16:54Z: autopilot a5f5a1e8, test 7b9e95e2, evolve 451bbc30; gate PASS, 227/227 mutants killed.
+- 09:23Z: all 8 lanes RUNNING. KSR S441K judged -> S456K armed. TENNIS pivot2 checkpoint judged.
+- Ledger 4.47B / 5.7B. At about 1B/day, the total runs out around 2026-11-28; the wall is 11-30.
+
 **2026-11-27 08:30Z (pane 31498a3e). ROUND 9: the night runs without the Owner** (Owner "aprovechar las noches al
 100%. subele el nivel de autonomia brutalmente"). Spec `vault/specs/ascension-autopilot-night-autonomy.md`.
 - At 07:30Z: FIFATC, TENNIS and KSR were parked 'branch'; WIIPARTY and WSR were blocked on questions; the day cap

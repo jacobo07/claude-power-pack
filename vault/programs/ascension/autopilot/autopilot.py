@@ -40,8 +40,8 @@ CLAUDE = os.environ.get("AP_CLAUDE", "/usr/local/bin/claude")
 OWNER_TURN = "d957c937-f56d-4447-9386-5d8002fe0b90:" + os.environ.get("AP_OWNER_TS", "")
 # Owner 2026-11-12 (laptop pane ddf4990e, uuid of "1. 120M"): release a 120M tranche. 285,261,779 + 120M =
 # 405,261,779 unlocked; the total moves 400M -> 405,261,779 so the full 120M is usable (nothing left frozen).
-TOTAL_CAP = 4_700_000_000  # Owner 2026-11-16 'Day cap 500M and total +1B' (pane 4de9b293, parallel lanes); was 3.7B: Owner 2026-11-15 'desatascalo todo y subele 600M a cada uno' (pane 4de9b293): 5 lane envelopes of 600M from 09:24Z on 659M booked; was 2.1B (Owner 2026-11-14 '600M each' FIFA+WIIPARTY, 4246d04c)
-DAY_CAP = 500_000_000  # Owner 2026-11-16 'Day cap 500M and total +1B' (pane 4de9b293); was 250M: Owner 2026-11-14 "raise it" (pane 4de9b293): 6 lanes share it; was 90M (Owner 2026-11-12, c26eafbf)
+TOTAL_CAP = 5_700_000_000  # Owner 2026-11-27 'both, y dejalas todas running' (pane 31498a3e): +1B at 4.47B booked; was 4.7B: Owner 2026-11-16 'Day cap 500M and total +1B' (pane 4de9b293, parallel lanes); was 3.7B: Owner 2026-11-15 'desatascalo todo y subele 600M a cada uno' (pane 4de9b293): 5 lane envelopes of 600M from 09:24Z on 659M booked; was 2.1B (Owner 2026-11-14 '600M each' FIFA+WIIPARTY, 4246d04c)
+DAY_CAP = 1_000_000_000  # Owner 2026-11-27 'both, y dejalas todas running' (pane 31498a3e; 500M ran out at 07:30Z); was 500M: Owner 2026-11-16 'Day cap 500M and total +1B' (pane 4de9b293); was 250M: Owner 2026-11-14 "raise it" (pane 4de9b293): 6 lanes share it; was 90M (Owner 2026-11-12, c26eafbf)
 GEN_CAP = 25_000_000
 FRESH_GEN_CAP = 1_000_000
 CALL_RESERVE = 2_000_000  # booked for a judge/planner call whose usage could not be measured (never 0)
@@ -57,7 +57,7 @@ PRIOR_AUTHORITY = (("m-10566700b1fe", "S27", 200_000_000),)
 # and integration on top of what was booked at approval: 225,261,779 = PRIOR 200M + ledger 25,261,779 (judge/planner
 # 4,761,779 + S28K's 20.5M). Everything between UNLOCKED_CAP and TOTAL_CAP is FROZEN behind value gates: the autopilot
 # can only ask for it (owner_queue), never release it.
-UNLOCKED_CAP = 4_700_000_000  # Owner 2026-11-16 'Day cap 500M and total +1B' (pane 4de9b293); was 3.7B: Owner 2026-11-15 '600M a cada uno' (5 lanes), pane 4de9b293; was 2.1B (2026-11-14, 4246d04c)
+UNLOCKED_CAP = 5_700_000_000  # Owner 2026-11-27 'both' (pane 31498a3e), +1B; was 4.7B: Owner 2026-11-16 'Day cap 500M and total +1B' (pane 4de9b293); was 3.7B: Owner 2026-11-15 '600M a cada uno' (5 lanes), pane 4de9b293; was 2.1B (2026-11-14, 4246d04c)
 WALL = dt.datetime(2026, 11, 30, 23, 59, tzinfo=dt.timezone.utc)
 BLANK_STOP = 3          # consecutive NONE generations (no verified progress of any class) stop the lane
 INFO_PARK = 2           # consecutive INFORMATION generations without CERT/CAPABILITY park the lane for an Owner look
@@ -2286,6 +2286,20 @@ AUTO_RULE_S = 1800
 BRANCH_RETRY_S = 900  # a lane parked "branch" is ticked again this often (round 9)
 
 
+def control_checkpoint(lane: dict, product: str, checkpoint: str) -> str:
+    """Round 10 (KSR S441K, 2026-11-27): a METHOD_PIVOT hold named evidence/ascension/s441k/pivot_residual.md, which
+    the worker committed in the lane's control repo (cwd gen3-pp, 6fd0ac5d), not in the product (t1-campaign).
+    Discovery looks only in the product, so the lane parked 'on 0 branches' for good. A relative path absent from the
+    product but committed at the control repo's HEAD is judged there (absolute). Otherwise `checkpoint` unchanged."""
+    cw = lane.get("cwd")
+    if (not checkpoint or os.path.isabs(checkpoint) or not cw or not os.path.isdir(cw)
+            or os.path.realpath(cw) == os.path.realpath(product) or os.path.exists(os.path.join(product, checkpoint))):
+        return checkpoint
+    if evolve._git(cw, "cat-file", "-e", f"HEAD:{checkpoint}")[0] != 0 or not os.path.exists(os.path.join(cw, checkpoint)):
+        return checkpoint
+    return os.path.join(cw, checkpoint)
+
+
 def branch_retry_due(ls: dict) -> bool:
     """A lane parked on a git state (park_kind 'branch') with a mission is due another look every BRANCH_RETRY_S."""
     return (ls.get("status") == "PARKED" and ls.get("park_kind") == "branch" and bool(ls.get("mission"))
@@ -2891,6 +2905,10 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
             ls["judged_for"] = hk
             return _park(st, ls, lane["name"], f"checkpoint hold of {mid} names no evidence or residual path after "
                                                f"{NOPATH_WAIT_S // 60} min; not judged")
+        cck = control_checkpoint(lane, product, checkpoint)
+        if cck != checkpoint:
+            log(f"{lane['name']}: {checkpoint} is committed in the control repo, not the product; judged as {cck}")
+            checkpoint = cck
         kept = resumable_plan(ls, f"{mid}:{hold.get('set_at')}")
         if kept and kept.get("checkpoint"):
             # 2026-11-19 (FIFATC S118C, pane 08cba76c): the halted worker sat on a stale side branch, so discovery parked

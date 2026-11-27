@@ -283,8 +283,8 @@ def run_all(ap):
     _fit = ap.UNLOCKED_CAP - 200_000_000 - 25_000_000  # the 200M prior counts: exactly this much earlier spend still fits
     check("V-AP-BUDGET-PRIOR-S27-COUNTS-IN-TOTAL", ap.budget_admits(early(_fit), now, 25_000_000) is None
           and ap.budget_admits(early(_fit + 1), now, 25_000_000) is not None)
-    check("V-AP-BUDGET-OWNER-4700M", ap.UNLOCKED_CAP == 4_700_000_000 and ap.TOTAL_CAP == 4_700_000_000
-          and ap.DAY_CAP == 500_000_000)  # Owner 2026-11-16 'Day cap 500M and total +1B' (was 3.7B / 250M)
+    check("V-AP-BUDGET-OWNER-5700M", ap.UNLOCKED_CAP == 5_700_000_000 and ap.TOTAL_CAP == 5_700_000_000
+          and ap.DAY_CAP == 1_000_000_000)  # Owner 2026-11-27 'both' (was 4.7B / 500M; before that 3.7B / 250M)
     _keep_u = ap.UNLOCKED_CAP; ap.UNLOCKED_CAP = 285_261_779  # the FROZEN mechanism itself still works
     check("V-AP-BUDGET-FROZEN-MECHANISM", str(ap.budget_admits(early(61_000_000), now, 25_000_000)).startswith("FROZEN"))
     check("V-AP-BUDGET-PRIOR-NOT-IN-DAY", ap.spend_totals([], now) == (200_000_000, 0))
@@ -2394,6 +2394,19 @@ def run_all(ap):
     how3b, _ = E.discover_checkpoint(str(pr3b), "ck.md")
     check("V-EVO-CHECKPOINT-DIRTY-DISJOINT-FF", how3b == "FF" and (pr3b / "ck.md").exists()
           and (pr3b / "a.txt").read_text() == "dirty\n")
+    # round 10 (KSR S441K): a residual committed in the lane's control repo (cwd), absent from the product, is judged
+    # there; one in the product, an uncommitted one, or a lane whose cwd is the product keep the path as it was
+    ctl = mkrepo("evo_ctl10")
+    (ctl / "ev").mkdir()
+    (ctl / "ev" / "pivot_residual.md").write_text("residual\n"); git(ctl, "add", "-A"); git(ctl, "commit", "-q", "-m", "r")
+    (ctl / "ev" / "loose.md").write_text("not committed\n")
+    lane10 = {"cwd": str(ctl), "product": str(pr3b)}
+    check("V-AP-CONTROL-CHECKPOINT", ap.control_checkpoint(lane10, str(pr3b), "ev/pivot_residual.md")
+          == os.path.join(str(ctl), "ev/pivot_residual.md")
+          and ap.control_checkpoint(lane10, str(pr3b), "ck.md") == "ck.md"
+          and ap.control_checkpoint(lane10, str(pr3b), "ev/loose.md") == "ev/loose.md"
+          and ap.control_checkpoint({"cwd": str(pr3b)}, str(pr3b), "ev/pivot_residual.md") == "ev/pivot_residual.md"
+          and E.discover_checkpoint(str(pr3b), os.path.join(str(ctl), "ev/pivot_residual.md"))[0] == "OK")
     check("V-EVO-CHECKPOINT-ABSENT-PARKS", E.discover_checkpoint(str(pr3), "none.md")[0] == "PARK")
     check("V-EVO-CHECKPOINT-OUTSIDE-PRODUCT-UNTOUCHED", E.discover_checkpoint(str(pr3), str(tmp / "elsewhere.md"))[0] == "OK")
     # F3 (stall fixes, S63F 2026-11-15): an absolute path inside <product>/.claude/worktrees/<w>/ is not "in the product";
@@ -3075,6 +3088,11 @@ drill["auto_rule_ignores_deny"] = lambda m: setattr(m, "AUTO_RULE_DENY_RE", __im
 drill["auto_rule_immediate"] = lambda m: setattr(m, "AUTO_RULE_S", 0)
 drill["auto_rule_repeats"] = lambda m: setattr(m, "auto_rule", (lambda real: lambda st, lanes, now=None: (
     [ls.pop("auto_ruled", None) for ls in (st.get("lanes") or {}).values()], real(st, lanes, now))[1])(m.auto_rule))
+# round 10 (KSR S441K): the control repo's committed residual is judged; never an uncommitted or product-shadowed one
+drill["control_checkpoint_never"] = lambda m: setattr(m, "control_checkpoint", lambda lane, product, ck: ck)
+drill["control_checkpoint_uncommitted"] = lambda m: setattr(m, "control_checkpoint", lambda lane, product, ck: (
+    os.path.join(lane["cwd"], ck) if ck and not os.path.isabs(ck) and lane.get("cwd") != product
+    and os.path.exists(os.path.join(lane["cwd"], ck)) else ck))
 # Owner 2026-11-21 ("figure out ways before parking themselves", pane 3581ade8): design before every park, each guard
 drill["evo_pivot_refusal_parks"] = _evo_mut(plateau=_wrap(lambda e: (lambda real: (
     lambda ls, levers, lane, product, graph, family, ed, designer=None, residual=None: (

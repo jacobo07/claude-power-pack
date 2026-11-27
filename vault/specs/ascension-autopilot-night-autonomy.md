@@ -62,6 +62,19 @@ Mutants:
 
 Known gap: the silent re-park (same `branch_note`) has no lane_tick-level test.
 
+## Round 10 addendum (Owner 2026-11-27: "both, y dejalas todas running")
+- **Caps:**
+  - DAY_CAP 500M -> 1B.
+  - TOTAL_CAP and UNLOCKED_CAP 4.7B -> 5.7B (+1B at 4.47B booked).
+  - Pinned by V-AP-BUDGET-OWNER-5700M.
+- **Weekly guard:** `~/.claude/state/account-governor-override.json` renewed until 2026-11-28T08:50:34Z, the
+  governor's 24 h maximum. Backup `*.bak-3149-r10-*`. Renewing it again is the Owner's call each day.
+- **`control_checkpoint`** (KSR S441K): the hold's residual is a relative path absent from the product. If it is
+  committed at the HEAD of the lane's control repo (`cwd`), it is judged there as an absolute path. Otherwise the
+  path is unchanged.
+  - Test: V-AP-CONTROL-CHECKPOINT.
+  - Mutants: control_checkpoint_never, control_checkpoint_uncommitted.
+
 ## Rollback
 In `~/agora/ascension-autopilot`, restore these files from `*.bak-3149-r9autonomy-<ts>`:
 - autopilot.py
