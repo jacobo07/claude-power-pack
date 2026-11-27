@@ -100,7 +100,8 @@ shipped. This file is the handoff for a fresh agent: it holds no context that is
       Gates: V-FRW 10/10, 4 new; the HEAD probe was shown littering a clean repo.
     - Left as is: `learning-sentinel.js` writes LEARNINGS_PENDING.md only when learning files exist. It is a global
       `~/.claude/hooks` file and is now unreachable in a foreign repo, since nothing creates the folder there.
-    - The tranche-2 engineering list is closed. What remains is Owner-only: item 7 (Bodeguita photos).
+    - The tranche-2 engineering list is closed. Item 7 (Bodeguita photos) DROPPED (Owner, 2026-11-27, "drop it"):
+      nothing in CDIO depended on it, and generated venue/dish images on a live site are not an option. Tranche 2 CLOSED.
     - Item 4 PROMOTED db1ef1f4 (Owner "go ahead"): CDIO-05 Lens 2 `hero-protagonist-first-phone-screen` for
       marketing/landing, `urgent-info-first-screen` for data/app screens; brand sheets and legal pages unassessed.
 - (session 85563ce8) Item 3, second run, with a hand-built protocol (`vault/fixtures/cdio_benchmark/BRIEF.md`) and a
